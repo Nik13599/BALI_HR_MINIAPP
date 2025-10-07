@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>BALI HR</title>
+<style>
+body { background:#000; color:#fff; font-family:Arial; display:flex; flex-direction:column; align-items:center; padding:20px; }
+input,textarea { width:100%; max-width:400px; margin:5px 0; padding:10px; border-radius:8px; border:none; background:#1b1b1b; color:#fff; }
+button { background:#7B2CBF; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; margin-top:10px; }
+h1 { color:#7B2CBF; }
+</style>
+</head>
+<body>
+  <img src="https://i.imgur.com/5v6FJtv.png" width="120" alt="BALI Logo" />
+  <h1>Анкета кандидата</h1>
+  <form id="form">
+    <input name="name" placeholder="ФИО" required />
+    <input name="age" placeholder="Возраст" required />
+    <input name="phone" placeholder="Телефон" required />
+    <input name="social" placeholder="Telegram / Instagram" />
+    <input name="position" placeholder="Желаемая должность" />
+    <textarea name="experience" placeholder="Опыт работы"></textarea>
+    <input name="photo" placeholder="Ссылка на фото" />
+    <textarea name="comment" placeholder="Комментарий"></textarea>
+    <button type="submit">Отправить</button>
+  </form>
+<script>
+document.getElementById("form").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  const r = await fetch("/submit", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
+  if(r.ok){ alert("🔥 Спасибо! Добро пожаловать на остров света — BALI ждёт тебя!"); e.target.reset(); }
+});
+</script>
+</body>
+</html>

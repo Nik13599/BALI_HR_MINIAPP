@@ -1,0 +1,37 @@
+import express from "express";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
+dotenv.config();
+
+const app = express();
+app.use(express.json());
+app.use(express.static("frontend"));
+
+const TOKEN = process.env.TELEGRAM_TOKEN;
+const CHAT_ID = process.env.HR_CHAT_ID;
+const API_URL = `https://api.telegram.org/bot${TOKEN}`;
+
+app.post("/submit", async (req, res) => {
+  const data = req.body;
+  const msg = `
+💼 Новая анкета кандидата BALI
+👤 Имя: ${data.name}
+🎂 Возраст: ${data.age}
+📞 Телефон: ${data.phone}
+📸 Instagram: ${data.social}
+💼 Должность: ${data.position}
+📚 Опыт: ${data.experience}
+💬 Комментарий: ${data.comment}
+🖼 Фото: ${data.photo}
+`;
+  await fetch(`${API_URL}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: CHAT_ID, text: msg }),
+  });
+  res.json({ ok: true });
+});
+
+app.listen(process.env.PORT || 8080, () =>
+  console.log("BALI HR MiniApp запущено")
+);
