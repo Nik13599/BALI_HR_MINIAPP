@@ -68,6 +68,9 @@ create table if not exists public.bookings (
 create index if not exists bookings_date_idx on public.bookings(booking_date);
 create index if not exists bookings_table_date_idx on public.bookings(table_id, booking_date);
 create index if not exists customers_phone_idx on public.customers(phone);
+create unique index if not exists bookings_one_active_table_per_date_idx
+  on public.bookings(table_id, booking_date)
+  where status not in ('cancelled','completed');
 
 alter table public.menu_items enable row level security;
 alter table public.events enable row level security;
@@ -83,26 +86,17 @@ create policy "public read active events" on public.events for select to anon us
 drop policy if exists "public read active tables" on public.hall_tables;
 create policy "public read active tables" on public.hall_tables for select to anon using (active = true);
 
--- Любой пользователь, вошедший через Supabase Auth, считается сотрудником панели.
--- Не создавайте публичную регистрацию; добавляйте администраторов вручную в Authentication > Users.
-do $$
-begin
-  if not exists (select 1 from pg_policies where schemaname='public' and tablename='menu_items' and policyname='staff manage menu') then
-    create policy "staff manage menu" on public.menu_items for all to authenticated using (true) with check (true);
-  end if;
-  if not exists (select 1 from pg_policies where schemaname='public' and tablename='events' and policyname='staff manage events') then
-    create policy "staff manage events" on public.events for all to authenticated using (true) with check (true);
-  end if;
-  if not exists (select 1 from pg_policies where schemaname='public' and tablename='hall_tables' and policyname='staff manage tables') then
-    create policy "staff manage tables" on public.hall_tables for all to authenticated using (true) with check (true);
-  end if;
-  if not exists (select 1 from pg_policies where schemaname='public' and tablename='customers' and policyname='staff manage customers') then
-    create policy "staff manage customers" on public.customers for all to authenticated using (true) with check (true);
-  end if;
-  if not exists (select 1 from pg_policies where schemaname='public' and tablename='bookings' and policyname='staff manage bookings') then
-    create policy "staff manage bookings" on public.bookings for all to authenticated using (true) with check (true);
-  end if;
-end $$;
+-- Администраторов добавляйте вручную в Authentication > Users.
+drop policy if exists "staff manage menu" on public.menu_items;
+create policy "staff manage menu" on public.menu_items for all to authenticated using (true) with check (true);
+drop policy if exists "staff manage events" on public.events;
+create policy "staff manage events" on public.events for all to authenticated using (true) with check (true);
+drop policy if exists "staff manage tables" on public.hall_tables;
+create policy "staff manage tables" on public.hall_tables for all to authenticated using (true) with check (true);
+drop policy if exists "staff manage customers" on public.customers;
+create policy "staff manage customers" on public.customers for all to authenticated using (true) with check (true);
+drop policy if exists "staff manage bookings" on public.bookings;
+create policy "staff manage bookings" on public.bookings for all to authenticated using (true) with check (true);
 
 -- Гость видит только свободен ли стол. Персональные данные брони не возвращаются.
 create or replace function public.get_table_availability(p_date date)
@@ -168,6 +162,9 @@ declare
   v_table public.hall_tables;
   v_booking public.bookings;
 begin
+  select * into v_table from public.hall_tables where id = p_table_id and active = true;
+  if v_table.id is null then raise exception 'Стол не найден'; end if;
+
   if exists (
     select 1 from public.bookings
     where table_id = p_table_id
@@ -177,9 +174,6 @@ begin
     raise exception 'Этот стол уже забронирован на выбранную дату';
   end if;
 
-  select * into v_table from public.hall_tables where id = p_table_id and active = true;
-  if v_table.id is null then raise exception 'Стол не найден'; end if;
-
   insert into public.customers(name, phone, telegram)
   values (p_name, regexp_replace(p_phone, '\s+', '', 'g'), coalesce(p_telegram,''))
   on conflict (phone) do update set
@@ -188,13 +182,17 @@ begin
     updated_at = now()
   returning * into v_customer;
 
-  insert into public.bookings(
-    booking_date, booking_time, table_id, table_name, customer_id,
-    customer_name, phone, guests, status, comment
-  ) values (
-    p_booking_date, coalesce(p_booking_time,'23:00'), p_table_id, v_table.name, v_customer.id,
-    p_name, regexp_replace(p_phone, '\s+', '', 'g'), greatest(p_guests,1), 'pending', coalesce(p_comment,'')
-  ) returning * into v_booking;
+  begin
+    insert into public.bookings(
+      booking_date, booking_time, table_id, table_name, customer_id,
+      customer_name, phone, guests, status, comment
+    ) values (
+      p_booking_date, coalesce(p_booking_time,'23:00'), p_table_id, v_table.name, v_customer.id,
+      p_name, regexp_replace(p_phone, '\s+', '', 'g'), greatest(p_guests,1), 'pending', coalesce(p_comment,'')
+    ) returning * into v_booking;
+  exception when unique_violation then
+    raise exception 'Этот стол уже забронирован на выбранную дату';
+  end;
 
   return v_booking;
 end;
@@ -206,7 +204,6 @@ grant select, insert, update, delete on public.menu_items, public.events, public
 grant execute on function public.get_table_availability(date) to anon, authenticated;
 grant execute on function public.create_public_booking(date,time,text,text,text,integer,text,text) to anon, authenticated;
 
--- Стартовая рассадка. Выполняется только если столов ещё нет.
 insert into public.hall_tables(id,name,seats,x,y,shape,active)
 select * from (values
   ('table-1','Стол 1',4,12,18,'round',true),
