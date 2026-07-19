@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#080706" />
+  <title>BALI — Колесо фортуны DEMO V3</title>
+  <style>
+    :root{color-scheme:dark;--gold:#e8bd60;--gold2:#fff0b5;--bg:#080706;--panel:#12100d;--text:#fff8e8;--muted:#a79d8c;--duration:5.6s}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-width:320px;background:radial-gradient(circle at 50% -10%,rgba(232,189,96,.19),transparent 35%),linear-gradient(180deg,#090806,#050505 72%);color:var(--text);font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased}
+    button,input{font:inherit}.page{width:min(100%,720px);margin:0 auto;padding:18px 14px 40px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.brand{display:flex;align-items:center;gap:11px}.logo{width:46px;height:46px;display:grid;place-items:center;border:1px solid #7d571b;border-radius:15px;background:radial-gradient(circle at 32% 25%,#fff2b9,#d9a84b 58%,#805719);color:#120d05;font-weight:900;font-size:20px;box-shadow:0 12px 32px rgba(232,189,96,.18)}.brand strong{display:block;letter-spacing:.16em}.brand small{display:block;margin-top:3px;color:var(--muted);font-size:9px;letter-spacing:.13em}.badge{padding:7px 10px;border:1px solid rgba(232,189,96,.38);border-radius:999px;background:rgba(232,189,96,.1);color:var(--gold2);font-size:10px;font-weight:900;letter-spacing:.15em}
+    .card{position:relative;overflow:hidden;padding:25px 15px 20px;border:1px solid rgba(232,189,96,.28);border-radius:30px;background:radial-gradient(circle at 50% 7%,rgba(232,189,96,.18),transparent 34%),linear-gradient(150deg,#19150f,#0a0907 72%);box-shadow:0 30px 90px rgba(0,0,0,.5)}.card:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(112deg,transparent 20%,rgba(255,255,255,.035) 43%,transparent 65%)}
+    .head{position:relative;z-index:2;text-align:center}.eyebrow{color:var(--gold);font-size:10px;font-weight:900;letter-spacing:.18em}.head h1{margin:10px 0 9px;font-size:clamp(31px,9vw,54px);line-height:.98;letter-spacing:-.055em;text-transform:uppercase}.head p{max-width:540px;margin:0 auto 19px;color:#b9ae9c;font-size:14px;line-height:1.55}
+    .stage{--radius:clamp(113px,40vw,199px);position:relative;width:min(100%,480px);aspect-ratio:1;margin:0 auto 22px;padding:23px}.rim{position:relative;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,#211d15 0 66%,#0f0e0b 67% 70%,#d1a44a 70.5% 72.7%,#36250e 73% 77%,#ffe398 77.5% 79%,#080706 79.5%);box-shadow:0 28px 70px rgba(0,0,0,.62),0 0 55px rgba(232,189,96,.16)}.lights{position:absolute;inset:0;z-index:5;border-radius:50%;pointer-events:none}.lights i{position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-4.5px;border-radius:50%;background:var(--gold2);box-shadow:0 0 7px rgba(255,240,181,.8),0 0 14px rgba(232,189,96,.58);transform:rotate(var(--a)) translateY(calc(-1 * var(--radius)));animation:blink 1.5s ease-in-out infinite alternate;animation-delay:var(--d)}
+    .pointer{position:absolute;z-index:15;left:50%;top:0;width:64px;height:80px;transform:translateX(-50%);filter:drop-shadow(0 10px 12px rgba(0,0,0,.7));pointer-events:none}.pointer:before{content:"";position:absolute;left:50%;top:1px;width:43px;height:43px;transform:translateX(-50%) rotate(45deg);border:3px solid #714d16;border-radius:11px;background:linear-gradient(135deg,#fff5c7,#e3b557 56%,#865b18);box-shadow:inset 0 0 0 3px rgba(255,255,255,.28)}.pointer:after{content:"";position:absolute;left:50%;top:31px;transform:translateX(-50%);border-left:19px solid transparent;border-right:19px solid transparent;border-top:38px solid var(--gold2)}
+    .wheel{position:absolute;z-index:2;inset:18px;overflow:hidden;border:3px solid rgba(255,239,181,.88);border-radius:50%;box-shadow:inset 0 0 0 7px rgba(8,7,5,.48),inset 0 0 42px rgba(0,0,0,.38),0 0 0 5px #15110b;transition:transform var(--duration) cubic-bezier(.08,.68,.06,1);will-change:transform}.wheel:after{content:"";position:absolute;z-index:2;inset:0;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.22),transparent 25%),radial-gradient(circle,transparent 54%,rgba(0,0,0,.34) 78%)}.separators{position:absolute;z-index:3;inset:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,transparent 0 59deg,rgba(255,235,169,.92) 59deg 60deg)}.winner{position:absolute;z-index:4;inset:0;border-radius:50%;opacity:0;background:conic-gradient(from 0deg,transparent 0 var(--ws),rgba(255,247,200,.72) var(--ws) var(--we),transparent var(--we) 360deg);mix-blend-mode:screen}.wheel.has-winner .winner{opacity:1;animation:pulse .85s ease-in-out infinite alternate}
+    .label{position:absolute;z-index:6;width:88px;display:grid;justify-items:center;gap:2px;transform:translate(-50%,-50%) rotate(var(--r));text-align:center;color:#fff9df;text-shadow:0 2px 7px rgba(0,0,0,.8);pointer-events:none}.label b{font-size:24px;line-height:1}.label strong{font-size:10px;line-height:1.12;letter-spacing:.04em}.center{position:absolute;z-index:10;left:50%;top:50%;width:110px;height:110px;display:grid;place-content:center;justify-items:center;transform:translate(-50%,-50%);border:5px solid #704d17;border-radius:50%;background:radial-gradient(circle at 35% 25%,#fff4bf,#dfad4e 50%,#8f641e 80%);color:#120d05;box-shadow:0 0 0 5px #171109,0 9px 30px rgba(0,0,0,.55)}.center small{font-size:7px;font-weight:900;letter-spacing:.18em}.center strong{font-size:24px;letter-spacing:.08em}.center span{margin-top:4px;font-size:8px;font-weight:900;letter-spacing:.22em}
+    .controls{position:relative;z-index:2;max-width:520px;margin:0 auto}.controls input{width:100%;min-height:56px;padding:0 16px;border:1px solid rgba(232,189,96,.32);border-radius:16px;outline:none;background:rgba(255,255,255,.045);color:var(--text);text-align:center;text-transform:uppercase;letter-spacing:.12em;font-weight:900}.controls input:focus{border-color:rgba(232,189,96,.84);box-shadow:0 0 0 3px rgba(232,189,96,.1)}.spin{position:relative;overflow:hidden;width:100%;min-height:55px;margin-top:10px;border:0;border-radius:16px;background:linear-gradient(135deg,#fff2b7,#dda949 57%,#96691f);color:#171006;font-weight:900;text-transform:uppercase;letter-spacing:.08em;box-shadow:0 14px 34px rgba(232,189,96,.19)}.spin:after{content:"";position:absolute;inset:0;transform:translateX(-120%);background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);animation:shine 3s ease-in-out infinite}.spin:disabled{opacity:.66;cursor:wait}.demo{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px}.demo button{min-height:38px;padding:0 14px;border:1px solid rgba(232,189,96,.38);border-radius:999px;background:rgba(232,189,96,.1);color:var(--gold2);font-size:11px;font-weight:900}.demo span{color:#80776a;font-size:10px}.status{min-height:23px;margin:13px 0 0;text-align:center;color:#9f9688;font-size:12px}.status.error{color:#ff8e8e}.status.spin-state,.status.win{color:var(--gold2);font-weight:900}.rules{display:grid;gap:8px;max-width:520px;margin:20px auto 0;padding-top:17px;border-top:1px solid rgba(232,189,96,.18);color:#9e9587;font-size:11px}
+    .result[hidden]{display:none}.result{position:absolute;z-index:50;inset:0;display:grid;place-items:center;padding:18px;background:rgba(3,3,3,.86);backdrop-filter:blur(12px);opacity:0;transition:opacity .22s ease}.result.open{opacity:1}.result-card{position:relative;width:min(100%,410px);padding:34px 22px 24px;border:1px solid rgba(232,189,96,.45);border-radius:28px;background:radial-gradient(circle at 50% 0,rgba(232,189,96,.24),transparent 38%),linear-gradient(160deg,#211b12,#0b0a08 72%);text-align:center;transform:scale(.96) translateY(12px);transition:.25s;box-shadow:0 32px 90px rgba(0,0,0,.7)}.result.open .result-card{transform:none}.result-card small{color:var(--gold);font-size:10px;font-weight:900;letter-spacing:.18em}.result-card h2{margin:10px 0 8px;font-size:clamp(31px,9vw,45px);text-transform:uppercase}.result-card p{margin:0 0 20px;color:#b8ad9d;line-height:1.55}.gift{width:88px;height:88px;display:grid;place-items:center;margin:0 auto 15px;border:3px solid #855d1d;border-radius:50%;background:linear-gradient(145deg,#fff0ae,#d5a347);font-size:43px}.back{width:100%;min-height:51px;border:0;border-radius:15px;background:linear-gradient(135deg,#fff2b7,#dda949 57%,#96691f);color:#171006;font-weight:900}.close{position:absolute;right:12px;top:12px;width:38px;height:38px;border:1px solid rgba(255,255,255,.12);border-radius:50%;background:rgba(255,255,255,.05);color:#fff;font-size:23px}.confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none}.confetti i{position:absolute;top:-18px;width:7px;height:13px;border-radius:2px;background:var(--gold2);animation:fall var(--t) cubic-bezier(.21,.65,.47,.99) var(--delay) forwards}
+    @keyframes blink{to{opacity:.38;filter:brightness(.7)}}@keyframes pulse{to{opacity:.48;filter:brightness(1.3)}}@keyframes shine{0%,62%{transform:translateX(-120%)}82%,100%{transform:translateX(120%)}}@keyframes fall{0%{opacity:0;transform:translateY(-10px) rotate(0)}10%{opacity:1}100%{opacity:0;transform:translateY(600px) rotate(720deg)}}
+    @media(max-width:500px){.page{padding:12px 8px 28px}.card{padding:22px 10px 18px}.stage{padding:19px}.lights i{width:7px;height:7px;margin:-3.5px}.label{width:69px}.label b{font-size:20px}.label strong{font-size:8px}.center{width:85px;height:85px}.center strong{font-size:18px}.pointer{width:52px;height:69px}.pointer:before{width:35px;height:35px}.pointer:after{top:26px;border-left-width:15px;border-right-width:15px;border-top-width:31px}.demo span{display:none}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <div class="brand"><span class="logo">B</span><span><strong>BALI</strong><small>МИНСК · КИРОВА, 13</small></span></div>
+      <span class="badge">DEMO V3</span>
+    </header>
+    <section class="card">
+      <div class="head">
+        <span class="eyebrow">ЭКСКЛЮЗИВНЫЙ КОКТЕЙЛЬ BALI</span>
+        <h1>Колесо фортуны</h1>
+        <p>Новая отдельная демо-версия. Стрелка остаётся неподвижной, вращается только колесо, а результат соответствует сектору под стрелкой.</p>
+      </div>
+      <div class="stage">
+        <div class="pointer" aria-hidden="true"></div>
+        <div class="rim">
+          <div class="lights" id="lights" aria-hidden="true"></div>
+          <div class="wheel" id="wheel" aria-label="Колесо фортуны"></div>
+        </div>
+      </div>
+      <div class="controls">
+        <input id="code" maxlength="24" autocomplete="off" placeholder="Введите код бармена" aria-label="Код бармена" />
+        <button class="spin" id="spin" type="button">Крутить колесо</button>
+        <div class="demo"><button id="demo" type="button">Получить демо-код</button><span>Код можно использовать один раз</span></div>
+        <p class="status" id="status" aria-live="polite">Нажмите «Получить демо-код» для проверки.</p>
+      </div>
+      <div class="rules"><span>🎯 Выигрыш — сектор точно под золотой стрелкой.</span><span>🎟 Один код даёт одно вращение.</span><span>🎁 Результат можно показать бармену.</span></div>
+      <div class="result" id="result" hidden>
+        <div class="confetti" id="confetti"></div>
+        <div class="result-card">
+          <button class="close" id="close" type="button" aria-label="Закрыть">×</button>
+          <div class="gift" id="gift">🎁</div>
+          <small>ВАШ ВЫИГРЫШ</small>
+          <h2 id="prizeName">Приз</h2>
+          <p id="prizeText"></p>
+          <button class="back" id="back" type="button">Вернуться к колесу</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    (()=>{
+      const prizes=[
+        {name:'Пиво',label:'ПИВО',icon:'🍺',color:'#c78d2c',weight:24},
+        {name:'Коктейль',label:'КОКТЕЙЛЬ',icon:'🍸',color:'#762a49',weight:18},
+        {name:'5 шотов',label:'5 ШОТОВ',icon:'🥃',color:'#28614f',weight:16},
+        {name:'10 шотов',label:'10 ШОТОВ',icon:'🔥',color:'#9a3b30',weight:8},
+        {name:'Текила',label:'ТЕКИЛА',icon:'🍋',color:'#967426',weight:14},
+        {name:'Без выигрыша',label:'ЕЩЁ РАЗ',icon:'✦',color:'#252927',weight:20}
+      ];
+      const wheel=document.querySelector('#wheel');const lights=document.querySelector('#lights');const code=document.querySelector('#code');const spinBtn=document.querySelector('#spin');const demoBtn=document.querySelector('#demo');const status=document.querySelector('#status');const result=document.querySelector('#result');const closeBtn=document.querySelector('#close');const back=document.querySelector('#back');const key='bali_fortune_demo_v3';let rotation=0;let spinning=false;const seg=360/prizes.length;
+      const norm=a=>((a%360)+360)%360;
+      const getCodes=()=>{try{return JSON.parse(localStorage.getItem(key)||'[]')}catch{return[]}};
+      const saveCodes=v=>{try{localStorage.setItem(key,JSON.stringify(v))}catch{}};
+      lights.innerHTML=Array.from({length:24},(_,i)=>`<i style="--a:${i*15}deg;--d:${i*-.07}s"></i>`).join('');
+      const labels=prizes.map((p,i)=>{const mid=i*seg+seg/2;const rad=(mid-90)*Math.PI/180;const x=50+Math.cos(rad)*31;const y=50+Math.sin(rad)*31;const r=mid>90&&mid<270?mid+180:mid;return `<div class="label" style="left:${x}%;top:${y}%;--r:${r}deg"><b>${p.icon}</b><strong>${p.label}</strong></div>`}).join('');
+      wheel.style.background=`conic-gradient(${prizes.map((p,i)=>`${p.color} ${i*seg}deg ${(i+1)*seg}deg`).join(',')})`;
+      wheel.innerHTML=`<div class="winner"></div><div class="separators"></div>${labels}<div class="center"><small>NIGHT CLUB</small><strong>BALI</strong><span>SPIN</span></div>`;
+      const setStatus=(text,type='')=>{status.textContent=text;status.className='status '+type};
+      const pick=()=>{const total=prizes.reduce((s,p)=>s+p.weight,0);let n=Math.random()*total;for(let i=0;i<prizes.length;i++){n-=prizes[i].weight;if(n<=0)return i}return prizes.length-1};
+      const actualIndex=()=>Math.floor(norm(-rotation)/seg)%prizes.length;
+      const showResult=p=>{document.querySelector('#gift').textContent=p.icon;document.querySelector('#prizeName').textContent=p.name;document.querySelector('#prizeText').textContent=p.name==='Без выигрыша'?'Сегодня колесо оставило интригу. Попробуйте снова с новым кодом.':'Покажите этот экран бармену, чтобы получить приз сегодня.';result.hidden=false;requestAnimationFrame(()=>result.classList.add('open'));const c=document.querySelector('#confetti');c.innerHTML=p.name==='Без выигрыша'?'':Array.from({length:34},(_,i)=>`<i style="left:${5+Math.random()*90}%;--delay:${Math.random()*.55}s;--t:${1.8+Math.random()*1.4}s"></i>`).join('')};
+      const hide=()=>{result.classList.remove('open');setTimeout(()=>result.hidden=true,220)};
+      demoBtn.addEventListener('click',()=>{const v='DEMO-'+Math.random().toString(36).slice(2,8).toUpperCase();const codes=getCodes();codes.unshift({code:v,used:false});saveCodes(codes);code.value=v;setStatus(`Демо-код ${v} готов. Нажмите «Крутить колесо».`,'win')});
+      spinBtn.addEventListener('click',()=>{if(spinning)return;const value=code.value.trim().toUpperCase();const codes=getCodes();const item=codes.find(x=>x.code===value);if(!value)return setStatus('Сначала получите или введите код.','error');if(!item)return setStatus('Код не найден. Получите новый демо-код.','error');if(item.used)return setStatus('Этот код уже использован.','error');item.used=true;saveCodes(codes);const chosen=pick();const jitter=(Math.random()-.5)*seg*.42;const selected=chosen*seg+seg/2+jitter;const target=norm(360-selected);const delta=norm(target-norm(rotation));rotation+=360*8+delta;spinning=true;spinBtn.disabled=true;demoBtn.disabled=true;code.disabled=true;wheel.classList.remove('has-winner');setStatus('Колесо вращается…','spin-state');wheel.style.transform=`rotate(${rotation}deg)`;setTimeout(()=>{const idx=actualIndex();const p=prizes[idx];spinning=false;spinBtn.disabled=false;demoBtn.disabled=false;code.disabled=false;wheel.style.setProperty('--ws',`${idx*seg}deg`);wheel.style.setProperty('--we',`${(idx+1)*seg}deg`);wheel.classList.add('has-winner');setStatus(`Под стрелкой: ${p.name}`,p.name==='Без выигрыша'?'':'win');showResult(p)},5600)});
+      closeBtn.addEventListener('click',hide);back.addEventListener('click',hide);
+    })();
+  </script>
+</body>
+</html>
