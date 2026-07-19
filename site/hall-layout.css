@@ -6,9 +6,12 @@
   background-position: center;
   background-size: contain;
 }
+.hall-map,
 .hall-layout {
   aspect-ratio: 1;
   min-height: 0 !important;
+}
+.hall-layout {
   background-color: #f0ebe3 !important;
 }
 .hall-layout::before, .hall-layout::after { display: none !important; }
@@ -28,6 +31,49 @@
 .hall-layout .table-node.vip { background: #e4c86e; border-color: #7d6221; color: #2c2107; }
 .hall-layout .table-node b { font: 700 clamp(9px,1.3vw,13px) Unbounded; }
 .hall-layout .table-node small { display: none; }
+
+.hall-plan-tools {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.hall-plan-upload {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.hall-plan-upload input { display: none; }
+.hall-plan-note {
+  flex: 1 1 260px;
+  color: var(--muted, #9aa09c);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.selected-table {
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+  border: 1px solid rgba(200,255,61,.18);
+  border-radius: 14px;
+  background: rgba(200,255,61,.045);
+}
+.selected-table strong {
+  color: var(--text, #fff);
+  font-size: 13px;
+}
+.selected-table span {
+  color: var(--lime, #c8ff3d);
+  font-size: 11px;
+  font-weight: 800;
+}
+.selected-table small {
+  color: var(--muted, #9aa09c);
+  font-size: 10px;
+  line-height: 1.45;
+}
 @media (max-width: 680px) {
   .hall-layout .table-node {
     width: 31px;
