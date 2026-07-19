@@ -4,10 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#080a0a" />
-  <meta name="description" content="BALI Minsk — афиши, меню и бронирование столов." />
+  <meta name="description" content="BALI Minsk — афиши, меню, бронирование столов и колесо фортуны." />
   <title>BALI Minsk — Telegram Mini App</title>
   <link rel="stylesheet" href="./guest.css" />
   <link rel="stylesheet" href="./hall-layout.css" />
+  <link rel="stylesheet" href="./fortune.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
@@ -28,10 +29,10 @@
       <div class="hero-copy">
         <span class="eyebrow">NIGHT CLUB · BAR · HOOKAH</span>
         <h1>Твоя ночь<br /><em>начинается здесь</em></h1>
-        <p>Афиши ближайших событий, барное меню и бронирование свободного стола — прямо в Telegram.</p>
+        <p>Афиши ближайших событий, барное меню, колесо фортуны и бронирование свободного стола — прямо в Telegram.</p>
         <div class="hero-actions">
           <button class="primary" type="button" data-scroll="events">Смотреть афиши</button>
-          <button class="secondary" type="button" data-scroll="booking">Забронировать стол</button>
+          <button class="secondary" type="button" data-scroll="fortune">Испытать удачу</button>
         </div>
       </div>
       <div class="orbit" aria-hidden="true">
@@ -57,6 +58,36 @@
       <div class="menu-grid" id="menuGrid"></div>
     </section>
 
+    <section class="section" id="fortune">
+      <div class="fortune-card">
+        <span class="eyebrow">ЭКСКЛЮЗИВНЫЙ КОКТЕЙЛЬ BALI</span>
+        <h2>Колесо фортуны</h2>
+        <p>Купите акционный коктейль у бармена, получите одноразовый код и испытайте удачу. Один код даёт одно вращение.</p>
+        <div class="fortune-stage" aria-label="Колесо фортуны">
+          <div class="fortune-pointer" aria-hidden="true"></div>
+          <div class="fortune-wheel" id="fortuneWheel"></div>
+        </div>
+        <form class="fortune-form" id="fortuneForm">
+          <input id="fortuneCode" name="fortune_code" maxlength="20" autocomplete="off" placeholder="Введите код бармена" required />
+          <button class="primary full" type="submit">Крутить колесо</button>
+        </form>
+        <p class="fortune-status" id="fortuneStatus">Тестовые коды: BALI-777, BALI-2026, LUCKY-13</p>
+        <div class="fortune-rules">
+          <span>🎟 Один код можно использовать только один раз.</span>
+          <span>🎁 Покажите результат бармену для получения приза.</span>
+          <span>⚠️ Приз действует в день вращения.</span>
+        </div>
+        <button class="fortune-admin-toggle" id="fortuneAdminToggle" type="button">Панель бармена</button>
+        <div class="fortune-admin" id="fortuneAdmin">
+          <span class="eyebrow">УПРАВЛЕНИЕ КОДАМИ</span>
+          <input id="generatedCode" readonly placeholder="Новый код появится здесь" />
+          <button class="secondary full" id="generateFortuneCode" type="button">Создать и скопировать код</button>
+          <button class="secondary full" id="resetFortuneCodes" type="button">Сбросить тестовые коды</button>
+          <div class="fortune-code-list" id="fortuneCodeList"></div>
+        </div>
+      </div>
+    </section>
+
     <section class="section" id="booking">
       <div class="booking-card">
         <span class="eyebrow">БРОНИРОВАНИЕ СТОЛА</span>
@@ -67,18 +98,12 @@
             <label><span>Дата</span><input id="bookingDate" name="booking_date" type="date" required /></label>
             <label><span>Время</span><input name="booking_time" type="time" value="23:00" required /></label>
           </div>
-
           <div class="hall-picker">
             <div class="hall-map" id="hallMap" aria-label="Схема столов BALI"></div>
-            <div class="legend">
-              <span><i></i>Свободен</span>
-              <span><i class="red"></i>Забронирован</span>
-              <span><i class="gold"></i>VIP</span>
-            </div>
+            <div class="legend"><span><i></i>Свободен</span><span><i class="red"></i>Забронирован</span><span><i class="gold"></i>VIP</span></div>
             <div class="selected-table" id="selectedTableText">Выберите свободный стол на схеме</div>
             <input id="selectedTableId" name="table_id" type="hidden" />
           </div>
-
           <label><span>Имя</span><input name="name" autocomplete="name" placeholder="Николай" required /></label>
           <div class="row">
             <label><span>Телефон</span><input name="phone" inputmode="tel" autocomplete="tel" placeholder="+375 29 670-03-00" required /></label>
@@ -93,45 +118,33 @@
 
     <section class="section" id="contacts">
       <div class="contacts-card">
-        <span class="eyebrow">BALI MINSK</span>
-        <h2>Кирова, 13</h2>
+        <span class="eyebrow">BALI MINSK</span><h2>Кирова, 13</h2>
         <p>Ночной клуб, бар и кальяны. Пятница и суббота — с 23:00 до 06:00.</p>
-        <div class="contact-actions">
-          <a class="secondary" href="https://yandex.by/maps/?text=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA%2C%20%D0%9A%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%2C%2013" target="_blank" rel="noreferrer">Маршрут</a>
-          <a class="secondary" href="tel:+375296700300">Позвонить</a>
-        </div>
+        <div class="contact-actions"><a class="secondary" href="https://yandex.by/maps/?text=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA%2C%20%D0%9A%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%2C%2013" target="_blank" rel="noreferrer">Маршрут</a><a class="secondary" href="tel:+375296700300">Позвонить</a></div>
       </div>
     </section>
   </main>
 
-  <nav class="bottom" aria-label="Навигация">
+  <nav class="bottom bottom-five" aria-label="Навигация">
     <a class="active" href="#home"><span>⌂</span>Главная</a>
     <a href="#events"><span>◫</span>Афиша</a>
     <a href="#menu"><span>◇</span>Меню</a>
+    <a href="#fortune"><span>🎡</span>Удача</a>
     <a href="#booking"><span>＋</span>Бронь</a>
   </nav>
 
   <dialog id="cartDialog">
     <button class="close" type="button" data-close>×</button>
-    <div class="sheet">
-      <span class="eyebrow">ВАШ ВЫБОР</span><h2>Предзаказ</h2>
-      <div id="cartItems"></div>
-      <div class="cart-total"><span>Итого</span><strong id="cartTotal">0 BYN</strong></div>
-      <button class="primary full" id="sendOrder" type="button">Отправить в Telegram</button>
-      <p class="muted">Предзаказ не является оплатой. Менеджер подтвердит наличие и итоговую сумму.</p>
-    </div>
+    <div class="sheet"><span class="eyebrow">ВАШ ВЫБОР</span><h2>Предзаказ</h2><div id="cartItems"></div><div class="cart-total"><span>Итого</span><strong id="cartTotal">0 BYN</strong></div><button class="primary full" id="sendOrder" type="button">Отправить в Telegram</button><p class="muted">Предзаказ не является оплатой. Менеджер подтвердит наличие и итоговую сумму.</p></div>
   </dialog>
 
   <dialog id="successDialog">
     <button class="close" type="button" data-close>×</button>
-    <div class="sheet">
-      <span class="eyebrow">ЗАЯВКА ПРИНЯТА</span><h2>Стол выбран</h2>
-      <p id="successText" class="muted"></p>
-      <a class="primary full" id="telegramConfirm" href="#" target="_blank">Написать менеджеру</a>
-    </div>
+    <div class="sheet"><span class="eyebrow">ЗАЯВКА ПРИНЯТА</span><h2>Стол выбран</h2><p id="successText" class="muted"></p><a class="primary full" id="telegramConfirm" href="#" target="_blank">Написать менеджеру</a></div>
   </dialog>
 
   <div class="toast" id="toast"></div>
   <script src="./guest.js"></script>
+  <script src="./fortune.js"></script>
 </body>
 </html>
