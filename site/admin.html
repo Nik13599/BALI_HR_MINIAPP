@@ -6,15 +6,16 @@
   <meta name="theme-color" content="#080a0a" />
   <title>BALI — Управление клубом</title>
   <link rel="stylesheet" href="./admin.css" />
-  <link rel="stylesheet" href="./brand-overrides.css" />
+  <link rel="stylesheet" href="./hall-layout.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
   <script src="./store.js"></script>
+  <script src="./hall-layout-data.js"></script>
 </head>
 <body>
   <div id="loginView" class="login-view">
     <form id="loginForm" class="login-card">
-      <img class="admin-brand-logo" src="https://i.imgur.com/5v6FJtv.png" alt="BALI Nightclub" />
+      <div class="admin-logo">B</div>
       <span class="eyebrow">BALI CONTROL</span>
       <h1>Панель управления</h1>
       <p id="loginHint">В демо-режиме данные сохраняются только в этом браузере.</p>
@@ -28,7 +29,7 @@
 
   <div id="appView" class="app hidden">
     <aside class="sidebar">
-      <div class="brand"><img class="sidebar-brand-logo" src="https://i.imgur.com/5v6FJtv.png" alt="BALI" /><div><strong>BALI</strong><small>CONTROL CENTER</small></div></div>
+      <div class="brand"><div class="admin-logo small">B</div><div><strong>BALI</strong><small>CONTROL CENTER</small></div></div>
       <nav id="adminNav">
         <button class="active" data-view="dashboard">▦ <span>Обзор</span></button>
         <button data-view="menu">◈ <span>Меню</span></button>
@@ -61,5 +62,6 @@
 
   <div id="toast" class="toast"></div>
   <script src="./admin.js"></script>
+  <script src="./admin-hall-patch.js"></script>
 </body>
 </html>
