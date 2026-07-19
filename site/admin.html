@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#080a0a" />
+  <title>BALI — Управление клубом</title>
+  <link rel="stylesheet" href="./admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./config.js"></script>
+  <script src="./store.js"></script>
+</head>
+<body>
+  <div id="loginView" class="login-view">
+    <form id="loginForm" class="login-card">
+      <div class="admin-logo">B</div>
+      <span class="eyebrow">BALI CONTROL</span>
+      <h1>Панель управления</h1>
+      <p id="loginHint">В демо-режиме данные сохраняются только в этом браузере.</p>
+      <label><span>Email администратора</span><input name="email" type="email" placeholder="admin@bali.by" /></label>
+      <label><span>Пароль</span><input name="password" type="password" placeholder="••••••••" /></label>
+      <button class="primary" type="submit">Войти</button>
+      <button class="ghost" id="demoLogin" type="button">Открыть демо-панель</button>
+      <small>Для общей базы подключите Supabase в разделе «Настройки».</small>
+    </form>
+  </div>
+
+  <div id="appView" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand"><span class="admin-logo small">B</span><div><strong>BALI</strong><small>CONTROL CENTER</small></div></div>
+      <nav id="adminNav">
+        <button class="active" data-view="dashboard">▦ <span>Обзор</span></button>
+        <button data-view="menu">◈ <span>Меню</span></button>
+        <button data-view="events">◫ <span>Афиши</span></button>
+        <button data-view="hall">⌗ <span>Рассадка зала</span></button>
+        <button data-view="bookings">◷ <span>Бронирования</span></button>
+        <button data-view="customers">◎ <span>Клиентская база</span></button>
+        <button data-view="settings">⚙ <span>Настройки</span></button>
+      </nav>
+      <div class="sidebar-foot"><span id="modeBadge" class="mode-badge">ДЕМО</span><button id="logoutButton">Выйти</button></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="workspace-head">
+        <div><span class="eyebrow">АДМИНИСТРИРОВАНИЕ</span><h2 id="pageTitle">Обзор</h2></div>
+        <div class="head-actions"><a href="./index.html" target="_blank">Открыть приложение ↗</a><button class="primary compact" id="primaryAction">Добавить</button></div>
+      </header>
+      <section id="content" class="content"></section>
+    </main>
+  </div>
+
+  <dialog id="editorDialog" class="modal">
+    <button class="modal-close" data-close>×</button>
+    <form id="editorForm" class="editor-form">
+      <div><span class="eyebrow" id="editorEyebrow">НОВАЯ ЗАПИСЬ</span><h3 id="editorTitle">Добавить</h3></div>
+      <div id="editorFields" class="editor-fields"></div>
+      <div class="modal-actions"><button type="button" class="ghost" data-close>Отмена</button><button type="submit" class="primary">Сохранить</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+  <script src="./admin.js"></script>
+</body>
+</html>
