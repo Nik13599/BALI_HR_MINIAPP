@@ -1,0 +1,38 @@
+.hall-map, .hall-layout {
+  background-image:
+    linear-gradient(rgba(255,255,255,.015), rgba(255,255,255,.015)),
+    url("./hall-plan.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+.hall-layout {
+  aspect-ratio: 1;
+  min-height: 0 !important;
+  background-color: #f0ebe3 !important;
+}
+.hall-layout::before, .hall-layout::after { display: none !important; }
+.hall-layout .table-node {
+  min-width: clamp(32px,4vw,48px);
+  min-height: clamp(32px,4vw,48px);
+  width: clamp(32px,4vw,48px);
+  height: clamp(32px,4vw,48px);
+  padding: 0;
+  border-radius: 50%;
+  color: #090b08;
+  background: rgba(200,255,61,.94);
+  border-color: rgba(11,13,12,.72);
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+.hall-layout .table-node.booked { background: #ff7777; border-color: #6b1d1d; color: #2b0505; }
+.hall-layout .table-node.vip { background: #e4c86e; border-color: #7d6221; color: #2c2107; }
+.hall-layout .table-node b { font: 700 clamp(9px,1.3vw,13px) Unbounded; }
+.hall-layout .table-node small { display: none; }
+@media (max-width: 680px) {
+  .hall-layout .table-node {
+    width: 31px;
+    height: 31px;
+    min-width: 31px;
+    min-height: 31px;
+  }
+}
