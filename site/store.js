@@ -140,11 +140,32 @@
   }
 
   async function createBooking(data) {
+    if (cloudEnabled) {
+      const { data: booking, error } = await client.rpc("create_public_booking", {
+        p_booking_date: data.booking_date,
+        p_booking_time: data.booking_time || "23:00",
+        p_table_id: data.table_id,
+        p_name: data.name || data.customer_name || "Гость",
+        p_phone: data.phone || "",
+        p_guests: Number(data.guests || 2),
+        p_telegram: data.telegram || "",
+        p_comment: data.comment || ""
+      });
+      if (error) throw error;
+      return booking;
+    }
+
     const customer = await findOrCreateCustomer(data);
+    const tables = await list("hall_tables");
+    const table = tables.find((item) => item.id === data.table_id);
+    const occupied = (await list("bookings", { filters: { booking_date: data.booking_date } }))
+      .some((item) => item.table_id === data.table_id && !["cancelled", "completed"].includes(item.status));
+    if (occupied) throw new Error("Этот стол уже забронирован на выбранную дату");
     return save("bookings", {
       booking_date: data.booking_date,
       booking_time: data.booking_time || "23:00",
       table_id: data.table_id,
+      table_name: table?.name || data.table_id,
       customer_id: customer?.id || null,
       customer_name: data.name || customer?.name || "Гость",
       phone: data.phone || customer?.phone || "",
@@ -156,6 +177,22 @@
   }
 
   async function getAvailability(date) {
+    if (cloudEnabled) {
+      const { data, error } = await client.rpc("get_table_availability", { p_date: date });
+      if (error) throw error;
+      const { data: authData } = await client.auth.getSession();
+      let privateBookings = [];
+      if (authData.session) privateBookings = await list("bookings", { filters: { booking_date: date } });
+      return (data || []).map((table) => {
+        const booking = privateBookings.find((item) => item.table_id === table.id && !["cancelled", "completed"].includes(item.status));
+        return {
+          ...table,
+          available: Boolean(table.available),
+          booking: booking || (table.available ? null : { status: table.booking_status })
+        };
+      });
+    }
+
     const [tables, bookings] = await Promise.all([
       list("hall_tables"),
       list("bookings", { filters: { booking_date: date } })
