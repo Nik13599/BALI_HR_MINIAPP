@@ -6,14 +6,23 @@ const state = { menu: [], events: [], cart: new Map(), category: "Все", selec
 const esc = (value = "") => String(value).replace(/[&<>'"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[ch]));
 const money = (value) => `${Number(value || 0).toLocaleString("ru-RU")} BYN`;
 const formatDate = (value) => new Date(`${value}T12:00:00`).toLocaleDateString("ru-RU", { day: "2-digit", month: "long" });
+const tableNumber = (name = "") => String(name).replace(/^Стол\s*/i, "").replace(/^VIP\s*/i, "VIP ");
 
 if (tg) {
-  tg.ready(); tg.expand();
-  tg.setHeaderColor("#080a0a"); tg.setBackgroundColor("#080a0a");
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor("#080a0a");
+  tg.setBackgroundColor("#080a0a");
 }
 
 function haptic(type = "light") { try { tg?.HapticFeedback?.impactOccurred(type); } catch {} }
-function toast(message) { const el = $("#toast"); el.textContent = message; el.classList.add("show"); clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove("show"), 2400); }
+function toast(message) {
+  const el = $("#toast");
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove("show"), 2400);
+}
 
 async function loadContent() {
   [state.events, state.menu] = await Promise.all([
@@ -22,12 +31,14 @@ async function loadContent() {
   ]);
   state.events = state.events.filter((item) => item.active !== false);
   state.menu = state.menu.filter((item) => item.active !== false);
-  renderEvents(); renderCategories(); renderMenu();
+  renderEvents();
+  renderCategories();
+  renderMenu();
 }
 
 function renderEvents() {
   const track = $("#eventTrack");
-  $("#eventCount").textContent = `${state.events.length} события`;
+  $("#eventCount").textContent = `${state.events.length} событий`;
   track.innerHTML = state.events.length ? state.events.map((event, index) => `
     <article class="poster poster-${(index % 3) + 1}" data-event="${event.id}">
       ${event.image_url ? `<img src="${esc(event.image_url)}" alt="${esc(event.title)}"/>` : ""}
@@ -47,7 +58,7 @@ function renderMenu() {
     <article class="menu-card">
       <div class="menu-glow"></div><span class="menu-category">${esc(item.category)}</span>
       <h3>${esc(item.name)}</h3><p>${esc(item.description)}</p>
-      <footer><strong>${money(item.price)}</strong><button data-add="${item.id}">＋</button></footer>
+      <footer><strong>${money(item.price)}</strong><button data-add="${item.id}" aria-label="Добавить ${esc(item.name)}">＋</button></footer>
     </article>`).join("") : '<div class="empty-card">В этой категории пока нет позиций</div>';
 }
 
@@ -63,35 +74,70 @@ async function loadAvailability() {
   const date = $("#bookingDate").value;
   if (!date) return;
   state.availability = await store.getAvailability(date);
+  state.availability.sort((a, b) => Number(tableNumber(a.name)) - Number(tableNumber(b.name)));
   if (state.selectedTable && !state.availability.find((t) => t.id === state.selectedTable && t.available)) state.selectedTable = null;
   renderHall();
 }
 
 function renderHall() {
   const hall = $("#hallMap");
-  hall.innerHTML = state.availability.map((table) => `<button type="button" class="guest-table ${esc(table.shape || "round")} ${table.available ? "free" : "booked"} ${state.selectedTable === table.id ? "selected" : ""}" style="left:${Number(table.x)}%;top:${Number(table.y)}%" data-table="${table.id}" ${table.available ? "" : "disabled"}><b>${esc(table.name)}</b><small>${table.seats} мест<br>${table.available ? "свободен" : "занят"}</small></button>`).join("");
+  hall.innerHTML = state.availability.map((table) => `
+    <button
+      type="button"
+      class="guest-table ${esc(table.shape || "round")} ${table.available ? "free" : "booked"} ${state.selectedTable === table.id ? "selected" : ""}"
+      style="left:${Number(table.x)}%;top:${Number(table.y)}%"
+      data-table="${table.id}"
+      title="${esc(table.name)} · ${table.seats} мест · ${table.available ? "свободен" : "занят"}"
+      aria-label="${esc(table.name)}, ${table.seats} мест, ${table.available ? "свободен" : "занят"}"
+      ${table.available ? "" : "disabled"}>
+      <b>${esc(tableNumber(table.name))}</b>
+      <small>${table.available ? "свободен" : "занят"}</small>
+    </button>`).join("");
+
   const selected = state.availability.find((t) => t.id === state.selectedTable);
-  $("#selectedTableText").textContent = selected ? `${selected.name} · ${selected.seats} мест` : "Выберите свободный стол на схеме";
+  $("#selectedTableText").textContent = selected
+    ? `${selected.name} · ${selected.seats} мест · свободен`
+    : "Выберите свободный стол на схеме";
   $("#selectedTableId").value = selected?.id || "";
 }
 
 $("#categoryTabs").addEventListener("click", (event) => {
-  const button = event.target.closest("[data-category]"); if (!button) return;
-  state.category = button.dataset.category; haptic(); renderCategories(); renderMenu();
+  const button = event.target.closest("[data-category]");
+  if (!button) return;
+  state.category = button.dataset.category;
+  haptic();
+  renderCategories();
+  renderMenu();
 });
+
 $("#menuGrid").addEventListener("click", (event) => {
-  const button = event.target.closest("[data-add]"); if (!button) return;
-  const id = button.dataset.add; state.cart.set(id, (state.cart.get(id) || 0) + 1); haptic(); renderCart(); toast("Добавлено в заказ");
+  const button = event.target.closest("[data-add]");
+  if (!button) return;
+  const id = button.dataset.add;
+  state.cart.set(id, (state.cart.get(id) || 0) + 1);
+  haptic();
+  renderCart();
+  toast("Добавлено в заказ");
 });
+
 $("#cartItems").addEventListener("click", (event) => {
-  const plus = event.target.closest("[data-cart-plus]"); const minus = event.target.closest("[data-cart-minus]");
-  const id = plus?.dataset.cartPlus || minus?.dataset.cartMinus; if (!id) return;
-  const qty = (state.cart.get(id) || 0) + (plus ? 1 : -1); if (qty <= 0) state.cart.delete(id); else state.cart.set(id, qty); renderCart();
+  const plus = event.target.closest("[data-cart-plus]");
+  const minus = event.target.closest("[data-cart-minus]");
+  const id = plus?.dataset.cartPlus || minus?.dataset.cartMinus;
+  if (!id) return;
+  const qty = (state.cart.get(id) || 0) + (plus ? 1 : -1);
+  if (qty <= 0) state.cart.delete(id); else state.cart.set(id, qty);
+  renderCart();
 });
+
 $("#hallMap").addEventListener("click", (event) => {
-  const table = event.target.closest("[data-table]"); if (!table || table.disabled) return;
-  state.selectedTable = table.dataset.table; haptic("medium"); renderHall();
+  const table = event.target.closest("[data-table]");
+  if (!table || table.disabled) return;
+  state.selectedTable = table.dataset.table;
+  haptic("medium");
+  renderHall();
 });
+
 $("#bookingDate").addEventListener("change", loadAvailability);
 
 $("#bookingForm").addEventListener("submit", async (event) => {
@@ -110,7 +156,10 @@ $("#bookingForm").addEventListener("submit", async (event) => {
     const username = (window.BALI_CONFIG?.telegramUsername || "").replace(/^@/, "");
     $("#telegramConfirm").href = username ? `https://t.me/${username}` : "#";
     $("#successText").textContent = `Заявка на ${selected?.name || "стол"} принята. Менеджер подтвердит бронь по телефону.`;
-  } catch (error) { toast(error.message || "Не удалось создать бронь"); await loadAvailability(); }
+  } catch (error) {
+    toast(error.message || "Не удалось создать бронь");
+    await loadAvailability();
+  }
 });
 
 $("#sendOrder").addEventListener("click", () => {
@@ -134,7 +183,8 @@ $$('[data-close]').forEach((button) => button.addEventListener("click", () => bu
 $$('[data-scroll]').forEach((button) => button.addEventListener("click", () => document.getElementById(button.dataset.scroll).scrollIntoView({ behavior: "smooth" })));
 
 const today = new Date().toISOString().slice(0, 10);
-$("#bookingDate").min = today; $("#bookingDate").value = today;
+$("#bookingDate").min = today;
+$("#bookingDate").value = today;
 window.addEventListener("bali:data-changed", () => { loadContent(); loadAvailability(); });
 loadContent().catch((error) => toast(error.message));
 loadAvailability().catch((error) => toast(error.message));

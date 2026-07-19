@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-label="Схема зала BALI">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000" flood-opacity=".18"/>
+    </filter>
+    <style>
+      .wall{fill:none;stroke:#323535;stroke-width:16;stroke-linecap:round;stroke-linejoin:round}
+      .furn{fill:#ded2c3;stroke:#6d665f;stroke-width:4}
+      .seat{fill:#efe6da;stroke:#776f66;stroke-width:3}
+      .bar{fill:#e8ddd0;stroke:#5d5954;stroke-width:5}
+      .rail{fill:none;stroke:#79736b;stroke-width:5}
+      .plant{fill:#68764a;stroke:#3d4930;stroke-width:4}
+    </style>
+  </defs>
+  <rect width="1000" height="1000" rx="24" fill="#f2ede6"/>
+  <path class="wall" d="M180 90H900V250l45 40-30 45c30 35 40 90 40 155 0 180-55 330-155 430M180 90v120l-70 80v390l-55 70v150h410v70"/>
+  <path class="wall" d="M465 970h15V810H265V680"/>
+  <path class="wall" d="M900 250l20 20M915 335c35 75 38 170 10 270M905 650c-18 95-55 185-110 260"/>
+  <rect class="bar" x="425" y="405" width="250" height="260" rx="10" filter="url(#shadow)"/>
+  <rect class="bar" x="465" y="445" width="170" height="150" rx="4"/>
+  <path class="rail" d="M365 350H720M365 350v360M720 350v360M365 710H720"/>
+  <g class="seat">
+    <rect x="405" y="322" width="35" height="24" rx="8"/><rect x="450" y="322" width="35" height="24" rx="8"/>
+    <rect x="495" y="322" width="35" height="24" rx="8"/><rect x="540" y="322" width="35" height="24" rx="8"/>
+    <rect x="585" y="322" width="35" height="24" rx="8"/><rect x="630" y="322" width="35" height="24" rx="8"/>
+    <rect x="675" y="322" width="35" height="24" rx="8"/>
+    <rect x="405" y="715" width="35" height="24" rx="8"/><rect x="450" y="715" width="35" height="24" rx="8"/>
+    <rect x="495" y="715" width="35" height="24" rx="8"/><rect x="540" y="715" width="35" height="24" rx="8"/>
+    <rect x="585" y="715" width="35" height="24" rx="8"/><rect x="630" y="715" width="35" height="24" rx="8"/>
+    <rect x="675" y="715" width="35" height="24" rx="8"/>
+  </g>
+  <g filter="url(#shadow)">
+    <path class="furn" d="M220 155q55-55 110 0v45q-55-35-110 0z"/>
+    <path class="furn" d="M765 140q70-50 110 5l-10 70q-45-40-105 0z"/>
+    <path class="furn" d="M130 260h90v135h-48V310h-42z"/>
+    <path class="furn" d="M135 420h70v90h-35v-55h-35z"/>
+    <path class="furn" d="M135 555h70v90h-35v-55h-35z"/>
+    <path class="furn" d="M165 730q65-55 115 0v60q-60-45-115 0z"/>
+    <path class="furn" d="M65 725q50-45 85 0v90q-45-40-85 0z"/>
+    <path class="furn" d="M250 770q45-35 75 0v75q-38-30-75 0z"/>
+    <path class="furn" d="M560 785q50-40 85 0v75q-45-30-85 0z"/>
+    <path class="furn" d="M760 620q65-35 90 15l-20 70q-45-25-90 5z"/>
+    <path class="furn" d="M790 520q70-30 90 25l-15 75q-45-30-95 0z"/>
+    <path class="furn" d="M800 410q70-25 90 30l-10 65q-50-25-95 5z"/>
+    <path class="furn" d="M755 95h125v70h-40v-30h-85z"/>
+    <path class="furn" d="M385 90h260v55H385z"/>
+    <path class="furn" d="M375 145h115v160H375z"/>
+    <path class="furn" d="M570 145h115v160H570z"/>
+    <path class="furn" d="M285 420h65v105h-35v-65h-30z"/>
+    <path class="furn" d="M290 550h65v105h-35v-65h-30z"/>
+    <rect class="furn" x="355" y="790" width="135" height="80" rx="8"/>
+  </g>
+  <path class="rail" d="M805 315q120 150 0 430"/>
+  <path class="rail" d="M825 300q140 165 5 470"/>
+  <circle class="plant" cx="370" cy="350" r="19"/><circle class="plant" cx="715" cy="350" r="19"/>
+  <circle class="plant" cx="370" cy="710" r="19"/><circle class="plant" cx="715" cy="710" r="19"/>
+  <rect x="470" y="950" width="85" height="24" rx="8" fill="#d5ccc0" stroke="#6d665f" stroke-width="3"/>
+</svg>

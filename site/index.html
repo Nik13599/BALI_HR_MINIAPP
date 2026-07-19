@@ -3,67 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#070908" />
-  <meta name="description" content="BALI Minsk — афиши, меню и бронь столов." />
+  <meta name="theme-color" content="#080a0a" />
+  <meta name="description" content="BALI Minsk — афиши, меню и бронирование столов." />
   <title>BALI Minsk — Telegram Mini App</title>
   <link rel="stylesheet" href="./guest.css" />
+  <link rel="stylesheet" href="./hall-layout.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
   <script src="./store.js"></script>
+  <script src="./hall-layout-data.js"></script>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="#home" aria-label="BALI Minsk">
-      <img class="brand-logo" src="https://i.imgur.com/5v6FJtv.png" alt="BALI Nightclub" />
-      <span class="brand-copy"><strong>BALI</strong><small>МИНСК · КИРОВА, 13</small></span>
+      <span class="logo">B</span>
+      <span><strong>BALI</strong><small>МИНСК · КИРОВА, 13</small></span>
     </a>
     <button class="icon-btn" id="shareButton" type="button" aria-label="Поделиться">↗</button>
   </header>
 
   <main class="page">
     <section class="hero" id="home">
-      <div class="interior-wall" aria-hidden="true"></div>
       <div class="hero-copy">
-        <img class="hero-club-logo" src="https://i.imgur.com/5v6FJtv.png" alt="BALI Nightclub" />
         <span class="eyebrow">NIGHT CLUB · BAR · HOOKAH</span>
         <h1>Твоя ночь<br /><em>начинается здесь</em></h1>
-        <p>Афиши ближайших событий, барное меню и выбор свободного стола — прямо в Telegram.</p>
+        <p>Афиши ближайших событий, барное меню и бронирование свободного стола — прямо в Telegram.</p>
         <div class="hero-actions">
           <button class="primary" type="button" data-scroll="events">Смотреть афиши</button>
           <button class="secondary" type="button" data-scroll="booking">Забронировать стол</button>
         </div>
       </div>
+      <div class="orbit" aria-hidden="true">
+        <div class="disc"><span>BALI</span></div>
+      </div>
       <div class="hero-meta"><span>ПТ–СБ</span><strong>23:00–06:00</strong><span>18+</span></div>
     </section>
 
     <section class="section" id="events">
-      <div class="section-head"><div><span class="eyebrow">БЛИЖАЙШИЕ СОБЫТИЯ</span><h2>Афиша</h2></div><span class="count" id="eventCount"></span></div>
+      <div class="section-head">
+        <div><span class="eyebrow">БЛИЖАЙШИЕ СОБЫТИЯ</span><h2>Афиша</h2></div>
+        <span class="count" id="eventCount"></span>
+      </div>
       <div class="poster-track" id="eventTrack"></div>
     </section>
 
     <section class="section" id="menu">
-      <div class="section-head"><div><span class="eyebrow">БАР И КАЛЬЯНЫ</span><h2>Меню</h2></div><button class="cart-trigger" type="button" data-open="#cartDialog">Заказ <span id="cartCount">0</span></button></div>
+      <div class="section-head">
+        <div><span class="eyebrow">БАР И КАЛЬЯНЫ</span><h2>Меню</h2></div>
+        <button class="cart-trigger" type="button" data-open="#cartDialog">Заказ <span id="cartCount">0</span></button>
+      </div>
       <div class="category-tabs" id="categoryTabs"></div>
       <div class="menu-grid" id="menuGrid"></div>
     </section>
 
     <section class="section" id="booking">
       <div class="booking-card">
-        <span class="eyebrow">БРОНИРОВАНИЕ</span>
-        <h2>Выберите свой стол</h2>
-        <p>Укажите дату, посмотрите свободные столы на схеме и отправьте заявку.</p>
+        <span class="eyebrow">БРОНИРОВАНИЕ СТОЛА</span>
+        <h2>Выберите место</h2>
+        <p>Укажите дату, нажмите на свободный стол на реальной схеме зала и заполните контакты.</p>
         <form id="bookingForm" class="form">
           <div class="row">
             <label><span>Дата</span><input id="bookingDate" name="booking_date" type="date" required /></label>
             <label><span>Время</span><input name="booking_time" type="time" value="23:00" required /></label>
           </div>
+
           <div class="hall-picker">
-            <div class="hall-map" id="hallMap"></div>
-            <div class="legend"><span><i></i>Свободен</span><span><i class="red"></i>Занят</span><span>Нажмите на стол, чтобы выбрать</span></div>
+            <div class="hall-map" id="hallMap" aria-label="Схема столов BALI"></div>
+            <div class="legend">
+              <span><i></i>Свободен</span>
+              <span><i class="red"></i>Забронирован</span>
+              <span><i class="gold"></i>VIP</span>
+            </div>
             <div class="selected-table" id="selectedTableText">Выберите свободный стол на схеме</div>
             <input id="selectedTableId" name="table_id" type="hidden" />
           </div>
+
           <label><span>Имя</span><input name="name" autocomplete="name" placeholder="Николай" required /></label>
           <div class="row">
             <label><span>Телефон</span><input name="phone" inputmode="tel" autocomplete="tel" placeholder="+375 29 670-03-00" required /></label>
@@ -78,14 +93,12 @@
 
     <section class="section" id="contacts">
       <div class="contacts-card">
-        <div class="interior-stripes" aria-hidden="true"></div>
         <span class="eyebrow">BALI MINSK</span>
         <h2>Кирова, 13</h2>
-        <p>Ночной клуб, бар, кальяны и атмосфера тропической ночи.</p>
+        <p>Ночной клуб, бар и кальяны. Пятница и суббота — с 23:00 до 06:00.</p>
         <div class="contact-actions">
           <a class="secondary" href="https://yandex.by/maps/?text=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA%2C%20%D0%9A%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%2C%2013" target="_blank" rel="noreferrer">Маршрут</a>
           <a class="secondary" href="tel:+375296700300">Позвонить</a>
-          <a class="secondary" href="./admin.html">Управление</a>
         </div>
       </div>
     </section>
@@ -98,9 +111,25 @@
     <a href="#booking"><span>＋</span>Бронь</a>
   </nav>
 
-  <dialog id="cartDialog"><button class="close" type="button" data-close>×</button><div class="sheet"><span class="eyebrow">ВАШ ВЫБОР</span><h2>Предзаказ</h2><div id="cartItems"></div><div class="cart-total"><span>Итого</span><strong id="cartTotal">0 BYN</strong></div><button class="primary full" id="sendOrder" type="button">Отправить в Telegram</button><p class="muted">Предзаказ не является оплатой. Менеджер подтвердит наличие и итоговую сумму.</p></div></dialog>
+  <dialog id="cartDialog">
+    <button class="close" type="button" data-close>×</button>
+    <div class="sheet">
+      <span class="eyebrow">ВАШ ВЫБОР</span><h2>Предзаказ</h2>
+      <div id="cartItems"></div>
+      <div class="cart-total"><span>Итого</span><strong id="cartTotal">0 BYN</strong></div>
+      <button class="primary full" id="sendOrder" type="button">Отправить в Telegram</button>
+      <p class="muted">Предзаказ не является оплатой. Менеджер подтвердит наличие и итоговую сумму.</p>
+    </div>
+  </dialog>
 
-  <dialog id="successDialog"><button class="close" type="button" data-close>×</button><div class="sheet"><span class="eyebrow">ЗАЯВКА ПРИНЯТА</span><h2>Стол выбран</h2><p id="successText" class="muted"></p><a class="primary full" id="telegramConfirm" href="#" target="_blank">Написать менеджеру</a></div></dialog>
+  <dialog id="successDialog">
+    <button class="close" type="button" data-close>×</button>
+    <div class="sheet">
+      <span class="eyebrow">ЗАЯВКА ПРИНЯТА</span><h2>Стол выбран</h2>
+      <p id="successText" class="muted"></p>
+      <a class="primary full" id="telegramConfirm" href="#" target="_blank">Написать менеджеру</a>
+    </div>
+  </dialog>
 
   <div class="toast" id="toast"></div>
   <script src="./guest.js"></script>
