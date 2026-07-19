@@ -7,6 +7,28 @@ const esc = (value = "") => String(value).replace(/[&<>'"]/g, (ch) => ({ "&": "&
 const money = (value) => `${Number(value || 0).toLocaleString("ru-RU")} BYN`;
 const formatDate = (value) => new Date(`${value}T12:00:00`).toLocaleDateString("ru-RU", { day: "2-digit", month: "long" });
 const tableNumber = (name = "") => String(name).replace(/^Стол\s*/i, "").replace(/^VIP\s*/i, "VIP ");
+const HALL_LAYOUT_STORAGE_KEY = "bali_hall_layout_config_v1";
+const DEFAULT_HALL_LAYOUT = { image: "", imageName: "", updatedAt: null };
+
+function readHallLayoutConfig() {
+  try {
+    const raw = localStorage.getItem(HALL_LAYOUT_STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_HALL_LAYOUT };
+    return { ...DEFAULT_HALL_LAYOUT, ...JSON.parse(raw) };
+  } catch {
+    return { ...DEFAULT_HALL_LAYOUT };
+  }
+}
+
+function toCssUrl(value = "") {
+  return String(value).replace(/\\/g, "\\\\").replace(/'/g, "%27");
+}
+
+function buildHallBackground(config, baseLayers = "") {
+  if (!config?.image) return "";
+  const safe = toCssUrl(config.image);
+  return `${baseLayers ? `${baseLayers}, ` : ""}url('${safe}')`;
+}
 
 if (tg) {
   tg.ready();
@@ -79,8 +101,25 @@ async function loadAvailability() {
   renderHall();
 }
 
+function clearHallBackground(node) {
+  node.style.removeProperty("background-image");
+  node.style.removeProperty("background-size");
+  node.style.removeProperty("background-position");
+  node.style.removeProperty("background-repeat");
+}
+
 function renderHall() {
   const hall = $("#hallMap");
+  const config = readHallLayoutConfig();
+  hall.classList.toggle("has-background", Boolean(config.image));
+  if (config.image) {
+    hall.style.backgroundImage = buildHallBackground(config, "radial-gradient(circle at 50% 42%,rgba(200,255,61,.10),transparent 34%),linear-gradient(145deg,rgba(18,18,16,.88),rgba(8,10,9,.95))");
+    hall.style.backgroundSize = "auto, auto, cover";
+    hall.style.backgroundPosition = "center, center, center";
+    hall.style.backgroundRepeat = "no-repeat, no-repeat, no-repeat";
+  } else {
+    clearHallBackground(hall);
+  }
   hall.innerHTML = state.availability.map((table) => `
     <button
       type="button"
