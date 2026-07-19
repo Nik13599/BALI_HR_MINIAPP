@@ -60,22 +60,36 @@
 
     <section class="section" id="fortune">
       <div class="fortune-card">
-        <span class="eyebrow">ЭКСКЛЮЗИВНЫЙ КОКТЕЙЛЬ BALI</span>
-        <h2>Колесо фортуны</h2>
-        <p>Купите акционный коктейль у бармена, получите одноразовый код и испытайте удачу. Один код даёт одно вращение.</p>
-        <div class="fortune-stage" aria-label="Колесо фортуны">
+        <div class="fortune-head">
+          <div class="fortune-headline">
+            <span class="eyebrow">ЭКСКЛЮЗИВНЫЙ КОКТЕЙЛЬ BALI</span>
+            <span class="fortune-demo-badge">DEMO</span>
+          </div>
+          <h2>Колесо фортуны</h2>
+          <p class="fortune-lead">Купите акционный коктейль у бармена, получите одноразовый код и испытайте удачу. Выигрывает сектор, который остановился точно под золотой стрелкой.</p>
+        </div>
+        <div class="fortune-stage" aria-label="Колесо фортуны. Выигрыш определяется сектором под неподвижной стрелкой.">
           <div class="fortune-pointer" aria-hidden="true"></div>
-          <div class="fortune-wheel" id="fortuneWheel"></div>
+          <div class="fortune-rim">
+            <div class="fortune-lights" id="fortuneLights" aria-hidden="true"></div>
+            <div class="fortune-wheel" id="fortuneWheel"></div>
+          </div>
         </div>
         <form class="fortune-form" id="fortuneForm">
-          <input id="fortuneCode" name="fortune_code" maxlength="20" autocomplete="off" placeholder="Введите код бармена" required />
-          <button class="primary full" type="submit">Крутить колесо</button>
+          <div class="fortune-input-wrap">
+            <input id="fortuneCode" name="fortune_code" maxlength="20" autocomplete="off" placeholder="Введите код бармена" aria-label="Одноразовый код бармена" required />
+          </div>
+          <button class="primary full fortune-spin-button" id="fortuneSpinButton" type="submit"><span>Крутить колесо</span></button>
         </form>
-        <p class="fortune-status" id="fortuneStatus">Тестовые коды: BALI-777, BALI-2026, LUCKY-13</p>
+        <div class="fortune-demo-tools">
+          <button id="fortuneDemoCode" type="button">Получить демо-код</button>
+          <span>Для быстрого просмотра механики</span>
+        </div>
+        <p class="fortune-status" id="fortuneStatus" data-type="neutral" aria-live="polite">Тестовые коды: BALI-777, BALI-2026, LUCKY-13</p>
         <div class="fortune-rules">
           <span>🎟 Один код можно использовать только один раз.</span>
+          <span>🎯 Результат всегда соответствует сектору под стрелкой.</span>
           <span>🎁 Покажите результат бармену для получения приза.</span>
-          <span>⚠️ Приз действует в день вращения.</span>
         </div>
         <button class="fortune-admin-toggle" id="fortuneAdminToggle" type="button">Панель бармена</button>
         <div class="fortune-admin" id="fortuneAdmin">
@@ -84,6 +98,17 @@
           <button class="secondary full" id="generateFortuneCode" type="button">Создать и скопировать код</button>
           <button class="secondary full" id="resetFortuneCodes" type="button">Сбросить тестовые коды</button>
           <div class="fortune-code-list" id="fortuneCodeList"></div>
+        </div>
+        <div class="fortune-result" id="fortuneResult" hidden>
+          <div class="fortune-confetti" id="fortuneConfetti" aria-hidden="true"></div>
+          <div class="fortune-result-card" role="dialog" aria-modal="true" aria-labelledby="fortuneResultPrize">
+            <button class="fortune-result-close" id="fortuneResultClose" type="button" aria-label="Закрыть">×</button>
+            <div class="fortune-result-icon" id="fortuneResultIcon">🎁</div>
+            <small>ВАШ ВЫИГРЫШ</small>
+            <h3 id="fortuneResultPrize">Приз</h3>
+            <p id="fortuneResultText"></p>
+            <button class="primary full" id="fortuneResultBack" type="button">Вернуться к колесу</button>
+          </div>
         </div>
       </div>
     </section>
