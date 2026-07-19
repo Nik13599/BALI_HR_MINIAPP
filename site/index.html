@@ -4,15 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#080a0a" />
-  <meta name="description" content="BALI Minsk — афиши, меню и бронирование столов." />
+  <meta name="description" content="BALI Minsk — афиши, меню, колесо фортуны и бронирование столов." />
   <title>BALI Minsk — Telegram Mini App</title>
   <link rel="stylesheet" href="./guest.css" />
   <link rel="stylesheet" href="./hall-layout.css" />
+  <link rel="stylesheet" href="./fortune.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
   <script src="./store.js"></script>
   <script src="./hall-layout-data.js"></script>
+  <script src="./hall-plan-store.js"></script>
+  <script src="./fortune-store.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -57,11 +60,38 @@
       <div class="menu-grid" id="menuGrid"></div>
     </section>
 
+    <section class="section" id="fortune">
+      <div class="fortune-card">
+        <div class="fortune-copy">
+          <span class="eyebrow">КОЛЕСО ФОРТУНЫ</span>
+          <h2>Испытай удачу</h2>
+          <p>После оплаты получите одноразовый код у бармена. Введите его ниже — система проверит код, случайно определит приз и сохранит результат.</p>
+        </div>
+
+        <div class="wheel-stage" aria-label="Колесо фортуны BALI">
+          <div class="wheel-pointer" aria-hidden="true"></div>
+          <div class="fortune-wheel" id="fortuneWheel">
+            <div class="fortune-labels" id="fortuneLabels"></div>
+          </div>
+        </div>
+
+        <form class="fortune-controls" id="fortuneForm">
+          <label class="fortune-code-label">
+            <span>Код от бармена</span>
+            <input id="fortuneCode" name="code" maxlength="12" autocomplete="one-time-code" placeholder="XXXXXXX" required />
+          </label>
+          <button class="primary full" id="fortuneSpinButton" type="submit">Активировать и крутить</button>
+          <p class="fortune-status" id="fortuneStatus">Один код даёт одно вращение и после использования сгорает.</p>
+          <div class="fortune-result" id="fortuneResult" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+
     <section class="section" id="booking">
       <div class="booking-card">
         <span class="eyebrow">БРОНИРОВАНИЕ СТОЛА</span>
         <h2>Выберите место</h2>
-        <p>Укажите дату, нажмите на свободный стол на реальной схеме зала и заполните контакты.</p>
+        <p>Укажите дату, нажмите на свободный стол на схеме зала и заполните контакты.</p>
         <form id="bookingForm" class="form">
           <div class="row">
             <label><span>Дата</span><input id="bookingDate" name="booking_date" type="date" required /></label>
@@ -108,7 +138,8 @@
     <a class="active" href="#home"><span>⌂</span>Главная</a>
     <a href="#events"><span>◫</span>Афиша</a>
     <a href="#menu"><span>◇</span>Меню</a>
-    <a href="#booking"><span>＋</span>Бронь</a>
+    <a href="#fortune"><span>◉</span>Колесо</a>
+    <a href="#booking"><span>＋</span>Столы</a>
   </nav>
 
   <dialog id="cartDialog">
@@ -133,5 +164,7 @@
 
   <div class="toast" id="toast"></div>
   <script src="./guest.js"></script>
+  <script src="./guest-hall-patch.js"></script>
+  <script src="./fortune.js"></script>
 </body>
 </html>
