@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="./guest.css" />
   <link rel="stylesheet" href="./hall-layout.css" />
   <link rel="stylesheet" href="./fortune.css" />
+  <link rel="stylesheet" href="./mobile-hero-v2.css?v=20260719-1" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
@@ -19,7 +20,7 @@
   <header class="topbar">
     <a class="brand" href="#home" aria-label="BALI Minsk">
       <span class="logo">B</span>
-      <span><strong>BALI</strong><small>МИНСК · КИРОВА, 13</small></span>
+      <span class="brand-copy"><strong>BALI</strong><small>МИНСК · КИРОВА, 13</small><small class="brand-schedule">ПТ–СБ · 23:00–06:00</small></span>
     </a>
     <button class="icon-btn" id="shareButton" type="button" aria-label="Поделиться">↗</button>
   </header>
@@ -28,15 +29,19 @@
     <section class="hero" id="home">
       <div class="hero-copy">
         <span class="eyebrow">NIGHT CLUB · BAR · HOOKAH</span>
-        <h1>Твоя ночь<br /><em>начинается здесь</em></h1>
+        <h1>Твоя ночь<br /><em>начинается<span class="mobile-title-break"><br /></span> здесь</em></h1>
         <p>Афиши ближайших событий, барное меню, колесо фортуны и бронирование свободного стола — прямо в Telegram.</p>
-        <div class="hero-actions">
+        <div class="hero-actions hero-actions-desktop">
           <button class="primary" type="button" data-scroll="events">Смотреть афиши</button>
           <button class="secondary" type="button" data-scroll="fortune">Испытать удачу</button>
         </div>
       </div>
       <div class="orbit" aria-hidden="true">
         <div class="disc"><span>BALI</span></div>
+      </div>
+      <div class="hero-actions hero-actions-mobile" aria-label="Быстрые действия">
+        <button class="primary" type="button" data-scroll="events">Смотреть афиши</button>
+        <button class="secondary" type="button" data-scroll="fortune">Испытать удачу</button>
       </div>
       <div class="hero-meta"><span>ПТ–СБ</span><strong>23:00–06:00</strong><span>18+</span></div>
     </section>
