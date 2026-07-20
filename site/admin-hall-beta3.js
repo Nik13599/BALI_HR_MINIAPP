@@ -19,4 +19,13 @@
       }
     }, true);
   };
+
+  if (/Beta4/i.test(document.title) && !document.querySelector('script[data-beta4-menu-categories]')) {
+    const script = document.createElement("script");
+    script.src = "./admin-menu-categories-beta4.js?v=beta4-menu-categories-instagram";
+    script.async = false;
+    script.dataset.beta4MenuCategories = "true";
+    script.onload = () => { if (window.state?.view === "menu" || (typeof state !== "undefined" && state.view === "menu")) window.render?.(); };
+    document.body.appendChild(script);
+  }
 })();
