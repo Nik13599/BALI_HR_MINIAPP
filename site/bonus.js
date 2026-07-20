@@ -1,4 +1,5 @@
 (() => {
+  const version = "beta3-crm-events";
   const load = (src) => new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = src;
@@ -6,13 +7,20 @@
     script.onerror = reject;
     document.body.appendChild(script);
   });
-  load("./points-core.js?v=beta3-bookings")
-    .then(() => load("./points-ui.js?v=beta3-bookings"))
-    .then(() => load("./my-bookings-beta3.js?v=beta3-bookings"))
+  const style = document.createElement("link");
+  style.rel = "stylesheet";
+  style.href = `./event-details-beta3.css?v=${version}`;
+  document.head.appendChild(style);
+  load(`./points-core.js?v=${version}`)
+    .then(() => load(`./points-ui.js?v=${version}`))
+    .then(() => load(`./my-bookings-beta3.js?v=${version}`))
+    .then(() => load(`./telegram-customer-beta3.js?v=${version}`))
+    .then(() => load(`./upcoming-booking-beta3.js?v=${version}`))
+    .then(() => load(`./event-details-beta3.js?v=${version}`))
     .catch(() => {
       const node = document.getElementById("toast");
       if (node) {
-        node.textContent = "Не удалось загрузить BALI-Баллы и мои брони";
+        node.textContent = "Не удалось загрузить профиль, брони или события";
         node.classList.add("show");
       }
     });
