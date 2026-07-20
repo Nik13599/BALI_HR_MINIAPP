@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#080a0a" />
-  <title>BALI — Управление клубом</title>
+  <title>BALI — Beta3 Admin</title>
   <link rel="stylesheet" href="./admin.css" />
   <link rel="stylesheet" href="./hall-layout.css" />
+  <link rel="stylesheet" href="./admin-beta3.css?v=beta3" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
   <script src="./store.js"></script>
@@ -16,36 +17,37 @@
   <div id="loginView" class="login-view">
     <form id="loginForm" class="login-card">
       <div class="admin-logo">B</div>
-      <span class="eyebrow">BALI CONTROL</span>
+      <span class="eyebrow">BALI CONTROL · BETA3</span>
       <h1>Панель управления</h1>
-      <p id="loginHint">В демо-режиме данные сохраняются только в этом браузере.</p>
+      <p id="loginHint">В демо-режиме данные сохраняются в этом браузере и синхронизируются между вкладками.</p>
       <label><span>Email администратора</span><input name="email" type="email" placeholder="admin@bali.by" /></label>
       <label><span>Пароль</span><input name="password" type="password" placeholder="••••••••" /></label>
       <button class="primary" type="submit">Войти</button>
-      <button class="ghost" id="demoLogin" type="button">Открыть демо-панель</button>
-      <small>Для общей базы подключите Supabase в разделе «Настройки».</small>
+      <button class="ghost" id="demoLogin" type="button">Открыть Beta3</button>
+      <small>Beta3 предназначена для проверки интерфейса и основных сценариев перед подключением общей базы.</small>
     </form>
   </div>
 
   <div id="appView" class="app hidden">
     <aside class="sidebar">
-      <div class="brand"><div class="admin-logo small">B</div><div><strong>BALI</strong><small>CONTROL CENTER</small></div></div>
+      <div class="brand"><div class="admin-logo small">B</div><div><strong>BALI</strong><small>CONTROL · BETA3</small></div></div>
       <nav id="adminNav">
         <button class="active" data-view="dashboard">▦ <span>Обзор</span></button>
         <button data-view="menu">◈ <span>Меню</span></button>
         <button data-view="events">◫ <span>Афиши</span></button>
-        <button data-view="hall">⌗ <span>Рассадка зала</span></button>
+        <button data-view="hall">⌗ <span>Схема зала</span></button>
+        <button data-view="bonuses">★ <span>BALI-Бонусы</span></button>
         <button data-view="bookings">◷ <span>Бронирования</span></button>
         <button data-view="customers">◎ <span>Клиентская база</span></button>
         <button data-view="settings">⚙ <span>Настройки</span></button>
       </nav>
-      <div class="sidebar-foot"><span id="modeBadge" class="mode-badge">ДЕМО</span><button id="logoutButton">Выйти</button></div>
+      <div class="sidebar-foot"><span id="modeBadge" class="mode-badge">BETA3</span><button id="logoutButton">Выйти</button></div>
     </aside>
 
     <main class="workspace">
       <header class="workspace-head">
-        <div><span class="eyebrow">АДМИНИСТРИРОВАНИЕ</span><h2 id="pageTitle">Обзор</h2></div>
-        <div class="head-actions"><a href="./index.html" target="_blank">Открыть приложение ↗</a><button class="primary compact" id="primaryAction">Добавить</button></div>
+        <div><span class="eyebrow">АДМИНИСТРИРОВАНИЕ · BETA3</span><h2 id="pageTitle">Обзор</h2></div>
+        <div class="head-actions"><a href="./index.html?v=beta3" target="_blank">Открыть приложение ↗</a><button class="primary compact" id="primaryAction">Добавить</button></div>
       </header>
       <section id="content" class="content"></section>
     </main>
@@ -61,7 +63,8 @@
   </dialog>
 
   <div id="toast" class="toast"></div>
-  <script src="./admin.js"></script>
-  <script src="./admin-hall-patch.js"></script>
+  <script src="./admin.js?v=beta3"></script>
+  <script src="./admin-hall-patch.js?v=beta3"></script>
+  <script src="./admin-beta3.js?v=beta3"></script>
 </body>
 </html>
