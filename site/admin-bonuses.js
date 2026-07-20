@@ -8,5 +8,9 @@
   });
   const start = window.BaliPoints ? Promise.resolve() : load("./points-core.js?v=beta3-points");
   start.then(() => load("./points-admin.js?v=beta3-points"))
+    .then(() => {
+      const label = document.querySelector('[data-view="bonuses"] span');
+      if (label) label.textContent = "BALI-Баллы";
+    })
     .catch(() => window.toast?.("Не удалось загрузить управление BALI-Баллами"));
 })();
