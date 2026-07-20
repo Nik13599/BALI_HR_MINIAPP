@@ -27,5 +27,7 @@
   function telegramVisible(person){return Boolean(person?.username&&person.shareTelegram!==false&&accepted(person.id))}
   const gifts=()=>read(KEYS.gifts,[]);
   function recordGift(targetId,giftId,source="beta_demo"){const gift=GIFT_CATALOG.find(x=>x.id===giftId),target=people().find(x=>x.id===targetId);if(!gift||!target)return null;const item={id:uid("gift"),fromId:myId(),fromName:profile().name,toId:targetId,toName:target.name,giftId,giftName:gift.name,icon:gift.icon,stars:gift.stars,source,createdAt:now()};const rows=gifts();rows.unshift(item);write(KEYS.gifts,rows.slice(0,300));return item}
+  function seedIncoming(){const rows=requests();if(rows.some(x=>x.toId===myId()))return;rows.unshift({id:uid("req"),fromId:"demo-1",fromName:"Лера",toId:myId(),toName:profile().name,type:"chat",status:"pending",eventId:"",eventTitle:"",eventDate:"",createdAt:now()});write(KEYS.requests,rows)}
+  seedIncoming();
   window.BaliBeta4Social={KEYS,STATUSES,GIFT_CATALOG,profile,saveProfile,people,visiblePeople,swipe,requests,sendRequest,respond,accepted,telegramVisible,gifts,recordGift,myId};
 })();
