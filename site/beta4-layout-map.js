@@ -7,6 +7,17 @@
   const clamp = v => Math.max(3, Math.min(97, Number(v ?? 50)));
   let busy = false;
 
+  function applyBackground(map, source) {
+    if (!map || !source) return;
+    map.classList.add("has-background");
+    map.style.backgroundImage = `url("${String(source).replace(/"/g, "%22")}")`;
+    const image = new Image();
+    image.onload = () => {
+      if (image.naturalWidth && image.naturalHeight) map.style.aspectRatio = `${image.naturalWidth} / ${image.naturalHeight}`;
+    };
+    image.src = source;
+  }
+
   async function draw() {
     const root = document.getElementById("tableChoices");
     const form = document.getElementById("bookingForm");
@@ -30,12 +41,7 @@
         return `<button type="button" class="booking-map-table ${shape} ${String(t.id)===String(selectedId)?"selected":""}" style="left:${clamp(t.x)}%;top:${clamp(t.y)}%" data-table="${esc(t.id)}" ${t.available?"":"disabled"}><strong>${esc(t.name || t.id)}</strong><small>${Number(t.seats || 4)} мест</small></button>`;
       }).join("");
       root.innerHTML = `<div class="booking-layout-shell"><div class="booking-layout-scroll"><div class="booking-layout-map" id="bookingLayoutMap">${buttons || '<div class="booking-layout-empty">Раскладка этого мероприятия ещё не настроена.</div>'}</div></div><div class="booking-layout-legend"><span><i></i>Свободен</span><span><i class="busy"></i>Занят</span><span><i class="vip"></i>VIP</span></div><div class="booking-layout-selected">${selected?`Выбран: <strong>${esc(selected.name || selected.id)}</strong> · ${Number(selected.seats || 4)} мест`:"Нажмите на свободный стол прямо на схеме"}</div><div class="booking-layout-hint">Показано реальное расположение столов для выбранного мероприятия.</div></div>`;
-      const map = document.getElementById("bookingLayoutMap");
-      const background = eventLayout.background || baseLayout.image || "";
-      if (map && background) {
-        map.classList.add("has-background");
-        map.style.backgroundImage = `url("${String(background).replace(/"/g, "%22")}")`;
-      }
+      applyBackground(document.getElementById("bookingLayoutMap"), eventLayout.background || baseLayout.image || "");
       const title = root.closest("label")?.querySelector(":scope > span");
       if (title) title.textContent = "Выберите стол на схеме";
     } finally { busy = false; }
