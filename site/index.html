@@ -4,161 +4,63 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#080a0a" />
-  <meta name="description" content="BALI Minsk — афиши, меню, BALI-Бонусы и бронирование столов." />
+  <meta name="description" content="BALI Minsk — афиши, BALI-Баллы, индивидуальные схемы мероприятий и бронирование столов." />
   <title>BALI Minsk — Beta3</title>
   <link rel="stylesheet" href="./guest.css" />
   <link rel="stylesheet" href="./hall-layout.css" />
-  <link rel="stylesheet" href="./bonus.css?v=beta3" />
-  <link rel="stylesheet" href="./mobile-hero-v2.css?v=beta3" />
+  <link rel="stylesheet" href="./bonus.css?v=beta3-event-attendance-modes" />
+  <link rel="stylesheet" href="./mobile-hero-v2.css?v=beta3-event-attendance-modes" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./config.js"></script>
-  <script src="./store.js"></script>
-  <script src="./hall-layout-data.js"></script>
+  <script src="./config.js?v=beta3-event-attendance-modes"></script>
+  <script src="./store.js?v=beta3-event-attendance-modes"></script>
+  <script src="./hall-layout-data.js?v=beta3-event-attendance-modes"></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#home" aria-label="BALI Minsk">
-      <span class="logo">B</span>
-      <span class="brand-copy"><strong>BALI</strong><small>МИНСК · КИРОВА, 13</small><small class="brand-schedule">ПТ–СБ · 23:00–06:00</small></span>
-    </a>
+    <a class="brand" href="#home" aria-label="BALI Minsk"><span class="logo">B</span><span class="brand-copy"><strong>BALI</strong><small>МИНСК · КИРОВА, 13</small><small class="brand-schedule">ПТ–СБ · 23:00–06:00</small></span></a>
     <button class="icon-btn" id="shareButton" type="button" aria-label="Поделиться">↗</button>
   </header>
 
   <main class="page">
     <section class="hero" id="home">
-      <div class="hero-copy">
-        <span class="eyebrow">BETA3 · NIGHT CLUB · BAR · HOOKAH</span>
-        <h1>Твоя ночь<br /><em>начинается<span class="mobile-title-break"><br /></span> здесь</em></h1>
-        <p>Афиши ближайших событий, барное меню, BALI-Бонусы и бронирование свободного стола — прямо в Telegram.</p>
-        <div class="hero-actions hero-actions-desktop">
-          <button class="primary" type="button" data-scroll="events">Смотреть афиши</button>
-          <button class="secondary" type="button" data-scroll="bonuses">BALI-Бонусы</button>
-        </div>
-      </div>
-      <div class="orbit" aria-hidden="true">
-        <div class="disc"><span>BALI</span></div>
-      </div>
-      <div class="hero-actions hero-actions-mobile" aria-label="Быстрые действия">
-        <button class="primary" type="button" data-scroll="events">Смотреть афиши</button>
-        <button class="secondary" type="button" data-scroll="bonuses">BALI-Бонусы</button>
-      </div>
+      <div class="hero-copy"><span class="eyebrow">BETA3 · NIGHT CLUB · BAR · HOOKAH</span><h1>Твоя ночь<br /><em>начинается<span class="mobile-title-break"><br /></span> здесь</em></h1><p>Афиши ближайших событий, BALI-Баллы, личные бронирования и свободные столы — прямо в Telegram.</p><div class="hero-actions hero-actions-desktop"><button class="primary" type="button" data-scroll="events">Смотреть афиши</button><button class="secondary" type="button" data-scroll="bonuses">BALI-Баллы</button></div></div>
+      <div class="orbit" aria-hidden="true"><div class="disc"><span>BALI</span></div></div>
+      <div class="hero-actions hero-actions-mobile"><button class="primary" type="button" data-scroll="events">Смотреть афиши</button><button class="secondary" type="button" data-scroll="bonuses">BALI-Баллы</button></div>
       <div class="hero-meta"><span>ПТ–СБ</span><strong>23:00–06:00</strong><span>18+</span></div>
     </section>
 
-    <section class="section" id="events">
-      <div class="section-head">
-        <div><span class="eyebrow">БЛИЖАЙШИЕ СОБЫТИЯ</span><h2>Афиша</h2></div>
-        <span class="count" id="eventCount"></span>
+    <section class="section" id="events"><div class="section-head"><div><span class="eyebrow">БЛИЖАЙШИЕ СОБЫТИЯ</span><h2>Афиша</h2></div><span class="count" id="eventCount"></span></div><div class="poster-track" id="eventTrack"></div></section>
+
+    <section class="section" id="menu"><div class="section-head"><div><span class="eyebrow">БАР И КАЛЬЯНЫ</span><h2>Меню</h2></div><button class="cart-trigger" type="button" data-open="#cartDialog">Заказ <span id="cartCount">0</span></button></div><div class="category-tabs" id="categoryTabs"></div><div class="menu-grid" id="menuGrid"></div></section>
+
+    <section class="section" id="bonuses"><div class="bonus-card">
+      <div class="bonus-head"><div><span class="eyebrow">БАЛЛЬНАЯ СИСТЕМА BALI</span><span class="bonus-beta">BETA3</span></div><h2>BALI-Баллы</h2><p>Получайте баллы за репосты мероприятий, приглашение друзей и посещение событий BALI.</p></div>
+      <div class="bonus-wallet"><div><small>ВАШ БАЛАНС</small><strong id="bonusBalance">0</strong><span>баллов</span></div><div class="bonus-code"><small>ВАШ КОД</small><b id="bonusReferralCode">BALI</b><button id="copyReferralCode" type="button">Копировать</button></div></div>
+      <div class="bonus-actions">
+        <article><span class="bonus-icon">↗</span><div><h3>Поделиться мероприятием</h3><p>Баллы начисляются один раз за репост каждой афиши.</p></div><button class="primary" type="button" data-scroll="events">Выбрать событие · +<span id="eventShareReward">0</span></button></article>
+        <article><span class="bonus-icon">👥</span><div><h3>Пригласить друга</h3><p>Отправьте другу персональную ссылку на приложение BALI.</p></div><button class="secondary" id="inviteFriendButton" type="button">Пригласить · +<span id="referralReward">0</span></button></article>
+        <article><span class="bonus-icon">🎟</span><div><h3>Посетить мероприятие</h3><p>Отсканируйте QR-код конкретного мероприятия при входе.</p></div><div class="attendance-code-form"><input id="attendanceCodeInput" maxlength="24" placeholder="Код посещения"/><button class="secondary" id="attendanceCodeButton" type="button">Начислить · +<span id="attendanceReward">0</span></button></div></article>
       </div>
-      <div class="poster-track" id="eventTrack"></div>
-    </section>
+      <div class="bonus-history-wrap"><div class="bonus-history-head"><h3>Последние начисления</h3><span id="bonusHistoryCount">0 операций</span></div><div class="bonus-history" id="bonusHistory"></div></div>
+    </div></section>
 
-    <section class="section" id="menu">
-      <div class="section-head">
-        <div><span class="eyebrow">БАР И КАЛЬЯНЫ</span><h2>Меню</h2></div>
-        <button class="cart-trigger" type="button" data-open="#cartDialog">Заказ <span id="cartCount">0</span></button>
-      </div>
-      <div class="category-tabs" id="categoryTabs"></div>
-      <div class="menu-grid" id="menuGrid"></div>
-    </section>
+    <section class="section" id="booking"><div class="booking-card"><span class="eyebrow">БРОНИРОВАНИЕ СТОЛА</span><h2>Выберите мероприятие и место</h2><p>Сначала выберите дату. После этого появится индивидуальная схема именно этого мероприятия.</p>
+      <form id="bookingForm" class="form"><div class="row"><label><span>Дата мероприятия</span><input id="bookingDate" name="booking_date" type="date" required /></label><label><span>Время</span><input name="booking_time" type="time" value="23:00" required /></label></div>
+        <div class="hall-picker"><div class="hall-map" id="hallMap" aria-label="Схема столов BALI"></div><div class="legend"><span><i></i>Свободен</span><span><i class="red"></i>Забронирован</span><span><i class="gold"></i>VIP</span></div><div class="selected-table" id="selectedTableText">Сначала выберите дату мероприятия</div><input id="selectedTableId" name="table_id" type="hidden" /></div>
+        <label><span>Имя</span><input name="name" autocomplete="name" placeholder="Ваше имя" required /></label><div class="row"><label><span>Телефон</span><input name="phone" inputmode="tel" autocomplete="tel" placeholder="+375 29 670-03-00" required /></label><label><span>Гостей</span><select name="guests"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option value="8">8+</option></select></label></div><label><span>Telegram</span><input name="telegram" placeholder="@username" /></label><label><span>Комментарий</span><textarea name="comment" placeholder="Пожелания по размещению"></textarea></label><button class="primary full" type="submit">Отправить заявку</button>
+      </form>
+    </div></section>
 
-    <section class="section" id="bonuses">
-      <div class="bonus-card">
-        <div class="bonus-head">
-          <div><span class="eyebrow">ПРОГРАММА ЛОЯЛЬНОСТИ</span><span class="bonus-beta">BETA3</span></div>
-          <h2>BALI-Бонусы</h2>
-          <p>Получайте бонусы за приглашения, публикации в Stories и распространение афиш BALI. В бета-версии начисления работают в демонстрационном режиме.</p>
-        </div>
-
-        <div class="bonus-wallet">
-          <div><small>ВАШ БАЛАНС</small><strong id="bonusBalance">0</strong><span>бонусов</span></div>
-          <div class="bonus-code"><small>ВАШ КОД</small><b id="bonusReferralCode">BALI</b><button id="copyReferralCode" type="button">Копировать</button></div>
-        </div>
-
-        <div class="bonus-actions">
-          <article>
-            <span class="bonus-icon">👥</span>
-            <div><h3>Пригласить друга</h3><p>Поделитесь персональной ссылкой. В Beta3 бонус начисляется после открытия окна приглашения.</p></div>
-            <button class="primary" id="inviteFriendButton" type="button">Пригласить · +<span id="referralReward">0</span></button>
-          </article>
-          <article>
-            <span class="bonus-icon">📸</span>
-            <div><h3>Опубликовать Stories</h3><p>Загрузите скриншот публикации как подтверждение. В Beta3 проверка выполняется автоматически.</p></div>
-            <input id="storyProofInput" type="file" accept="image/*" hidden />
-            <button class="secondary" id="storyProofButton" type="button">Загрузить · +<span id="storyReward">0</span></button>
-          </article>
-          <article>
-            <span class="bonus-icon">↗</span>
-            <div><h3>Поделиться событием</h3><p>На каждой афише появилась кнопка «Поделиться». Бонус можно получить один раз за каждое событие.</p></div>
-            <button class="secondary" type="button" data-scroll="events">Выбрать событие · +<span id="eventShareReward">0</span></button>
-          </article>
-        </div>
-
-        <div class="bonus-history-wrap">
-          <div class="bonus-history-head"><h3>Последние начисления</h3><span id="bonusHistoryCount">0 операций</span></div>
-          <div class="bonus-history" id="bonusHistory"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="booking">
-      <div class="booking-card">
-        <span class="eyebrow">БРОНИРОВАНИЕ СТОЛА</span>
-        <h2>Выберите место</h2>
-        <p>Укажите дату, нажмите на свободный стол на актуальной схеме зала и заполните контакты.</p>
-        <form id="bookingForm" class="form">
-          <div class="row">
-            <label><span>Дата</span><input id="bookingDate" name="booking_date" type="date" required /></label>
-            <label><span>Время</span><input name="booking_time" type="time" value="23:00" required /></label>
-          </div>
-          <div class="hall-picker">
-            <div class="hall-map" id="hallMap" aria-label="Схема столов BALI"></div>
-            <div class="legend"><span><i></i>Свободен</span><span><i class="red"></i>Забронирован</span><span><i class="gold"></i>VIP</span></div>
-            <div class="selected-table" id="selectedTableText">Выберите свободный стол на схеме</div>
-            <input id="selectedTableId" name="table_id" type="hidden" />
-          </div>
-          <label><span>Имя</span><input name="name" autocomplete="name" placeholder="Николай" required /></label>
-          <div class="row">
-            <label><span>Телефон</span><input name="phone" inputmode="tel" autocomplete="tel" placeholder="+375 29 670-03-00" required /></label>
-            <label><span>Гостей</span><select name="guests"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option value="8">8+</option></select></label>
-          </div>
-          <label><span>Telegram</span><input name="telegram" placeholder="@username" /></label>
-          <label><span>Комментарий</span><textarea name="comment" placeholder="Пожелания по размещению"></textarea></label>
-          <button class="primary full" type="submit">Отправить заявку</button>
-        </form>
-      </div>
-    </section>
-
-    <section class="section" id="contacts">
-      <div class="contacts-card">
-        <span class="eyebrow">BALI MINSK</span><h2>Кирова, 13</h2>
-        <p>Ночной клуб, бар и кальяны. Пятница и суббота — с 23:00 до 06:00.</p>
-        <div class="contact-actions"><a class="secondary" href="https://yandex.by/maps/?text=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA%2C%20%D0%9A%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%2C%2013" target="_blank" rel="noreferrer">Маршрут</a><a class="secondary" href="tel:+375296700300">Позвонить</a></div>
-      </div>
-    </section>
+    <section class="section" id="contacts"><div class="contacts-card"><span class="eyebrow">BALI MINSK</span><h2>Кирова, 13</h2><p>Ночной клуб, контактный бар и кальяны. Можно провести ночь за столиком, на танцполе или у контактной барной стойки.</p><div class="contact-actions"><a class="secondary" href="https://yandex.by/maps/?text=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA%2C%20%D0%9A%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%2C%2013" target="_blank" rel="noreferrer">Маршрут</a><a class="secondary" href="tel:+375296700300">Позвонить</a></div></div></section>
   </main>
 
-  <nav class="bottom bottom-five" aria-label="Навигация">
-    <a class="active" href="#home"><span>⌂</span>Главная</a>
-    <a href="#events"><span>◫</span>Афиша</a>
-    <a href="#menu"><span>◇</span>Меню</a>
-    <a href="#bonuses"><span>★</span>Бонусы</a>
-    <a href="#booking"><span>＋</span>Бронь</a>
-  </nav>
+  <nav class="bottom bottom-five" aria-label="Навигация"><a class="active" href="#home"><span>⌂</span>Главная</a><a href="#events"><span>◫</span>Афиша</a><a href="#menu"><span>◇</span>Меню</a><a href="#bonuses"><span>★</span>Баллы</a><a href="#booking"><span>＋</span>Бронь</a></nav>
 
-  <dialog id="cartDialog">
-    <button class="close" type="button" data-close>×</button>
-    <div class="sheet"><span class="eyebrow">ВАШ ВЫБОР</span><h2>Предзаказ</h2><div id="cartItems"></div><div class="cart-total"><span>Итого</span><strong id="cartTotal">0 BYN</strong></div><button class="primary full" id="sendOrder" type="button">Отправить в Telegram</button><p class="muted">Предзаказ не является оплатой. Менеджер подтвердит наличие и итоговую сумму.</p></div>
-  </dialog>
-
-  <dialog id="successDialog">
-    <button class="close" type="button" data-close>×</button>
-    <div class="sheet"><span class="eyebrow">ЗАЯВКА ПРИНЯТА</span><h2>Стол выбран</h2><p id="successText" class="muted"></p><a class="primary full" id="telegramConfirm" href="#" target="_blank">Написать менеджеру</a></div>
-  </dialog>
-
+  <dialog id="cartDialog"><button class="close" type="button" data-close>×</button><div class="sheet"><span class="eyebrow">ВАШ ВЫБОР</span><h2>Предзаказ</h2><div id="cartItems"></div><div class="cart-total"><span>Итого</span><strong id="cartTotal">0 BYN</strong></div><button class="primary full" id="sendOrder" type="button">Отправить в Telegram</button><p class="muted">Предзаказ не является оплатой. Менеджер подтвердит наличие и итоговую сумму.</p></div></dialog>
+  <dialog id="successDialog"><button class="close" type="button" data-close>×</button><div class="sheet"><span class="eyebrow">ЗАЯВКА ПРИНЯТА</span><h2>Стол выбран</h2><p id="successText" class="muted"></p><a class="primary full" id="telegramConfirm" href="#" target="_blank">Написать менеджеру</a></div></dialog>
   <div class="toast" id="toast"></div>
-  <script src="./guest.js?v=beta3"></script>
-  <script src="./bonus.js?v=beta3"></script>
+  <script src="./guest.js?v=beta3-event-attendance-modes"></script>
+  <script src="./bonus.js?v=beta3-event-attendance-modes"></script>
 </body>
 </html>
