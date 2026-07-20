@@ -4,7 +4,8 @@
     profile: "bali_bonus_profile_v1",
     ledger: "bali_bonus_ledger_v1",
     actions: "bali_bonus_actions_v1",
-    visits: "bali_attendance_codes_v1"
+    visits: "bali_attendance_codes_v1",
+    accounts: "bali_points_accounts_v1"
   };
   const defaults = { referral: 50, attendance: 100, eventShare: 10 };
   const read = (key, fallback) => {
@@ -12,43 +13,118 @@
   };
   const write = (key, value) => {
     localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new CustomEvent("bali:points-changed"));
+    window.dispatchEvent(new CustomEvent("bali:points-changed", { detail: { key } }));
     return value;
   };
+  const normalizePhone = (value = "") => String(value).replace(/\D/g, "");
   const settings = () => {
     const value = read(keys.settings, {});
     return { ...defaults, ...value, attendance: Number(value.attendance ?? value.story ?? defaults.attendance) };
   };
+  const accounts = () => read(keys.accounts, {});
+  const accountKey = (data = {}) => data.userKey || data.ownerKey || (data.phone ? `phone:${normalizePhone(data.phone)}` : "") || (data.telegramId ? `tg:${data.telegramId}` : "") || data.code || "";
+
+  function saveAccount(account) {
+    const key = accountKey(account);
+    if (!key) return account;
+    const all = accounts();
+    all[key] = { ...(all[key] || {}), ...account, userKey: key, updatedAt: new Date().toISOString() };
+    write(keys.accounts, all);
+    return all[key];
+  }
+
   const profile = () => {
     const saved = read(keys.profile, null);
-    if (saved?.code) return saved;
+    if (saved?.code) {
+      if (!saved.userKey) {
+        const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+        saved.userKey = tgId ? `tg:${tgId}` : saved.code;
+        write(keys.profile, saved);
+      }
+      saveAccount(saved);
+      return saved;
+    }
     const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
     const source = user?.id ? String(user.id) : String(Date.now()).slice(-7);
-    return write(keys.profile, {
+    const created = {
       code: `BALI-${source.slice(-7).toUpperCase()}`,
+      userKey: user?.id ? `tg:${user.id}` : `BALI-${source.slice(-7).toUpperCase()}`,
+      telegramId: user?.id || null,
       name: user?.first_name || "Гость BALI",
       balance: 0,
       createdAt: new Date().toISOString()
-    });
+    };
+    write(keys.profile, created);
+    saveAccount(created);
+    return created;
   };
   const ledger = () => read(keys.ledger, []);
   const actions = () => read(keys.actions, {});
   const visits = () => read(keys.visits, []);
-  const add = (type, amount, title, actionKey) => {
+
+  function linkIdentity(data = {}) {
+    const current = profile();
+    const key = accountKey(data) || current.userKey || current.code;
+    const linked = {
+      ...current,
+      userKey: key,
+      name: data.name || current.name,
+      phone: normalizePhone(data.phone) || current.phone || "",
+      telegram: data.telegram || current.telegram || "",
+      ownerKey: data.ownerKey || current.ownerKey || key
+    };
+    write(keys.profile, linked);
+    saveAccount(linked);
+    return linked;
+  }
+
+  function add(type, amount, title, actionKey) {
     const used = actions();
     if (actionKey && used[actionKey]) return false;
     const user = profile();
     const value = Math.max(0, Number(amount || 0));
     user.balance = Number(user.balance || 0) + value;
     const rows = ledger();
-    rows.unshift({ id: crypto.randomUUID?.() || String(Date.now()), type, title, amount: value, createdAt: new Date().toISOString() });
+    rows.unshift({ id: crypto.randomUUID?.() || String(Date.now()), userKey: user.userKey, type, title, amount: value, createdAt: new Date().toISOString() });
     if (actionKey) used[actionKey] = new Date().toISOString();
     write(keys.profile, user);
-    write(keys.ledger, rows.slice(0, 50));
+    write(keys.ledger, rows.slice(0, 100));
     write(keys.actions, used);
+    saveAccount(user);
     return true;
-  };
-  const redeemVisit = (rawCode) => {
+  }
+
+  function adjustAccount(target, delta, note = "Корректировка администратора") {
+    const key = accountKey(target);
+    if (!key) return { ok: false, message: "Не выбран пользователь" };
+    const all = accounts();
+    const currentProfile = profile();
+    const existing = all[key] || {
+      userKey: key,
+      code: target.code || "",
+      name: target.name || "Пользователь BALI",
+      phone: normalizePhone(target.phone),
+      telegram: target.telegram || "",
+      balance: 0,
+      createdAt: new Date().toISOString()
+    };
+    const value = Number(delta || 0);
+    if (!value) return { ok: false, message: "Укажите количество баллов" };
+    existing.balance = Math.max(0, Number(existing.balance || 0) + value);
+    existing.updatedAt = new Date().toISOString();
+    all[key] = existing;
+    write(keys.accounts, all);
+    const rows = ledger();
+    rows.unshift({ id: crypto.randomUUID?.() || String(Date.now()), userKey: key, type: value > 0 ? "admin_add" : "admin_remove", title: note, amount: value, createdAt: new Date().toISOString() });
+    write(keys.ledger, rows.slice(0, 200));
+    if (currentProfile.userKey === key || currentProfile.ownerKey === key || currentProfile.code === key) {
+      const synced = { ...currentProfile, ...existing, userKey: key };
+      write(keys.profile, synced);
+    }
+    return { ok: true, account: existing, delta: value };
+  }
+
+  function redeemVisit(rawCode) {
     const code = String(rawCode || "").trim().toUpperCase();
     if (!code) return { ok: false, message: "Введите код посещения" };
     const rows = visits();
@@ -61,6 +137,7 @@
     rows[index] = { ...rows[index], usedAt: new Date().toISOString(), usedBy: profile().code };
     write(keys.visits, rows);
     return { ok: true, amount, title };
-  };
-  window.BaliPoints = { keys, defaults, read, write, settings, profile, ledger, actions, visits, add, redeemVisit };
+  }
+
+  window.BaliPoints = { keys, defaults, read, write, settings, profile, ledger, actions, visits, accounts, saveAccount, linkIdentity, add, adjustAccount, redeemVisit, accountKey };
 })();
