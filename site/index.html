@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#080a0a" />
-  <meta name="description" content="BALI Minsk — афиши, меню, бронирование столов и колесо фортуны." />
-  <title>BALI Minsk — Telegram Mini App</title>
+  <meta name="description" content="BALI Minsk — афиши, меню, BALI-Бонусы и бронирование столов." />
+  <title>BALI Minsk — Beta3</title>
   <link rel="stylesheet" href="./guest.css" />
   <link rel="stylesheet" href="./hall-layout.css" />
-  <link rel="stylesheet" href="./fortune.css" />
-  <link rel="stylesheet" href="./mobile-hero-v2.css?v=20260719-1" />
+  <link rel="stylesheet" href="./bonus.css?v=beta3" />
+  <link rel="stylesheet" href="./mobile-hero-v2.css?v=beta3" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
@@ -28,12 +28,12 @@
   <main class="page">
     <section class="hero" id="home">
       <div class="hero-copy">
-        <span class="eyebrow">NIGHT CLUB · BAR · HOOKAH</span>
+        <span class="eyebrow">BETA3 · NIGHT CLUB · BAR · HOOKAH</span>
         <h1>Твоя ночь<br /><em>начинается<span class="mobile-title-break"><br /></span> здесь</em></h1>
-        <p>Афиши ближайших событий, барное меню, колесо фортуны и бронирование свободного стола — прямо в Telegram.</p>
+        <p>Афиши ближайших событий, барное меню, BALI-Бонусы и бронирование свободного стола — прямо в Telegram.</p>
         <div class="hero-actions hero-actions-desktop">
           <button class="primary" type="button" data-scroll="events">Смотреть афиши</button>
-          <button class="secondary" type="button" data-scroll="fortune">Испытать удачу</button>
+          <button class="secondary" type="button" data-scroll="bonuses">BALI-Бонусы</button>
         </div>
       </div>
       <div class="orbit" aria-hidden="true">
@@ -41,7 +41,7 @@
       </div>
       <div class="hero-actions hero-actions-mobile" aria-label="Быстрые действия">
         <button class="primary" type="button" data-scroll="events">Смотреть афиши</button>
-        <button class="secondary" type="button" data-scroll="fortune">Испытать удачу</button>
+        <button class="secondary" type="button" data-scroll="bonuses">BALI-Бонусы</button>
       </div>
       <div class="hero-meta"><span>ПТ–СБ</span><strong>23:00–06:00</strong><span>18+</span></div>
     </section>
@@ -63,57 +63,41 @@
       <div class="menu-grid" id="menuGrid"></div>
     </section>
 
-    <section class="section" id="fortune">
-      <div class="fortune-card">
-        <div class="fortune-head">
-          <div class="fortune-headline">
-            <span class="eyebrow">ЭКСКЛЮЗИВНЫЙ КОКТЕЙЛЬ BALI</span>
-            <span class="fortune-demo-badge">DEMO</span>
-          </div>
-          <h2>Колесо фортуны</h2>
-          <p class="fortune-lead">Купите акционный коктейль у бармена, получите одноразовый код и испытайте удачу. Выигрывает сектор, который остановился точно под золотой стрелкой.</p>
+    <section class="section" id="bonuses">
+      <div class="bonus-card">
+        <div class="bonus-head">
+          <div><span class="eyebrow">ПРОГРАММА ЛОЯЛЬНОСТИ</span><span class="bonus-beta">BETA3</span></div>
+          <h2>BALI-Бонусы</h2>
+          <p>Получайте бонусы за приглашения, публикации в Stories и распространение афиш BALI. В бета-версии начисления работают в демонстрационном режиме.</p>
         </div>
-        <div class="fortune-stage" aria-label="Колесо фортуны. Выигрыш определяется сектором под неподвижной стрелкой.">
-          <div class="fortune-pointer" aria-hidden="true"></div>
-          <div class="fortune-rim">
-            <div class="fortune-lights" id="fortuneLights" aria-hidden="true"></div>
-            <div class="fortune-wheel" id="fortuneWheel"></div>
-          </div>
+
+        <div class="bonus-wallet">
+          <div><small>ВАШ БАЛАНС</small><strong id="bonusBalance">0</strong><span>бонусов</span></div>
+          <div class="bonus-code"><small>ВАШ КОД</small><b id="bonusReferralCode">BALI</b><button id="copyReferralCode" type="button">Копировать</button></div>
         </div>
-        <form class="fortune-form" id="fortuneForm">
-          <div class="fortune-input-wrap">
-            <input id="fortuneCode" name="fortune_code" maxlength="20" autocomplete="off" placeholder="Введите код бармена" aria-label="Одноразовый код бармена" required />
-          </div>
-          <button class="primary full fortune-spin-button" id="fortuneSpinButton" type="submit"><span>Крутить колесо</span></button>
-        </form>
-        <div class="fortune-demo-tools">
-          <button id="fortuneDemoCode" type="button">Получить демо-код</button>
-          <span>Для быстрого просмотра механики</span>
+
+        <div class="bonus-actions">
+          <article>
+            <span class="bonus-icon">👥</span>
+            <div><h3>Пригласить друга</h3><p>Поделитесь персональной ссылкой. В Beta3 бонус начисляется после открытия окна приглашения.</p></div>
+            <button class="primary" id="inviteFriendButton" type="button">Пригласить · +<span id="referralReward">0</span></button>
+          </article>
+          <article>
+            <span class="bonus-icon">📸</span>
+            <div><h3>Опубликовать Stories</h3><p>Загрузите скриншот публикации как подтверждение. В Beta3 проверка выполняется автоматически.</p></div>
+            <input id="storyProofInput" type="file" accept="image/*" hidden />
+            <button class="secondary" id="storyProofButton" type="button">Загрузить · +<span id="storyReward">0</span></button>
+          </article>
+          <article>
+            <span class="bonus-icon">↗</span>
+            <div><h3>Поделиться событием</h3><p>На каждой афише появилась кнопка «Поделиться». Бонус можно получить один раз за каждое событие.</p></div>
+            <button class="secondary" type="button" data-scroll="events">Выбрать событие · +<span id="eventShareReward">0</span></button>
+          </article>
         </div>
-        <p class="fortune-status" id="fortuneStatus" data-type="neutral" aria-live="polite">Тестовые коды: BALI-777, BALI-2026, LUCKY-13</p>
-        <div class="fortune-rules">
-          <span>🎟 Один код можно использовать только один раз.</span>
-          <span>🎯 Результат всегда соответствует сектору под стрелкой.</span>
-          <span>🎁 Покажите результат бармену для получения приза.</span>
-        </div>
-        <button class="fortune-admin-toggle" id="fortuneAdminToggle" type="button">Панель бармена</button>
-        <div class="fortune-admin" id="fortuneAdmin">
-          <span class="eyebrow">УПРАВЛЕНИЕ КОДАМИ</span>
-          <input id="generatedCode" readonly placeholder="Новый код появится здесь" />
-          <button class="secondary full" id="generateFortuneCode" type="button">Создать и скопировать код</button>
-          <button class="secondary full" id="resetFortuneCodes" type="button">Сбросить тестовые коды</button>
-          <div class="fortune-code-list" id="fortuneCodeList"></div>
-        </div>
-        <div class="fortune-result" id="fortuneResult" hidden>
-          <div class="fortune-confetti" id="fortuneConfetti" aria-hidden="true"></div>
-          <div class="fortune-result-card" role="dialog" aria-modal="true" aria-labelledby="fortuneResultPrize">
-            <button class="fortune-result-close" id="fortuneResultClose" type="button" aria-label="Закрыть">×</button>
-            <div class="fortune-result-icon" id="fortuneResultIcon">🎁</div>
-            <small>ВАШ ВЫИГРЫШ</small>
-            <h3 id="fortuneResultPrize">Приз</h3>
-            <p id="fortuneResultText"></p>
-            <button class="primary full" id="fortuneResultBack" type="button">Вернуться к колесу</button>
-          </div>
+
+        <div class="bonus-history-wrap">
+          <div class="bonus-history-head"><h3>Последние начисления</h3><span id="bonusHistoryCount">0 операций</span></div>
+          <div class="bonus-history" id="bonusHistory"></div>
         </div>
       </div>
     </section>
@@ -122,7 +106,7 @@
       <div class="booking-card">
         <span class="eyebrow">БРОНИРОВАНИЕ СТОЛА</span>
         <h2>Выберите место</h2>
-        <p>Укажите дату, нажмите на свободный стол на реальной схеме зала и заполните контакты.</p>
+        <p>Укажите дату, нажмите на свободный стол на актуальной схеме зала и заполните контакты.</p>
         <form id="bookingForm" class="form">
           <div class="row">
             <label><span>Дата</span><input id="bookingDate" name="booking_date" type="date" required /></label>
@@ -159,7 +143,7 @@
     <a class="active" href="#home"><span>⌂</span>Главная</a>
     <a href="#events"><span>◫</span>Афиша</a>
     <a href="#menu"><span>◇</span>Меню</a>
-    <a href="#fortune"><span>🎡</span>Удача</a>
+    <a href="#bonuses"><span>★</span>Бонусы</a>
     <a href="#booking"><span>＋</span>Бронь</a>
   </nav>
 
@@ -174,7 +158,7 @@
   </dialog>
 
   <div class="toast" id="toast"></div>
-  <script src="./guest.js"></script>
-  <script src="./fortune.js"></script>
+  <script src="./guest.js?v=beta3"></script>
+  <script src="./bonus.js?v=beta3"></script>
 </body>
 </html>
