@@ -29,6 +29,10 @@
       .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
   }
 
+  function escapeHtml(value) {
+    return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
   function patchTabs() {
     const root = document.getElementById("menuTabs");
     if (!root || patching) return;
@@ -40,11 +44,13 @@
     if (selected !== "Все" && !names.includes(selected)) selected = "Все";
 
     const expected = ["Все", ...names];
-    const current = [...root.querySelectorAll("[data-category]")].map((button) => button.dataset.category);
-    if (JSON.stringify(current) === JSON.stringify(expected) && root.querySelector(`[data-category="${CSS.escape(selected)}"]`)?.classList.contains("active")) return;
+    const buttons = [...root.querySelectorAll("[data-category]")];
+    const current = buttons.map((button) => button.dataset.category);
+    const selectedButton = buttons.find((button) => button.dataset.category === selected);
+    if (JSON.stringify(current) === JSON.stringify(expected) && selectedButton?.classList.contains("active")) return;
 
     patching = true;
-    root.innerHTML = expected.map((name) => `<button class="${name === selected ? "active" : ""}" data-category="${String(name).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}">${String(name).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</button>`).join("");
+    root.innerHTML = expected.map((name) => `<button class="${name === selected ? "active" : ""}" data-category="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join("");
     patching = false;
   }
 
