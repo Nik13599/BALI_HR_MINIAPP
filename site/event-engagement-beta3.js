@@ -47,6 +47,7 @@
       user_key: key,
       name: currentUserName(),
       status,
+      attendance_mode: status === "going" ? "general_admission" : status === "booked" ? "table_booking" : "interest",
       updated_at: new Date().toISOString(),
       ...extra
     };
@@ -61,7 +62,7 @@
     const bookedUsers = new Set(bookings.map((booking) => booking.owner_key || booking.client_key || booking.telegram_id || booking.customer_id || booking.id));
     return {
       interested: eventRows.filter((row) => row.status === "interested").length,
-      going: eventRows.filter((row) => row.status === "going").length,
+      generalAdmission: eventRows.filter((row) => row.status === "going").length,
       booked: bookedUsers.size,
       bookedGuests: bookings.reduce((sum, booking) => sum + Number(booking.guests || 0), 0),
       bookedTables: bookings.length,
@@ -130,7 +131,9 @@
       checked_in_at: new Date().toISOString()
     };
     write(CHECKIN_KEY, rows);
-    setRsvp(event.id, "going", { checked_in: true });
+    const previous = userRsvp(event.id);
+    const nextStatus = previous?.status === "booked" ? "booked" : "going";
+    setRsvp(event.id, nextStatus, { checked_in: true, attendance_mode: previous?.status === "booked" ? "table_booking" : "general_admission" });
     await incrementCustomerVisit();
     toast(`Посещение подтверждено · +${amount} BALI-баллов`);
   }
@@ -148,7 +151,7 @@
   store.createBooking = async function(data) {
     const booking = await baseCreateBooking(data);
     const eventId = booking?.event_id || data.event_id || (await window.BaliEventLayouts?.eventByDate?.(data.booking_date))?.id;
-    if (eventId) setRsvp(eventId, "booked", { booking_id: booking?.id || "", guests: Number(data.guests || booking?.guests || 0) });
+    if (eventId) setRsvp(eventId, "booked", { booking_id: booking?.id || "", guests: Number(data.guests || booking?.guests || 0), attendance_mode: "table_booking" });
     return booking;
   };
 
@@ -166,7 +169,7 @@
     ensureQr(event);
     const totals = await counts(eventId);
     const mine = userRsvp(eventId)?.status || "";
-    return `<section class="event-social-proof" data-event-engagement="${eventId}"><h3>Кто собирается в BALI</h3><div class="event-counts"><article><span>ХОТЯТ ПОЙТИ</span><strong>${totals.interested}</strong></article><article><span>ТОЧНО ПРИДУТ</span><strong>${totals.going}</strong></article><article><span>ЗАБРОНИРОВАЛИ</span><strong>${totals.bookedGuests || totals.booked}</strong></article></div><div class="event-rsvp-actions"><button class="secondary ${mine === "interested" ? "active" : ""}" type="button" data-rsvp-status="interested">Хочу пойти</button><button class="primary ${mine === "going" ? "active" : ""}" type="button" data-rsvp-status="going">Я точно приду</button></div><small class="event-rsvp-note">Статистика доступна пользователям Mini App. После бронирования столика ваш статус автоматически учитывается как подтверждённое посещение.</small></section>`;
+    return `<section class="event-social-proof" data-event-engagement="${eventId}"><h3>Кто собирается в BALI</h3><div class="event-counts"><article><span>ИНТЕРЕСУЮТСЯ</span><strong>${totals.interested}</strong></article><article><span>ПРИДУТ БЕЗ СТОЛА</span><strong>${totals.generalAdmission}</strong></article><article><span>ГОСТЕЙ ЗА СТОЛАМИ</span><strong>${totals.bookedGuests || totals.booked}</strong></article></div><div class="event-rsvp-actions"><button class="secondary ${mine === "interested" ? "active" : ""}" type="button" data-rsvp-status="interested">Хочу пойти</button><button class="primary ${mine === "going" ? "active" : ""}" type="button" data-rsvp-status="going">Приду без брони</button></div><small class="event-rsvp-note">«Приду без брони» означает клубный формат без закреплённого столика: танцпол, контактный бар и свободное перемещение по клубу. Бронь стола учитывается отдельно и автоматически.</small></section>`;
   }
 
   async function refreshVisibleEvent() {
@@ -181,9 +184,10 @@
   function bindRsvpButtons(root = document) {
     root.querySelectorAll("[data-rsvp-status]").forEach((button) => button.addEventListener("click", () => {
       const current = userRsvp(activeEventId)?.status || "";
+      if (current === "booked") return toast("У вас уже есть бронь стола на это мероприятие");
       const next = current === button.dataset.rsvpStatus ? "" : button.dataset.rsvpStatus;
       setRsvp(activeEventId, next);
-      toast(next === "interested" ? "Добавлено: хочу пойти" : next === "going" ? "Добавлено: точно приду" : "Статус отменён");
+      toast(next === "interested" ? "Добавлено: хочу пойти" : next === "going" ? "Добавлено: приду без брони" : "Статус отменён");
     }));
   }
 
