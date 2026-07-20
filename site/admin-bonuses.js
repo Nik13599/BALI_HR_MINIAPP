@@ -1,5 +1,5 @@
 (() => {
-  const version = "beta3-event-attendees";
+  const version = "beta3-event-attendance-modes";
   const load = (src) => new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = src;
@@ -17,6 +17,7 @@
     .then(() => load(`./event-layout-admin-beta3.js?v=${version}`))
     .then(() => load(`./event-engagement-admin-beta3.js?v=${version}`))
     .then(() => load(`./event-attendees-admin-beta3.js?v=${version}`))
+    .then(() => load(`./event-attendance-mode-admin-beta3.js?v=${version}`))
     .then(() => {
       const label = document.querySelector('[data-view="bonuses"] span');
       if (label) label.textContent = "BALI-Баллы";
