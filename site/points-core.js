@@ -28,20 +28,29 @@
     const key = accountKey(account);
     if (!key) return account;
     const all = accounts();
-    all[key] = { ...(all[key] || {}), ...account, userKey: key, updatedAt: new Date().toISOString() };
+    const previous = all[key] || null;
+    const candidate = { ...(previous || {}), ...account, userKey: key };
+    const previousComparable = previous ? { ...previous } : null;
+    const candidateComparable = { ...candidate };
+    if (previousComparable) delete previousComparable.updatedAt;
+    delete candidateComparable.updatedAt;
+    if (previousComparable && JSON.stringify(previousComparable) === JSON.stringify(candidateComparable)) return previous;
+    candidate.updatedAt = new Date().toISOString();
+    all[key] = candidate;
     write(keys.accounts, all);
-    return all[key];
+    return candidate;
   }
 
   const profile = () => {
     const saved = read(keys.profile, null);
     if (saved?.code) {
       if (!saved.userKey) {
-        const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-        saved.userKey = tgId ? `tg:${tgId}` : saved.code;
+        const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+        saved.userKey = telegramId ? `tg:${telegramId}` : saved.code;
         write(keys.profile, saved);
       }
-      saveAccount(saved);
+      const registry = accounts();
+      if (!registry[saved.userKey]) saveAccount(saved);
       return saved;
     }
     const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -118,8 +127,7 @@
     rows.unshift({ id: crypto.randomUUID?.() || String(Date.now()), userKey: key, type: value > 0 ? "admin_add" : "admin_remove", title: note, amount: value, createdAt: new Date().toISOString() });
     write(keys.ledger, rows.slice(0, 200));
     if (currentProfile.userKey === key || currentProfile.ownerKey === key || currentProfile.code === key) {
-      const synced = { ...currentProfile, ...existing, userKey: key };
-      write(keys.profile, synced);
+      write(keys.profile, { ...currentProfile, ...existing, userKey: key });
     }
     return { ok: true, account: existing, delta: value };
   }
