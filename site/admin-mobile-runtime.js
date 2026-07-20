@@ -2,7 +2,7 @@
   if (window.__BALI_ADMIN_MOBILE_RUNTIME__) return;
   window.__BALI_ADMIN_MOBILE_RUNTIME__ = true;
 
-  const VERSION = "beta4-vip-gifts";
+  const VERSION = "beta4-stable-4";
   const moduleSets = {
     dashboard: [],
     menu: [],
@@ -11,14 +11,26 @@
     events: ["admin-events-mobile-list.js"],
     bookings: ["event-layouts-beta3.js", "booking-admin-beta3.js"],
     customers: ["points-core.js", "customer-admin-beta3.js"],
-    bonuses: ["points-core.js", "beta4-game.js", "points-admin.js", "points-admin-manual.js", "admin-vip-beta4.js"]
+    bonuses: [
+      "points-core.js",
+      "beta4-game.js",
+      "beta4-loyalty-core.js",
+      "beta4-reward-icons-core.js",
+      "reward-png-validator-beta4.js",
+      "points-admin.js",
+      "points-admin-manual.js",
+      "admin-vip-beta4.js",
+      "admin-loyalty-economy-beta4.js",
+      "admin-custom-rewards-beta4.js",
+      "admin-reward-icon-list-beta4.js"
+    ]
   };
   const viewTitles = {
     dashboard: "Обзор",
     menu: "Меню",
     events: "Афиши + рассадка",
     hall: "Базовый шаблон",
-    bonuses: "BALI-Баллы и VIP",
+    bonuses: "BALI-Баллы, VIP, фишки и награды",
     bookings: "Бронирования",
     customers: "Клиентская база",
     settings: "Настройки"
