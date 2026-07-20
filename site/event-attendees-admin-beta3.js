@@ -11,7 +11,7 @@
   const digits = (value = "") => String(value).replace(/\D/g, "");
   const statusLabels = {
     interested: "Хочет пойти",
-    going: "Точно придёт",
+    going: "Придёт без брони",
     booked: "Забронировал стол",
     checked_in: "Уже посетил"
   };
@@ -49,20 +49,26 @@
     };
   }
 
+  function bookingIdentity(booking) {
+    return String(booking.owner_key || booking.client_key || (booking.telegram_id ? `tg:${booking.telegram_id}` : "") || booking.customer_id || booking.id || "");
+  }
+
   async function collect(eventId) {
     const [customers, bookings] = await Promise.all([store.list("customers"), store.list("bookings")]);
     const indexes = customerIndexes(customers);
     const rsvpMap = read(RSVP_KEY, {})?.[eventId] || {};
     const checkins = Object.values(read(CHECKIN_KEY, {})).filter((row) => row.event_id === eventId);
     const activeBookings = bookings.filter((booking) => booking.event_id === eventId && !["cancelled", "completed"].includes(booking.status));
+    const bookedKeys = new Set(activeBookings.map(bookingIdentity).filter(Boolean));
 
     const rsvpRows = Object.values(rsvpMap).map((row) => {
       const customer = indexes.byKey.get(String(row.user_key || "")) || {};
-      return { ...contactFrom(customer, row), status: row.status, updated_at: row.updated_at || "", user_key: row.user_key || "" };
-    });
+      return { ...contactFrom(customer, row), status: row.status, updated_at: row.updated_at || "", user_key: String(row.user_key || "") };
+    }).filter((row) => !bookedKeys.has(row.user_key));
 
     const bookedRows = activeBookings.map((booking) => {
-      const customer = indexes.byId.get(booking.customer_id) || indexes.byKey.get(String(booking.owner_key || booking.client_key || (booking.telegram_id ? `tg:${booking.telegram_id}` : ""))) || {};
+      const key = bookingIdentity(booking);
+      const customer = indexes.byId.get(booking.customer_id) || indexes.byKey.get(key) || {};
       return {
         ...contactFrom(customer, booking),
         status: "booked",
@@ -102,7 +108,7 @@
     const data = await collect(eventId);
     ensureDialog();
     document.getElementById("eventAttendeesTitle").textContent = `${event.title} · ${formatDate(event.event_date)}`;
-    document.getElementById("eventAttendeesBody").innerHTML = `<div class="event-attendees-summary"><article><span>ХОТЯТ ПОЙТИ</span><strong>${data.interested.length}</strong></article><article><span>ТОЧНО ПРИДУТ</span><strong>${data.going.length}</strong></article><article><span>ЗАБРОНИРОВАЛИ</span><strong>${data.booked.length}</strong></article><article><span>УЖЕ ПРИШЛИ</span><strong>${data.checkedIn.length}</strong></article></div><div class="event-attendees-note">Этот список доступен только в административной части. В пользовательском приложении показываются только общие числа без имён, телефонов и Telegram-профилей.</div>${group("Хочет пойти", data.interested, "interested")}${group("Точно придёт", data.going, "going")}${group("Забронировал стол", data.booked, "booked")}${group("Отметился по QR", data.checkedIn, "checked_in")}`;
+    document.getElementById("eventAttendeesBody").innerHTML = `<div class="event-attendees-summary"><article><span>ХОТЯТ ПОЙТИ</span><strong>${data.interested.length}</strong></article><article><span>БЕЗ БРОНИ</span><strong>${data.going.length}</strong></article><article><span>ЗАБРОНИРОВАЛИ</span><strong>${data.booked.length}</strong></article><article><span>УЖЕ ПРИШЛИ</span><strong>${data.checkedIn.length}</strong></article></div><div class="event-attendees-note">Этот список доступен только в административной части. Гости без брони планируют клубный формат, танцпол и контактный бар. Брони столов считаются отдельно и содержат номер стола и количество гостей.</div>${group("Хочет пойти", data.interested, "interested")}${group("Придут без брони / контактный бар", data.going, "going")}${group("Забронировал стол", data.booked, "booked")}${group("Отметился по QR", data.checkedIn, "checked_in")}`;
     document.getElementById("eventAttendeesDialog").showModal();
   }
 
