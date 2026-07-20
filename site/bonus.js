@@ -1,5 +1,5 @@
 (() => {
-  const version = "beta3-event-layouts";
+  const version = "beta3-event-engagement";
   const load = (src) => new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = src;
@@ -18,10 +18,11 @@
     .then(() => load(`./telegram-customer-beta3.js?v=${version}`))
     .then(() => load(`./upcoming-booking-beta3.js?v=${version}`))
     .then(() => load(`./event-details-beta3.js?v=${version}`))
+    .then(() => load(`./event-engagement-beta3.js?v=${version}`))
     .catch(() => {
       const node = document.getElementById("toast");
       if (node) {
-        node.textContent = "Не удалось загрузить профиль, брони или схемы мероприятий";
+        node.textContent = "Не удалось загрузить профиль, брони или события";
         node.classList.add("show");
       }
     });
