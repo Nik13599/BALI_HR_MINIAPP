@@ -15,7 +15,7 @@ assert.match(css, /\.clean-nav\{display:flex!important/, "Bottom navigation must
 assert.match(css, /\.clean-nav button\{flex:1 1 0;width:0/, "Each button must own an equal physical hit area");
 assert.match(css, /\.clean-nav button i,\.clean-nav button span\{pointer-events:none\}/, "Icon and label taps must resolve to their button");
 assert.ok(!js.includes("MutationObserver"), "Clean app must not rebuild navigation through MutationObserver");
-assert.equal((js.match(/<button[^>]+data-page=\\"(?:home|events|menu|people|crown|profile)\\"/g) || []).length, 8, "The template must contain six nav buttons plus two page links");
+assert.equal((js.match(/<button[^>]+data-page=\\"(?:home|events|menu|people|crown|profile)\\"/g) || []).length, 10, "The template must contain six navigation buttons and four internal page links");
 assert.equal((js.match(/<nav class=\\"clean-nav\\"/g) || []).length, 1, "Only one bottom navigation may be created");
 
 assert.ok(js.includes("ХОТЯТ ПОЙТИ"), "Event detail must show the interested counter");
