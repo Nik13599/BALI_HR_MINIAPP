@@ -49,8 +49,13 @@ assert.ok(profileRestore.includes("Магазин BALI — покупки за �
 
 assert.ok(attendance.includes("ХОТЯТ ПОЙТИ"), "Event detail must show one unified counter");
 assert.ok(attendance.includes("sum + row.guests"), "A booking must add the full guest count");
-assert.ok(attendance.includes("row.guests - 1"), "A booking must display additional guests beyond the owner");
 assert.ok(attendance.includes("Вы уже идёте · бронь"), "A booking owner must automatically be marked as attending");
 assert.ok(attendance.includes("#eventGoing{display:none!important}"), "The separate no-booking action must be removed");
+assert.ok(attendance.includes("legacyAttendanceDialog"), "The attendance list must open in a separate dialog");
+assert.ok(attendance.includes("data-open-attendance-list"), "The total counter must be clickable");
+assert.ok(attendance.includes("Посмотреть, кто собирается"), "The event must show an explicit list action");
+assert.ok(attendance.includes("Забронировали столик"), "Booked parties must have their own section");
+assert.ok(attendance.includes("Хотят пойти без бронирования"), "Interested guests must have their own section");
+assert.match(attendance, /root\.innerHTML = `<button class="legacy-attendance-total"/, "The event page must render only the compact attendance button, not the full people list");
 
-console.log("BALI restored navigation, attendance and full profile smoke test passed");
+console.log("BALI restored navigation, dialog attendance and full profile smoke test passed");
