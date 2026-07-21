@@ -14,12 +14,16 @@ on:
       - "site/beta4-profile-v2.js"
       - "site/beta4-loyalty-ui-stable.js"
       - "site/chip-requests-user-beta4.js"
+      - "site/beta4-qr-checkin.js"
+      - "site/night-crown-core-beta4.js"
+      - "site/night-crown-cloud-beta4.js"
       - "site/admin-beta4.html"
       - "site/admin-beta4-categories.html"
       - "site/admin-booking-manager-beta4.js"
       - "tests/demo-smoke.mjs"
       - "tests/bottom-nav-smoke.mjs"
       - "tests/admin-booking-manager-smoke.mjs"
+      - "tests/crown-live-event-smoke.mjs"
       - ".github/workflows/demo-smoke.yml"
   workflow_dispatch:
 
@@ -47,6 +51,9 @@ jobs:
           node --check site/beta4-profile-v2.js
           node --check site/beta4-loyalty-ui-stable.js
           node --check site/chip-requests-user-beta4.js
+          node --check site/beta4-qr-checkin.js
+          node --check site/night-crown-core-beta4.js
+          node --check site/night-crown-cloud-beta4.js
           node --check site/admin-booking-manager-beta4.js
       - name: Run demo data smoke test
         run: node tests/demo-smoke.mjs
@@ -54,3 +61,5 @@ jobs:
         run: node tests/bottom-nav-smoke.mjs
       - name: Run admin booking manager smoke test
         run: node tests/admin-booking-manager-smoke.mjs
+      - name: Run crown and active event smoke test
+        run: node tests/crown-live-event-smoke.mjs
