@@ -1,4 +1,4 @@
--- BALI Stable 7 migration
+-- BALI Stable 8 migration
 -- Выполните файл один раз в Supabase SQL Editor.
 
 alter table if exists public.menu_items add column if not exists image_url text not null default '';
@@ -11,6 +11,7 @@ alter table if exists public.events add column if not exists qr_created_at times
 
 create table if not exists public.chip_requests (
   id text primary key,
+  lookup_token text not null,
   user_key text not null,
   telegram_id text,
   name text not null default 'Гость BALI',
@@ -28,6 +29,11 @@ create table if not exists public.chip_requests (
   refund_at timestamptz
 );
 
+alter table if exists public.chip_requests add column if not exists lookup_token text;
+update public.chip_requests set lookup_token = gen_random_uuid()::text where lookup_token is null or lookup_token = '';
+alter table public.chip_requests alter column lookup_token set not null;
+
+create unique index if not exists chip_requests_lookup_token_idx on public.chip_requests(lookup_token);
 create index if not exists chip_requests_status_created_idx on public.chip_requests(status, created_at desc);
 create index if not exists chip_requests_user_key_idx on public.chip_requests(user_key);
 
@@ -40,6 +46,7 @@ for insert
 to anon
 with check (
   status = 'pending'
+  and length(lookup_token) >= 16
   and quantity > 0
   and points_cost > 0
   and rate_points > 0
@@ -55,6 +62,27 @@ to authenticated
 using (true)
 with check (true);
 
+create or replace function public.get_chip_request_status(p_id text, p_token text)
+returns table (
+  id text,
+  status text,
+  fulfilled_at timestamptz,
+  cancelled_at timestamptz,
+  refund_at timestamptz
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select r.id, r.status, r.fulfilled_at, r.cancelled_at, r.refund_at
+  from public.chip_requests r
+  where r.id = p_id
+    and r.lookup_token = p_token
+  limit 1;
+$$;
+
+revoke all on function public.get_chip_request_status(text,text) from public;
+grant execute on function public.get_chip_request_status(text,text) to anon, authenticated;
 grant insert on public.chip_requests to anon;
 grant select, insert, update, delete on public.chip_requests to authenticated;
 
