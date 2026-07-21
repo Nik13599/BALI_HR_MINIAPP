@@ -1,0 +1,35 @@
+name: Demo smoke checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/demo-*.js"
+      - "site/beta4-stable.html"
+      - "site/admin-beta4.html"
+      - "site/admin-beta4-categories.html"
+      - "site/bottom-nav-dedupe-beta4.js"
+      - "tests/demo-smoke.mjs"
+      - ".github/workflows/demo-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: |
+          node --check site/demo-seed.js
+          node --check site/demo-live-sync.js
+          node --check site/demo-user-toolbar.js
+          node --check site/demo-admin-toolbar.js
+          node --check site/bottom-nav-dedupe-beta4.js
+      - name: Run demo data smoke test
+        run: node tests/demo-smoke.mjs
