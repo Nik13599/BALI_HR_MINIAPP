@@ -116,6 +116,41 @@
     return true;
   }
 
+  function currentIdentity() {
+    const profile = game?.profile?.() || {};
+    return {
+      profile,
+      userKey: String(profile.id || profile.userKey || points?.profile?.()?.userKey || ""),
+      telegramId: String(profile.telegramId || "")
+    };
+  }
+
+  function updateRsvp(eventId, userKey, row, status) {
+    const rsvps = read(RSVP_KEY, {});
+    rsvps[eventId] ||= {};
+    rsvps[eventId][userKey] = {
+      ...(rsvps[eventId][userKey] || {}),
+      user_key: userKey,
+      name: row.name,
+      telegram: row.telegram,
+      telegram_id: row.telegram_id,
+      status,
+      attendance_mode: "qr",
+      updated_at: now()
+    };
+    localStorage.setItem(RSVP_KEY, JSON.stringify(rsvps));
+  }
+
+  async function reactivate(row, event, registry, id, userKey) {
+    const next = { ...row, id: row.id || id, left_at: null, presence_status: "active", reentered_at: now() };
+    registry[next.id] = next;
+    write(CHECKIN_KEY, registry);
+    updateRsvp(event.id, userKey, next, "checked_in");
+    await saveCloud(next);
+    window.dispatchEvent(new CustomEvent("bali:checkin-complete", { detail: { event, result: { ok: true, reentered: true, row: next } } }));
+    return { ok: true, reentered: true, event, row: next, points: 0, xp: 0, visits: Number(next.visits || 0), level: next.level || game?.levelFor?.(game.profile().xp)?.current?.name || "" };
+  }
+
   async function checkIn(raw) {
     if (!game || !points) return { ok: false, message: "Профиль пользователя ещё не загрузился" };
     let parsed;
@@ -129,27 +164,28 @@
     const tokenIsValid = store.cloudEnabled ? Boolean(event.qr_token && String(event.qr_token) === String(parsed.token)) : validateLocalToken(event, parsed);
     if (!tokenIsValid) return { ok: false, message: "Этот QR-код создан для другой версии мероприятия. Обновите QR в админке и отсканируйте новый код." };
 
-    const profile = game.profile();
-    const userKey = String(profile.id || profile.userKey || points.profile().userKey);
+    const { profile, userKey } = currentIdentity();
     const id = `checkin-${safeKey(event.id)}-${safeKey(userKey)}`;
     const registry = localCheckins();
-    if (registry[id]) return { ok: false, duplicate: true, event, row: registry[id], message: "Посещение этого мероприятия уже подтверждено" };
+    if (registry[id]) {
+      if (registry[id].left_at) return reactivate(registry[id], event, registry, id, userKey);
+      return { ok: false, duplicate: true, event, row: registry[id], message: "Посещение этого мероприятия уже подтверждено" };
+    }
     const existing = (await listCheckins(event.id)).find(row => String(row.user_key || "") === userKey || (profile.telegramId && String(row.telegram_id || "") === String(profile.telegramId)));
-    if (existing) return { ok: false, duplicate: true, event, row: existing, message: "Посещение этого мероприятия уже подтверждено" };
+    if (existing) {
+      if (existing.left_at) return reactivate(existing, event, registry, id, userKey);
+      return { ok: false, duplicate: true, event, row: existing, message: "Посещение этого мероприятия уже подтверждено" };
+    }
 
     const pointAmount = Number(points.settings().attendance || 100);
     const before = game.profile();
     game.recordVisit();
     points.add("attendance", pointAmount, `Посещение «${event.title}»`, `event-checkin-${event.id}-${userKey}`);
     const after = game.profile();
-    const row = { id, event_id: event.id, event_title: event.title, event_date: event.event_date || parsed.date, event_time: event.event_time || parsed.time || "23:00", user_key: userKey, telegram_id: profile.telegramId || null, telegram: profile.username || "", name: profile.name || "Гость BALI", phone: profile.phone || "", checked_in_at: now(), source: "event_qr", reward: pointAmount, xp: Math.max(0, Number(after.xp || 0) - Number(before.xp || 0)), visits: Number(after.visits || 0), level: game.levelFor(after.xp).current.name };
+    const row = { id, event_id: event.id, event_title: event.title, event_date: event.event_date || parsed.date, event_time: event.event_time || parsed.time || "23:00", user_key: userKey, telegram_id: profile.telegramId || null, telegram: profile.username || "", name: profile.name || "Гость BALI", phone: profile.phone || "", checked_in_at: now(), left_at: null, presence_status: "active", source: "event_qr", reward: pointAmount, xp: Math.max(0, Number(after.xp || 0) - Number(before.xp || 0)), visits: Number(after.visits || 0), level: game.levelFor(after.xp).current.name };
     registry[id] = row;
     write(CHECKIN_KEY, registry);
-
-    const rsvps = read(RSVP_KEY, {});
-    rsvps[event.id] ||= {};
-    rsvps[event.id][userKey] = { user_key: userKey, name: row.name, telegram: row.telegram, telegram_id: row.telegram_id, status: "checked_in", attendance_mode: "qr", updated_at: row.checked_in_at };
-    localStorage.setItem(RSVP_KEY, JSON.stringify(rsvps));
+    updateRsvp(event.id, userKey, row, "checked_in");
 
     await Promise.all([saveCloud(row), updateCustomer(after)]);
     try { window.BaliBeta4Loyalty?.evaluateRewards?.(game.profile()); } catch {}
@@ -158,5 +194,22 @@
     return { ok: true, event, row, points: pointAmount, xp: row.xp, visits: row.visits, level: row.level };
   }
 
-  window.BaliEventQrAttendance = { CHECKIN_KEY, ensureEvent, ensureAllEvents, payload, payloadUrl, parse, checkIn, listCheckins };
+  async function leave(eventId = "") {
+    if (!game || !points) return { ok: false, message: "Профиль пользователя ещё не загрузился" };
+    const { userKey, telegramId } = currentIdentity();
+    const rows = await listCheckins(eventId);
+    const current = rows.find(row => !row.left_at && (!eventId || String(row.event_id) === String(eventId)) && (String(row.user_key || "") === userKey || (telegramId && String(row.telegram_id || "") === telegramId)));
+    if (!current) return { ok: false, message: "Активное мероприятие не найдено" };
+    const next = { ...current, left_at: now(), presence_status: "left" };
+    const registry = localCheckins();
+    registry[next.id || `checkin-${safeKey(next.event_id)}-${safeKey(userKey)}`] = next;
+    write(CHECKIN_KEY, registry);
+    updateRsvp(next.event_id, userKey, next, "left");
+    await saveCloud(next);
+    window.dispatchEvent(new CustomEvent("bali:checkin-left", { detail: { eventId: next.event_id, row: next } }));
+    window.dispatchEvent(new CustomEvent("bali:beta4-changed"));
+    return { ok: true, row: next };
+  }
+
+  window.BaliEventQrAttendance = { CHECKIN_KEY, ensureEvent, ensureAllEvents, payload, payloadUrl, parse, checkIn, leave, listCheckins };
 })();
