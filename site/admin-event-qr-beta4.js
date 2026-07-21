@@ -4,12 +4,12 @@
   const attendance = window.BaliEventQrAttendance;
   const store = window.BaliStore;
   if (!attendance || !store) return;
-  const QR_SCRIPT = "https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js";
+  const QR_SCRIPT = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
   let activeEvent = null;
   let activeImage = "";
 
   function loadQrLibrary() {
-    if (window.QRCode?.toDataURL) return Promise.resolve();
+    if (window.QRCode) return Promise.resolve();
     return new Promise((resolve, reject) => {
       const existing = document.querySelector(`script[src="${QR_SCRIPT}"]`);
       if (existing) { existing.addEventListener("load", resolve, { once: true }); existing.addEventListener("error", reject, { once: true }); return; }
@@ -32,7 +32,7 @@
   function ensureDialog() {
     let dialog = document.getElementById("eventQrAdminDialog");
     if (dialog) return dialog;
-    document.body.insertAdjacentHTML("beforeend", `<dialog class="event-qr-admin-dialog" id="eventQrAdminDialog"><div class="event-qr-admin-sheet"><div class="event-qr-admin-head"><div><span class="eyebrow">ВХОД ПО QR</span><h2 id="eventQrAdminTitle">QR мероприятия</h2></div><button class="event-qr-admin-close" type="button" data-close-admin-event-qr>×</button></div><div class="event-qr-admin-body"><div class="event-qr-print-card"><img id="eventQrAdminImage" alt="QR-код мероприятия"><h3 id="eventQrAdminEvent"></h3><p id="eventQrAdminDate"></p><p>Отсканируйте в приложении BALI, чтобы подтвердить вход</p></div><div class="event-qr-admin-stats"><article><span>ОТМЕТИЛИСЬ ПО QR</span><strong id="eventQrAdminCount">0</strong></article><article><span>СТАТУС QR</span><strong>АКТИВЕН</strong></article></div><div class="event-qr-admin-actions"><button class="primary" type="button" data-download-event-qr>Скачать PNG</button><button class="secondary" type="button" data-print-event-qr>Печать</button><button class="danger wide" type="button" data-regenerate-event-qr>Создать новый QR</button></div><div class="event-qr-admin-note">После создания нового QR ранее распечатанный код перестанет работать. Используйте эту кнопку только при необходимости заменить код.</div></div></div></dialog>`);
+    document.body.insertAdjacentHTML("beforeend", `<dialog class="event-qr-admin-dialog" id="eventQrAdminDialog"><div class="event-qr-admin-sheet"><div class="event-qr-admin-head"><div><span class="eyebrow">ВХОД ПО QR</span><h2>QR мероприятия</h2></div><button class="event-qr-admin-close" type="button" data-close-admin-event-qr>×</button></div><div class="event-qr-admin-body"><div class="event-qr-print-card"><img id="eventQrAdminImage" alt="QR-код мероприятия"><h3 id="eventQrAdminEvent"></h3><p id="eventQrAdminDate"></p><p>Отсканируйте в приложении BALI, чтобы подтвердить вход</p></div><div class="event-qr-admin-stats"><article><span>ОТМЕТИЛИСЬ ПО QR</span><strong id="eventQrAdminCount">0</strong></article><article><span>СТАТУС QR</span><strong>АКТИВЕН</strong></article></div><div class="event-qr-admin-actions"><button class="primary" type="button" data-download-event-qr>Скачать PNG</button><button class="secondary" type="button" data-print-event-qr>Печать</button><button class="danger wide" type="button" data-regenerate-event-qr>Создать новый QR</button></div><div class="event-qr-admin-note">После создания нового QR ранее распечатанный код перестанет работать. Используйте эту кнопку только при необходимости заменить код.</div></div></div></dialog>`);
     dialog = document.getElementById("eventQrAdminDialog");
     dialog.querySelector("[data-close-admin-event-qr]").onclick = () => dialog.close();
     return dialog;
@@ -40,7 +40,18 @@
 
   async function qrDataUrl(event) {
     await loadQrLibrary();
-    return QRCode.toDataURL(attendance.payloadUrl(event), { width: 1024, margin: 2, errorCorrectionLevel: "H", color: { dark: "#090b0a", light: "#ffffff" } });
+    const holder = document.createElement("div");
+    holder.style.position = "fixed";
+    holder.style.left = "-9999px";
+    document.body.appendChild(holder);
+    new QRCode(holder, { text: attendance.payloadUrl(event), width: 1024, height: 1024, colorDark: "#090b0a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+    await new Promise(resolve => setTimeout(resolve, 40));
+    const canvas = holder.querySelector("canvas");
+    const image = holder.querySelector("img");
+    const result = canvas?.toDataURL("image/png") || image?.src || "";
+    holder.remove();
+    if (!result) throw new Error("QR-код не сформирован");
+    return result;
   }
 
   async function posterDataUrl(event, qrUrl) {
@@ -91,10 +102,8 @@
     document.getElementById("eventQrAdminImage").removeAttribute("src");
     document.getElementById("eventQrAdminCount").textContent = (await attendance.listCheckins(event.id)).length;
     dialog.showModal();
-    try {
-      activeImage = await qrDataUrl(event);
-      document.getElementById("eventQrAdminImage").src = activeImage;
-    } catch (error) { toast(error.message || "Не удалось создать QR-код"); }
+    try { activeImage = await qrDataUrl(event); document.getElementById("eventQrAdminImage").src = activeImage; }
+    catch (error) { toast(error.message || "Не удалось создать QR-код"); }
   }
 
   async function downloadQr() {
@@ -133,10 +142,7 @@
   styles();
   ensureDialog();
   const baseRenderEvents = window.renderEvents;
-  window.renderEvents = async function(root) {
-    await attendance.ensureAllEvents();
-    await baseRenderEvents(root);
-  };
+  window.renderEvents = async function(root) { await attendance.ensureAllEvents(); await baseRenderEvents(root); };
   window.BaliAdminEventQr = { openQr };
   if (typeof state !== "undefined" && state.view === "events") window.render?.();
 })();
