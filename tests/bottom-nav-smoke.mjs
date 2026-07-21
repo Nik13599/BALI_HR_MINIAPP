@@ -1,17 +1,26 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const css = fs.readFileSync("site/bottom-nav-stable-beta4.css", "utf8");
-const loader = fs.readFileSync("site/beta4-square-loader.js", "utf8");
+const html = fs.readFileSync("site/beta4-stable.html", "utf8");
+const css = fs.readFileSync("site/bali-user-clean.css", "utf8");
+const js = fs.readFileSync("site/bali-user-clean.js", "utf8");
 
-assert.match(css, /\.nav\s*\{[\s\S]*display:flex!important/, "Navigation must use one stable flex row");
-assert.match(css, /\.nav>button\[data-page\][\s\S]*flex:1 1 0!important/, "Every navigation button must own an equal hit area");
-assert.match(css, /width:0!important/, "Equal flex buttons must not retain content-based width");
-assert.match(css, /\.nav>button\[data-page\]>i,[\s\S]*pointer-events:none!important/, "Icon taps must resolve to the button itself");
-assert.match(css, /touch-action:manipulation!important/, "Touch input must be handled as direct taps");
+assert.ok(html.includes("bali-user-clean.css"), "Clean user CSS must be loaded");
+assert.ok(html.includes("bali-user-clean.js"), "Clean user application must be loaded");
+assert.ok(!html.includes("beta4-square-loader.js"), "Legacy modular loader must not be loaded");
+assert.ok(!html.includes("bottom-nav-controller-beta4.js"), "Legacy navigation controller must not be loaded");
+assert.ok(!html.includes("bottom-nav-dedupe-beta4.js"), "Legacy navigation deduper must not be loaded");
 
-assert.ok(loader.includes("'bottom-nav-stable-beta4.css'"), "Stable navigation CSS must be loaded");
-assert.ok(!loader.includes("'bottom-nav-controller-beta4.js'"), "The conflicting event interceptor must not be loaded");
-assert.ok(!loader.includes("'bottom-nav-dedupe-beta4.js'"), "The old DOM-reordering navigation fixer must not be loaded");
+assert.match(css, /\.clean-nav\{display:flex!important/, "Bottom navigation must be one fixed flex row");
+assert.match(css, /\.clean-nav button\{flex:1 1 0;width:0/, "Each button must own an equal physical hit area");
+assert.match(css, /\.clean-nav button i,\.clean-nav button span\{pointer-events:none\}/, "Icon and label taps must resolve to their button");
+assert.ok(!js.includes("MutationObserver"), "Clean app must not rebuild navigation through MutationObserver");
+assert.equal((js.match(/<button[^>]+data-page=\\"(?:home|events|menu|people|crown|profile)\\"/g) || []).length, 8, "The template must contain six nav buttons plus two page links");
+assert.equal((js.match(/<nav class=\\"clean-nav\\"/g) || []).length, 1, "Only one bottom navigation may be created");
 
-console.log("BALI bottom navigation layout smoke test passed");
+assert.ok(js.includes("ХОТЯТ ПОЙТИ"), "Event detail must show the interested counter");
+assert.ok(!js.includes("БЕЗ СТОЛА"), "General-admission counter must be removed");
+assert.ok(!js.includes("ЗА СТОЛАМИ"), "Booked-guests counter must be removed");
+assert.ok(!js.includes("СВОБОДНО</span>"), "Free-table counter must be removed from event statistics");
+
+console.log("BALI clean navigation and event counters smoke test passed");
