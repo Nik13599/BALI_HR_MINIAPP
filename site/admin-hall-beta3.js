@@ -20,12 +20,12 @@
     }, true);
   };
 
-  if (/Beta4/i.test(document.title) && !document.querySelector('script[data-beta4-menu-categories]')) {
+  if (/Beta4/i.test(document.title) && !document.querySelector('script[data-beta4-menu-categories-dialog]')) {
     const script = document.createElement("script");
-    script.src = "./admin-menu-categories-beta4.js?v=beta4-menu-categories-instagram";
+    script.src = "./admin-menu-categories-dialog-beta4.js?v=category-dialog-1";
     script.async = false;
-    script.dataset.beta4MenuCategories = "true";
-    script.onload = () => { if (window.state?.view === "menu" || (typeof state !== "undefined" && state.view === "menu")) window.render?.(); };
+    script.dataset.beta4MenuCategoriesDialog = "true";
+    script.onload = () => { if (typeof state !== "undefined" && state.view === "menu") window.render?.(); };
     document.body.appendChild(script);
   }
 })();
