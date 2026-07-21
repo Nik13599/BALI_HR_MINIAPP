@@ -127,10 +127,20 @@
     actions?.insertAdjacentElement("afterend", card) || home.prepend(card);
   }
 
+  async function processLinkCheckin() {
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get("event");
+    const token = params.get("token");
+    if (!eventId || !token || sessionStorage.getItem(`bali-checkin-link-${eventId}`)) return;
+    sessionStorage.setItem(`bali-checkin-link-${eventId}`, "1");
+    try { await handleCode(location.href); history.replaceState({}, "", location.pathname); }
+    catch (error) { toast(error.message || "Не удалось подтвердить вход"); }
+  }
+
   document.addEventListener("click", event => {
     if (event.target.closest("[data-scan-event-qr]")) scanWithCamera().catch(error => toast(error.message || "Не удалось открыть камеру"));
     if (event.target.closest("[data-close-checkin]")) event.target.closest("dialog")?.close();
   }, true);
-  setTimeout(mount, 0);
+  setTimeout(() => { mount(); processLinkCheckin(); }, 0);
   window.BaliEventQrCheckin = { parsePayload, registerCheckin, handleCode };
 })();
