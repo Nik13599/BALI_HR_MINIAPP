@@ -2,13 +2,13 @@
   if (window.__BALI_ADMIN_MOBILE_RUNTIME__) return;
   window.__BALI_ADMIN_MOBILE_RUNTIME__ = true;
 
-  const VERSION = "beta4-stable-4";
+  const VERSION = "beta4-event-qr-1";
   const moduleSets = {
     dashboard: [],
     menu: [],
     hall: [],
     settings: [],
-    events: ["admin-events-mobile-list.js"],
+    events: ["event-qr-attendance-beta4.js", "admin-events-mobile-list.js", "event-attendees-admin-beta3.js", "admin-event-qr-beta4.js"],
     bookings: ["event-layouts-beta3.js", "booking-admin-beta3.js"],
     customers: ["points-core.js", "customer-admin-beta3.js"],
     bonuses: [
@@ -28,7 +28,7 @@
   const viewTitles = {
     dashboard: "Обзор",
     menu: "Меню",
-    events: "Афиши + рассадка",
+    events: "Афиши + рассадка + QR входа",
     hall: "Базовый шаблон",
     bonuses: "BALI-Баллы, VIP, фишки и награды",
     bookings: "Бронирования",
