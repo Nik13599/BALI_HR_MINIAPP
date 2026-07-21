@@ -16,7 +16,7 @@
     const badge = document.getElementById("modeBadge");
     if (badge) badge.textContent = "ДЕМО · 6 ГОСТЕЙ";
     document.querySelectorAll('a[href*="beta4-stable.html"]').forEach(link => {
-      link.href = "./beta4-stable.html?v=bali-club-suite-11-crown-birthdays-final-2";
+      link.href = "./beta4-stable.html?v=bali-clean-rebuild-1";
       link.textContent = "Открыть пользователя ↗";
     });
     const hint = document.getElementById("loginHint");
