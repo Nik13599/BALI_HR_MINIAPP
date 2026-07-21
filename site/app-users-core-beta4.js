@@ -4,10 +4,12 @@
   const game = window.BaliBeta4Game;
   const points = window.BaliPoints;
   const KEY = "bali_app_users_v1";
+  const AGE_KEY = "bali_age_verification_v1";
   const now = () => new Date().toISOString();
   const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; } };
   const write = rows => { localStorage.setItem(KEY, JSON.stringify(rows)); window.dispatchEvent(new CustomEvent("bali:app-users-changed")); return rows; };
   const digits = value => String(value || "").replace(/\D/g, "");
+  const ageVerified = () => { try { return JSON.parse(localStorage.getItem(AGE_KEY) || "null")?.verified === true; } catch { return false; } };
 
   function currentIdentity() {
     const profile = game?.profile?.() || points?.profile?.() || {};
@@ -24,6 +26,7 @@
   }
 
   async function register() {
+    if (!document.getElementById("adminNav") && !ageVerified()) return null;
     const identity = currentIdentity();
     if (!identity.user_key) return null;
     const rows = read();
@@ -70,7 +73,12 @@
 
   window.BaliAppUsers = { KEY, register, listAdmin, currentIdentity };
   if (!document.getElementById("adminNav") && sessionStorage.getItem("bali_app_user_registered") !== "1") {
-    sessionStorage.setItem("bali_app_user_registered", "1");
-    setTimeout(register, 0);
+    const run = () => {
+      if (sessionStorage.getItem("bali_app_user_registered") === "1") return;
+      sessionStorage.setItem("bali_app_user_registered", "1");
+      register();
+    };
+    if (ageVerified()) setTimeout(run, 0);
+    else window.addEventListener("bali:age-verified", run, { once:true });
   }
 })();
