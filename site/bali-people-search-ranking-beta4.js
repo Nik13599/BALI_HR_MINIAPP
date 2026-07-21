@@ -7,6 +7,8 @@
   if (!social || !game || !points) return;
 
   let query = "";
+  let scheduled = false;
+  let refreshing = false;
   const normalize = value => String(value || "").toLocaleLowerCase("ru").replace(/[^\p{L}\p{N}@+]+/gu, " ").trim();
   const digits = value => String(value || "").replace(/\D/g, "");
 
@@ -64,22 +66,30 @@
         const paragraph = body.querySelector("p");
         paragraph?.insertAdjacentElement("afterend", badge);
       }
-      badge.textContent = position ? `Рейтинг #${position.position}` : "Без места в рейтинге";
-      card.dataset.peopleSearch = normalize(`${person.name || ""} ${person.username || person.telegram || ""} ${person.phone || ""} ${digits(person.phone || "")}`);
+      const badgeText = position ? `Рейтинг #${position.position}` : "Без места в рейтинге";
+      if (badge.textContent !== badgeText) badge.textContent = badgeText;
+      const searchValue = normalize(`${person.name || ""} ${person.username || person.telegram || ""} ${person.phone || ""} ${digits(person.phone || "")}`);
+      if (card.dataset.peopleSearch !== searchValue) card.dataset.peopleSearch = searchValue;
     });
     filterCards();
   }
 
   function filterCards() {
+    const queryDigits = digits(query);
     document.querySelectorAll('[data-open-social-person]').forEach(card => {
-      card.hidden = Boolean(query && !String(card.dataset.peopleSearch || "").includes(query) && !digits(card.dataset.peopleSearch || "").includes(digits(query)));
+      const searchValue = String(card.dataset.peopleSearch || "");
+      const hidden = Boolean(query && !searchValue.includes(query) && !(queryDigits && digits(searchValue).includes(queryDigits)));
+      if (card.hidden !== hidden) card.hidden = hidden;
     });
   }
 
   function moveRanking() {
     document.querySelector('.nav [data-page="ranking"]')?.remove();
     const nav = document.querySelector(".nav");
-    if (nav) nav.style.gridTemplateColumns = `repeat(${Math.max(1, nav.children.length)}, minmax(0,1fr))`;
+    if (nav) {
+      const columns = `repeat(${Math.max(1, nav.children.length)}, minmax(0,1fr))`;
+      if (nav.style.gridTemplateColumns !== columns) nav.style.gridTemplateColumns = columns;
+    }
     const controls = document.querySelector("#profileHero .profile-v2-controls");
     if (!controls) return;
     const me = game.profile();
@@ -93,17 +103,36 @@
       controls.prepend(button);
     }
     const total = rankingRows().length;
-    button.innerHTML = `<span>Рейтинг</span><small>${position ? `#${position.position} из ${total}` : `нет места · ${total}`}</small>`;
+    const html = `<span>Рейтинг</span><small>${position ? `#${position.position} из ${total}` : `нет места · ${total}`}</small>`;
+    if (button.innerHTML !== html) button.innerHTML = html;
   }
 
   function refresh() {
-    ensureSearch();
-    decorateCards();
-    moveRanking();
+    if (refreshing) return;
+    refreshing = true;
+    try {
+      ensureSearch();
+      decorateCards();
+      moveRanking();
+    } finally {
+      refreshing = false;
+    }
+  }
+
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      refresh();
+    });
   }
 
   styles();
   refresh();
-  new MutationObserver(() => requestAnimationFrame(refresh)).observe(document.body, { childList: true, subtree: true });
-  ["bali:social-changed", "bali:beta4-changed", "bali:points-changed", "bali:data-changed"].forEach(name => window.addEventListener(name, () => requestAnimationFrame(refresh)));
+  new MutationObserver(records => {
+    if (refreshing || !records.some(record => record.addedNodes.length || record.removedNodes.length)) return;
+    schedule();
+  }).observe(document.body, { childList: true, subtree: true });
+  ["bali:social-changed", "bali:beta4-changed", "bali:points-changed", "bali:data-changed"].forEach(name => window.addEventListener(name, schedule));
 })();
