@@ -16,8 +16,10 @@ on:
       - "site/chip-requests-user-beta4.js"
       - "site/admin-beta4.html"
       - "site/admin-beta4-categories.html"
+      - "site/admin-booking-manager-beta4.js"
       - "tests/demo-smoke.mjs"
       - "tests/bottom-nav-smoke.mjs"
+      - "tests/admin-booking-manager-smoke.mjs"
       - ".github/workflows/demo-smoke.yml"
   workflow_dispatch:
 
@@ -45,7 +47,10 @@ jobs:
           node --check site/beta4-profile-v2.js
           node --check site/beta4-loyalty-ui-stable.js
           node --check site/chip-requests-user-beta4.js
+          node --check site/admin-booking-manager-beta4.js
       - name: Run demo data smoke test
         run: node tests/demo-smoke.mjs
       - name: Run full user application smoke test
         run: node tests/bottom-nav-smoke.mjs
+      - name: Run admin booking manager smoke test
+        run: node tests/admin-booking-manager-smoke.mjs
