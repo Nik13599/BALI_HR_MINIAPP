@@ -6,10 +6,12 @@ on:
     paths:
       - "site/demo-*.js"
       - "site/beta4-stable.html"
+      - "site/beta4-square-loader.js"
       - "site/admin-beta4.html"
       - "site/admin-beta4-categories.html"
-      - "site/bottom-nav-dedupe-beta4.js"
+      - "site/bottom-nav-controller-beta4.js"
       - "tests/demo-smoke.mjs"
+      - "tests/bottom-nav-smoke.mjs"
       - ".github/workflows/demo-smoke.yml"
   workflow_dispatch:
 
@@ -30,6 +32,9 @@ jobs:
           node --check site/demo-live-sync.js
           node --check site/demo-user-toolbar.js
           node --check site/demo-admin-toolbar.js
-          node --check site/bottom-nav-dedupe-beta4.js
+          node --check site/bottom-nav-controller-beta4.js
+          node --check site/beta4-square-loader.js
       - name: Run demo data smoke test
         run: node tests/demo-smoke.mjs
+      - name: Run bottom navigation smoke test
+        run: node tests/bottom-nav-smoke.mjs
