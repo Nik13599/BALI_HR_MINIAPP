@@ -1,141 +1,59 @@
 (() => {
   if (window.__BALI_BETA4_MAP__) return;
   window.__BALI_BETA4_MAP__ = true;
-
   const store = window.BaliStore;
-  const read = (key, fallback) => {
-    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-    catch { return fallback; }
-  };
-  const esc = (value = "") => String(value).replace(/[&<>'"]/g, char => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
-  }[char]));
-  const clamp = value => Math.max(3, Math.min(97, Number(value ?? 50)));
+  if (!store) return;
+  const read=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
+  const esc=(v="")=>String(v).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+  const clamp=v=>Math.max(3,Math.min(97,Number(v??50)));
+  let tables=[];
 
-  let busy = false;
-  let currentLayout = null;
+  const style=document.createElement("style");
+  style.textContent=`#tableChoices{display:block!important;width:100%}.booking-square-map{position:relative;width:100%;aspect-ratio:1;overflow:hidden;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:#f0ebe3 url('./hall-plan.svg') center/contain no-repeat;touch-action:manipulation}.booking-square-table{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;width:31px;height:31px;padding:0;border:1px solid rgba(11,13,12,.72);border-radius:50%;background:#c8ff3d;color:#090b08;box-shadow:0 4px 12px rgba(0,0,0,.25);font:700 8px Unbounded;z-index:2}.booking-square-table.square{border-radius:7px}.booking-square-table.vip{background:#e4c86e;border-color:#7d6221;color:#2c2107}.booking-square-table:disabled{background:#ff7777;border-color:#6b1d1d;color:#2b0505;opacity:1;pointer-events:none}.booking-map-legend{display:flex;justify-content:center;gap:9px;margin-top:9px;flex-wrap:wrap}.booking-map-legend span{display:flex;align-items:center;gap:5px;color:#9da49f;font-size:8px}.booking-map-legend i{width:8px;height:8px;border-radius:50%;background:#c8ff3d}.booking-map-legend i.busy{background:#ff7777}.booking-map-legend i.vip{background:#e4c86e}.booking-map-help{text-align:center;margin-top:7px;color:#9da49f;font-size:9px}.booking-data-overlay{position:fixed;inset:0;z-index:1000;display:none;place-items:end center;background:rgba(0,0,0,.82)}.booking-data-overlay.open{display:grid}.booking-data-sheet{width:min(520px,100%);max-height:92dvh;overflow:auto;padding:18px;border-radius:22px 22px 0 0;background:#0d100f;display:grid;gap:11px}.booking-data-head{display:flex;justify-content:space-between;align-items:center}.booking-data-head h3{margin:0;font:600 19px Unbounded}.booking-data-close{width:40px;height:40px;border:1px solid rgba(255,255,255,.1);border-radius:50%;background:#171c1a;color:#fff;font-size:22px}.booking-data-summary{padding:11px;border:1px solid rgba(200,255,61,.22);border-radius:14px;background:rgba(200,255,61,.06);color:#c8ff3d;font-weight:800}.booking-data-sheet>.row{display:grid!important}.booking-data-sheet>label{display:grid!important}.booking-data-sheet>button{display:block!important;width:100%}@media(max-width:380px){.booking-square-table{width:28px;height:28px;font-size:7px}}`;
+  document.head.appendChild(style);
 
-  function setBackground(map, source, fullscreen = false) {
-    if (!map || !source) return;
-    map.classList.add("has-background");
-    map.style.backgroundImage = `url("${String(source).replace(/"/g, "%22")}")`;
-    map.style.backgroundPosition = "center";
-    map.style.backgroundRepeat = "no-repeat";
-    map.style.backgroundSize = "100% 100%";
-
-    const image = new Image();
-    image.onload = () => {
-      if (!image.naturalWidth || !image.naturalHeight) return;
-      const ratio = image.naturalWidth / image.naturalHeight;
-      map.style.aspectRatio = `${image.naturalWidth} / ${image.naturalHeight}`;
-      if (!fullscreen) return;
-
-      const maxWidth = Math.max(280, window.innerWidth - 8);
-      const maxHeight = Math.max(260, window.innerHeight - 124);
-      let width = maxWidth;
-      let height = width / ratio;
-      if (height > maxHeight) {
-        height = maxHeight;
-        width = height * ratio;
-      }
-      map.style.width = `${Math.floor(width)}px`;
-      map.style.height = `${Math.floor(height)}px`;
-    };
-    image.src = source;
+  function prepareForm(form){
+    if(form.querySelector('.booking-data-overlay'))return;
+    const mapLabel=[...form.children].find(x=>x.querySelector?.('#tableChoices'));
+    const overlay=document.createElement('div');overlay.className='booking-data-overlay';
+    const sheet=document.createElement('div');sheet.className='booking-data-sheet';
+    sheet.innerHTML='<div class="booking-data-head"><div><span class="eyebrow">БРОНИРОВАНИЕ</span><h3>Введите данные</h3></div><button type="button" class="booking-data-close">×</button></div><div class="booking-data-summary"></div>';
+    [...form.children].filter(x=>x!==mapLabel&&!x.matches('input[type="hidden"]')).forEach(x=>sheet.appendChild(x));
+    overlay.appendChild(sheet);form.appendChild(overlay);
+    sheet.querySelector('.booking-data-close').onclick=()=>overlay.classList.remove('open');
+    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('open')});
   }
 
-  function buttons(tables, selectedId) {
-    return tables.map(table => {
-      const shape = ["round", "square", "vip"].includes(table.shape) ? table.shape : "round";
-      const selected = String(table.id) === String(selectedId);
-      return `<button type="button" class="booking-map-table ${shape} ${selected ? "selected" : ""}" style="left:${clamp(table.x)}%;top:${clamp(table.y)}%" data-table="${esc(table.id)}" ${table.available ? "" : "disabled"}><strong>${esc(table.name || table.id)}</strong><small>${Number(table.seats || 4)} мест</small></button>`;
-    }).join("");
+  function openDetails(id){
+    const form=document.getElementById('bookingForm'),table=tables.find(x=>String(x.id)===String(id));
+    if(!form||!table||!table.available)return;
+    form.elements.table_id.value=table.id;
+    const overlay=form.querySelector('.booking-data-overlay');
+    overlay.querySelector('.booking-data-summary').textContent=`${table.name||table.id} · ${Number(table.seats||4)} мест`;
+    overlay.classList.add('open');
   }
 
-  function closeFullMap() {
-    const dialog = document.getElementById("bookingLayoutFullDialog");
-    if (!dialog) return;
-    try { dialog.close(); } catch {}
-    dialog.remove();
+  async function draw(){
+    const root=document.getElementById('tableChoices'),form=document.getElementById('bookingForm');
+    if(!root||!form||!form.elements.event_id.value)return;
+    const eventId=form.elements.event_id.value,date=form.elements.booking_date.value;
+    const layouts=read('bali_event_layouts_v1',{}),layout=layouts[eventId]||{},base=read('bali_hall_layout_config_v1',{});
+    const source=layout.tables?.length?layout.tables:await store.list('hall_tables');
+    const bookings=(await store.list('bookings')).filter(b=>!['cancelled','completed'].includes(b.status)&&(b.event_id===eventId||(!b.event_id&&b.booking_date===date)));
+    const occupied=new Set(bookings.map(b=>String(b.table_id)));
+    tables=source.filter(t=>t.active!==false).map(t=>({...t,available:!occupied.has(String(t.id))}));
+    const buttons=tables.map(t=>`<button type="button" class="booking-square-table ${['round','square','vip'].includes(t.shape)?t.shape:'round'}" data-square-table="${esc(t.id)}" style="left:${clamp(t.x)}%;top:${clamp(t.y)}%" ${t.available?'':'disabled'}>${esc(String(t.name||t.id).replace(/^Стол\s*/i,''))}</button>`).join('');
+    root.innerHTML=`<div class="booking-square-map" id="bookingSquareMap">${buttons||'<div class="booking-layout-empty">Схема ещё не настроена</div>'}</div><div class="booking-map-legend"><span><i></i>Свободен</span><span><i class="busy"></i>Занят</span><span><i class="vip"></i>VIP</span></div><div class="booking-map-help">Нажмите на свободный стол</div>`;
+    const bg=layout.background||base.image||'';if(bg)document.getElementById('bookingSquareMap').style.backgroundImage=`url("${String(bg).replace(/"/g,'%22')}")`;
+    prepareForm(form);
+    const title=root.closest('label')?.querySelector(':scope > span');if(title)title.textContent='Выберите свободный стол';
   }
 
-  function openFullMap() {
-    if (!currentLayout) return;
-    closeFullMap();
-
-    const selectedId = document.getElementById("bookingForm")?.elements.table_id?.value || currentLayout.selectedId || "";
-    const dialog = document.createElement("dialog");
-    dialog.id = "bookingLayoutFullDialog";
-    dialog.style.cssText = "width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#050706;color:#fff;overflow:hidden";
-    dialog.innerHTML = `<div style="height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto"><header style="display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;border-bottom:1px solid rgba(255,255,255,.1);background:#080a09"><div><span style="display:block;color:#c8ff3d;font-size:8px;font-weight:900;letter-spacing:.14em">СХЕМА МЕРОПРИЯТИЯ</span><strong style="display:block;margin-top:3px;font:600 17px Unbounded">Выберите стол</strong></div><button type="button" data-close-full-map style="width:44px;height:44px;border:1px solid rgba(255,255,255,.14);border-radius:50%;background:#171c1a;color:#fff;font-size:27px">×</button></header><div style="min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:4px"><div class="booking-layout-map" id="bookingLayoutMapFull" style="flex:0 0 auto;max-width:100%;max-height:100%">${buttons(currentLayout.tables, selectedId) || '<div class="booking-layout-empty">Раскладка ещё не настроена.</div>'}</div></div><footer style="padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(255,255,255,.1);background:#080a09"><div class="booking-layout-legend"><span><i></i>Свободен</span><span><i class="busy"></i>Занят</span><span><i class="vip"></i>VIP</span></div><p style="margin:7px 0 0;color:#aeb5b0;font-size:9px">Схема показана полностью, без обрезки.</p></footer></div>`;
-    document.body.appendChild(dialog);
-    dialog.showModal();
-    setBackground(document.getElementById("bookingLayoutMapFull"), currentLayout.background, true);
-  }
-
-  async function draw(force = false) {
-    const root = document.getElementById("tableChoices");
-    const form = document.getElementById("bookingForm");
-    if (!root || !form || (!force && root.querySelector(".booking-layout-map")) || busy) return;
-
-    const eventId = form.elements.event_id?.value;
-    const date = form.elements.booking_date?.value;
-    if (!eventId || !date) return;
-
-    busy = true;
-    try {
-      const layouts = read("bali_event_layouts_v1", {});
-      const eventLayout = layouts[eventId] || {};
-      const baseLayout = read("bali_hall_layout_config_v1", {});
-      const sourceTables = eventLayout.tables?.length ? eventLayout.tables : await store.list("hall_tables");
-      const bookings = (await store.list("bookings")).filter(row =>
-        !["cancelled", "completed"].includes(row.status) &&
-        (row.event_id === eventId || (!row.event_id && row.booking_date === date))
-      );
-      const occupied = new Set(bookings.map(row => String(row.table_id)));
-      const selectedId = form.elements.table_id?.value || "";
-      const tables = sourceTables
-        .filter(row => row.active !== false)
-        .map(row => ({ ...row, available: !occupied.has(String(row.id)) }));
-      const selected = tables.find(row => String(row.id) === String(selectedId));
-      const background = eventLayout.background || baseLayout.image || "";
-
-      currentLayout = { tables, selectedId, background };
-      root.innerHTML = `<div class="booking-layout-shell" style="width:calc(100vw - 4px);margin-left:calc(50% - 50vw + 2px)"><button type="button" data-open-full-map style="width:calc(100% - 20px);min-height:46px;margin:0 10px;border:1px solid rgba(200,255,61,.3);border-radius:14px;background:rgba(200,255,61,.09);color:#c8ff3d;font-weight:900">⛶ Открыть схему на весь экран</button><div class="booking-layout-scroll" data-open-full-map style="width:100%;border-radius:0;border-left:0;border-right:0"><div class="booking-layout-map" id="bookingLayoutMap">${buttons(tables, selectedId) || '<div class="booking-layout-empty">Раскладка этого мероприятия ещё не настроена.</div>'}</div></div><div class="booking-layout-legend" style="padding:0 10px"><span><i></i>Свободен</span><span><i class="busy"></i>Занят</span><span><i class="vip"></i>VIP</span></div><div class="booking-layout-selected" style="margin:0 10px">${selected ? `Выбран: <strong>${esc(selected.name || selected.id)}</strong> · ${Number(selected.seats || 4)} мест` : "Нажмите на схему, чтобы открыть её на весь экран"}</div></div>`;
-      setBackground(document.getElementById("bookingLayoutMap"), background, false);
-
-      const title = root.closest("label")?.querySelector(":scope > span");
-      if (title) title.textContent = "Полная схема расположения столов";
-    } finally {
-      busy = false;
-    }
-  }
-
-  document.addEventListener("click", event => {
-    if (event.target.closest("[data-event]")) {
-      setTimeout(() => draw(true), 80);
-      setTimeout(() => draw(true), 280);
-    }
-    if (event.target.closest("[data-open-full-map]")) {
-      event.preventDefault();
-      openFullMap();
-      return;
-    }
-    if (event.target.closest("[data-close-full-map]")) {
-      event.preventDefault();
-      closeFullMap();
-      return;
-    }
-    const table = event.target.closest("#bookingLayoutFullDialog [data-table]");
-    if (table && !table.disabled) {
-      setTimeout(() => {
-        closeFullMap();
-        draw(true);
-      }, 80);
-      return;
-    }
-    if (event.target.closest("#tableChoices [data-table]")) setTimeout(() => draw(true), 0);
-  });
-
-  window.addEventListener("bali:data-changed", () => setTimeout(() => draw(true), 80));
+  document.addEventListener('click',e=>{
+    const table=e.target.closest('[data-square-table]');
+    if(table){e.preventDefault();e.stopImmediatePropagation();openDetails(table.dataset.squareTable);return}
+    if(e.target.closest('[data-event]'))setTimeout(draw,320);
+  },true);
+  document.getElementById('eventDialog')?.addEventListener('close',()=>document.querySelector('.booking-data-overlay')?.classList.remove('open'));
+  window.addEventListener('bali:data-changed',()=>setTimeout(draw,320));
 })();
