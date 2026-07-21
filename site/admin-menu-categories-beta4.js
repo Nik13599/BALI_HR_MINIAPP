@@ -17,7 +17,8 @@
         active: row.active !== false
       }))
       .filter((row) => row.name)
-      .sort((a, b) => Number(a.sort_order) - Number(b.sort_order));
+      .sort((a, b) => Number(a.sort_order) - Number(b.sort_order))
+      .map((row, index) => ({ ...row, sort_order: index + 1 }));
     localStorage.setItem(KEY, JSON.stringify(normalized));
     window.dispatchEvent(new CustomEvent("bali:menu-categories-changed"));
     return normalized;
@@ -37,40 +38,84 @@
     if (document.getElementById("menuCategoriesAdminStyle")) return;
     const style = document.createElement("style");
     style.id = "menuCategoriesAdminStyle";
-    style.textContent = `.menu-category-admin{margin-bottom:14px}.menu-category-create{display:grid;grid-template-columns:minmax(0,1fr) 100px auto;gap:8px;align-items:end}.menu-category-create label,.menu-category-row label{display:grid;gap:5px;color:var(--muted);font-size:9px;font-weight:800}.menu-category-create input,.menu-category-row input{width:100%;min-height:43px;padding:0 11px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);color:var(--text)}.menu-category-list{display:grid;gap:8px;margin-top:13px}.menu-category-row{display:grid;grid-template-columns:minmax(0,1fr) 84px auto;gap:8px;align-items:end;padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:14px;background:rgba(255,255,255,.018)}.menu-category-actions{display:flex;gap:6px}.menu-category-actions button{min-width:38px;height:43px;border-radius:11px}.menu-category-note{margin-top:10px;color:var(--muted);font-size:9px;line-height:1.5}@media(max-width:650px){.menu-category-create,.menu-category-row{grid-template-columns:1fr 78px}.menu-category-create button,.menu-category-actions{grid-column:1/-1}.menu-category-actions button{flex:1}}`;
+    style.textContent = `
+      .menu-categories-open{min-height:42px;padding:0 14px;white-space:nowrap}
+      .menu-categories-dialog{width:min(760px,calc(100% - 20px));max-width:760px;max-height:92dvh;padding:0;border:1px solid var(--line);border-radius:22px;background:#0d100f;color:var(--text);overflow:hidden}
+      .menu-categories-dialog::backdrop{background:rgba(0,0,0,.82);backdrop-filter:blur(4px)}
+      .menu-categories-shell{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;max-height:92dvh}
+      .menu-categories-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;border-bottom:1px solid var(--line)}
+      .menu-categories-head h3{margin:0;font:600 18px Unbounded}
+      .menu-categories-head small{display:block;margin-top:5px;color:var(--muted);font-size:9px}
+      .menu-categories-close{width:42px;height:42px;flex:0 0 42px;border:1px solid var(--line);border-radius:50%;background:rgba(255,255,255,.04);color:var(--text);font-size:24px}
+      .menu-category-create{display:grid;grid-template-columns:minmax(0,1fr) 105px auto;gap:8px;align-items:end;padding:14px 18px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.018)}
+      .menu-category-create label,.menu-category-row label{display:grid;gap:5px;color:var(--muted);font-size:9px;font-weight:800}
+      .menu-category-create input,.menu-category-row input{width:100%;min-height:43px;padding:0 11px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04);color:var(--text)}
+      .menu-category-list{display:grid;gap:8px;padding:14px 18px;overflow:auto}
+      .menu-category-row{display:grid;grid-template-columns:minmax(0,1fr) 82px auto;gap:8px;align-items:end;padding:10px;border:1px solid rgba(255,255,255,.07);border-radius:14px;background:rgba(255,255,255,.018)}
+      .menu-category-actions{display:flex;gap:6px}
+      .menu-category-actions button{min-width:38px;height:43px;padding:0 9px;border-radius:11px}
+      .menu-category-note{margin:0;padding:11px 18px calc(11px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);color:var(--muted);font-size:9px;line-height:1.5}
+      @media(max-width:650px){
+        .menu-categories-dialog{width:100%;max-width:none;max-height:96dvh;margin:auto 0 0;border-radius:22px 22px 0 0}
+        .menu-categories-shell{max-height:96dvh}
+        .menu-category-create,.menu-category-row{grid-template-columns:1fr 78px}
+        .menu-category-create button,.menu-category-actions{grid-column:1/-1}
+        .menu-category-actions button{flex:1}
+      }
+    `;
     document.head.appendChild(style);
   }
 
-  function categoryPanel(rows) {
-    return `<section class="panel menu-category-admin"><div class="panel-head"><div><h3>Категории меню</h3><small>Добавление, переименование, сортировка и удаление</small></div></div><div class="panel-body"><form id="menuCategoryCreate" class="menu-category-create"><label><span>Новая категория</span><input name="name" placeholder="Например: Безалкогольные коктейли" required></label><label><span>Порядок</span><input name="sort_order" type="number" min="1" value="${rows.length + 1}"></label><button class="primary" type="submit">Добавить</button></form><div class="menu-category-list">${rows.map((row) => `<div class="menu-category-row" data-category-id="${esc(row.id)}"><label><span>Название</span><input data-category-name value="${esc(row.name)}"></label><label><span>Порядок</span><input data-category-order type="number" min="1" value="${Number(row.sort_order)}"></label><div class="menu-category-actions"><button class="secondary" type="button" data-category-up title="Выше">↑</button><button class="secondary" type="button" data-category-down title="Ниже">↓</button><button class="primary" type="button" data-category-save>Сохранить</button><button class="danger" type="button" data-category-delete>Удалить</button></div></div>`).join("")}</div><p class="menu-category-note">Новая категория сразу становится доступной при редактировании товара и появляется в пользовательском меню. Товары удалённой категории переносятся в «${FALLBACK}».</p></div></section>`;
-  }
+  function ensureDialog() {
+    let dialog = document.getElementById("menuCategoriesDialog");
+    if (dialog) return dialog;
+    dialog = document.createElement("dialog");
+    dialog.id = "menuCategoriesDialog";
+    dialog.className = "menu-categories-dialog";
+    dialog.innerHTML = `
+      <div class="menu-categories-shell">
+        <div class="menu-categories-head">
+          <div><h3>Категории меню</h3><small>Добавление, переименование, сортировка и удаление</small></div>
+          <button class="menu-categories-close" type="button" data-close-menu-categories>×</button>
+        </div>
+        <form id="menuCategoryCreate" class="menu-category-create">
+          <label><span>Новая категория</span><input name="name" placeholder="Например: Безалкогольные коктейли" required></label>
+          <label><span>Порядок</span><input name="sort_order" type="number" min="1" value="1"></label>
+          <button class="primary" type="submit">Добавить</button>
+        </form>
+        <div class="menu-category-list" id="menuCategoryList"></div>
+        <p class="menu-category-note">Новая категория сразу доступна при редактировании товара и появляется у пользователя. Товары удалённой категории переносятся в «${FALLBACK}».</p>
+      </div>`;
+    document.body.appendChild(dialog);
 
-  async function updateItemsCategory(oldName, newName) {
-    if (!oldName || oldName === newName) return;
-    const items = await store.list("menu_items");
-    for (const item of items.filter((row) => String(row.category || "") === oldName)) {
-      await store.save("menu_items", { ...item, category: newName });
-    }
-  }
+    dialog.querySelector("[data-close-menu-categories]").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.addEventListener("close", () => {
+      if (typeof state !== "undefined" && state.view === "menu") window.render?.();
+    });
 
-  async function renderCategoriesPanel(root) {
-    if (state.view !== "menu" || !root || root.querySelector(".menu-category-admin")) return;
-    const rows = await ensureCategories();
-    root.insertAdjacentHTML("afterbegin", categoryPanel(rows));
-
-    root.querySelector("#menuCategoryCreate")?.addEventListener("submit", async (event) => {
+    dialog.querySelector("#menuCategoryCreate").addEventListener("submit", async (event) => {
       event.preventDefault();
       const data = Object.fromEntries(new FormData(event.currentTarget).entries());
       const name = String(data.name || "").trim();
       const current = read();
       if (!name) return toast("Введите название категории");
       if (current.some((row) => row.name.toLowerCase() === name.toLowerCase())) return toast("Такая категория уже существует");
-      write([...current, { id: `category-${crypto.randomUUID?.() || Date.now()}`, name, sort_order: Number(data.sort_order || current.length + 1), active: true }]);
+      write([...current, {
+        id: `category-${crypto.randomUUID?.() || Date.now()}`,
+        name,
+        sort_order: Number(data.sort_order || current.length + 1),
+        active: true
+      }]);
+      event.currentTarget.reset();
+      event.currentTarget.sort_order.value = read().length + 1;
       toast("Категория добавлена");
-      render();
+      await drawDialog();
     });
 
-    root.querySelector(".menu-category-list")?.addEventListener("click", async (event) => {
+    dialog.querySelector("#menuCategoryList").addEventListener("click", async (event) => {
       const rowNode = event.target.closest("[data-category-id]");
       if (!rowNode) return;
       const id = rowNode.dataset.categoryId;
@@ -79,12 +124,14 @@
       if (index < 0) return;
 
       if (event.target.closest("[data-category-up]") && index > 0) {
-        [rows[index - 1].sort_order, rows[index].sort_order] = [rows[index].sort_order, rows[index - 1].sort_order];
-        write(rows); return render();
+        [rows[index - 1], rows[index]] = [rows[index], rows[index - 1]];
+        write(rows.map((row, position) => ({ ...row, sort_order: position + 1 })));
+        return drawDialog();
       }
       if (event.target.closest("[data-category-down]") && index < rows.length - 1) {
-        [rows[index + 1].sort_order, rows[index].sort_order] = [rows[index].sort_order, rows[index + 1].sort_order];
-        write(rows); return render();
+        [rows[index + 1], rows[index]] = [rows[index], rows[index + 1]];
+        write(rows.map((row, position) => ({ ...row, sort_order: position + 1 })));
+        return drawDialog();
       }
       if (event.target.closest("[data-category-save]")) {
         const oldName = rows[index].name;
@@ -96,7 +143,7 @@
         write(rows);
         await updateItemsCategory(oldName, newName);
         toast("Категория сохранена");
-        return render();
+        return drawDialog();
       }
       if (event.target.closest("[data-category-delete]")) {
         const deleted = rows[index];
@@ -110,16 +157,75 @@
         write(rows);
         await updateItemsCategory(deleted.name, FALLBACK);
         toast("Категория удалена");
-        return render();
+        return drawDialog();
       }
     });
+    return dialog;
+  }
+
+  function categoryRows(rows) {
+    return rows.map((row, index) => `
+      <div class="menu-category-row" data-category-id="${esc(row.id)}">
+        <label><span>Название</span><input data-category-name value="${esc(row.name)}"></label>
+        <label><span>Порядок</span><input data-category-order type="number" min="1" value="${Number(row.sort_order)}"></label>
+        <div class="menu-category-actions">
+          <button class="secondary" type="button" data-category-up title="Выше" ${index === 0 ? "disabled" : ""}>↑</button>
+          <button class="secondary" type="button" data-category-down title="Ниже" ${index === rows.length - 1 ? "disabled" : ""}>↓</button>
+          <button class="primary" type="button" data-category-save>Сохранить</button>
+          <button class="danger" type="button" data-category-delete>Удалить</button>
+        </div>
+      </div>`).join("") || '<div class="empty">Категорий пока нет</div>';
+  }
+
+  async function drawDialog() {
+    const dialog = ensureDialog();
+    const rows = await ensureCategories();
+    dialog.querySelector("#menuCategoryList").innerHTML = categoryRows(rows);
+    dialog.querySelector('#menuCategoryCreate [name="sort_order"]').value = rows.length + 1;
+    document.querySelector("[data-open-menu-categories] [data-category-count]")?.replaceChildren(document.createTextNode(String(rows.length)));
+  }
+
+  async function openCategoriesDialog() {
+    const dialog = ensureDialog();
+    await drawDialog();
+    if (!dialog.open) dialog.showModal();
+  }
+
+  async function updateItemsCategory(oldName, newName) {
+    if (!oldName || oldName === newName) return;
+    const items = await store.list("menu_items");
+    for (const item of items.filter((row) => String(row.category || "") === oldName)) {
+      await store.save("menu_items", { ...item, category: newName });
+    }
+  }
+
+  async function addCategoriesButton(root) {
+    if (state.view !== "menu" || !root) return;
+    const panelHead = root.querySelector(".panel .panel-head");
+    if (!panelHead || panelHead.querySelector("[data-open-menu-categories]")) return;
+    const rows = await ensureCategories();
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "secondary menu-categories-open";
+    button.dataset.openMenuCategories = "true";
+    button.innerHTML = `Категории <span class="count" data-category-count>${rows.length}</span>`;
+    const filters = panelHead.querySelector(".filter-bar");
+    filters ? filters.insertAdjacentElement("beforebegin", button) : panelHead.appendChild(button);
   }
 
   injectStyles();
+  ensureDialog();
+  document.addEventListener("click", (event) => {
+    if (event.target.closest("[data-open-menu-categories]")) {
+      event.preventDefault();
+      openCategoriesDialog();
+    }
+  }, true);
+
   const baseRenderMenu = renderMenu;
   renderMenu = async function(root) {
     await baseRenderMenu(root);
-    await renderCategoriesPanel(root);
+    await addCategoriesButton(root);
   };
 
   const baseOpenEditor = openEditor;
@@ -132,5 +238,5 @@
     return baseOpenEditor(type, row);
   };
 
-  window.BaliMenuCategories = { KEY, read, write, ensureCategories };
+  window.BaliMenuCategories = { KEY, read, write, ensureCategories, openDialog: openCategoriesDialog };
 })();
