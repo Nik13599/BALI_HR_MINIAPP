@@ -9,6 +9,14 @@
   const profile=()=>game.profile(),myKey=()=>String(profile().id||profile().userKey||points?.profile?.().userKey||profile().code||"");
   const myKeys=()=>new Set(game.identityKeys(profile()).map(String));
   const entriesLocal=()=>read(ENTRY_KEY,[]),votesLocal=()=>read(VOTE_KEY,[]),prizesLocal=()=>read(PRIZE_KEY,[]);
+  const at=(date,time="00:00")=>{const value=new Date(`${String(date||"").slice(0,10)}T${time||"00:00"}:00`);return Number.isNaN(value.getTime())?null:value};
+  function eventEnd(event){
+    const startDate=event?.event_date||"",startTime=event?.event_time||"23:00",endTime=event?.event_end_time||event?.end_time||"06:00";
+    let endDate=event?.event_end_date||event?.end_date||startDate;
+    if(!event?.event_end_date&&!event?.end_date&&endTime<=startTime){const date=at(startDate,"12:00");if(date){date.setDate(date.getDate()+1);endDate=date.toISOString().slice(0,10)}}
+    return at(endDate,endTime)?.getTime()||0;
+  }
+  const isActiveEvent=event=>eventEnd(event)>Date.now();
   async function adminSession(){if(!store.cloudEnabled||!store.client)return false;try{const{data}=await store.client.auth.getSession();return Boolean(data?.session?.user)}catch{return false}}
   async function cloud(table,eventId=""){
     if(!store.cloudEnabled||!store.client)return[];
@@ -27,13 +35,13 @@
   async function events(){return(await store.list("events")).filter(e=>e.night_crown_enabled===true||e.night_crown_enabled==="true")}
   async function eventById(id){return(await store.list("events")).find(e=>String(e.id)===String(id))||null}
   async function myCheckin(eventId){const rows=await attendance.listCheckins(eventId),keys=myKeys(),tg=String(profile().telegramId||"");return rows.find(r=>keys.has(String(r.user_key||""))||(tg&&String(r.telegram_id||"")===tg))||null}
-  async function activeEvent(){const enabled=await events(),all=await attendance.listCheckins(),keys=myKeys(),tg=String(profile().telegramId||"");const mine=all.filter(r=>keys.has(String(r.user_key||""))||(tg&&String(r.telegram_id||"")===tg)).sort((a,b)=>String(b.checked_in_at||"").localeCompare(String(a.checked_in_at||"")));for(const row of mine){const e=enabled.find(x=>String(x.id)===String(row.event_id));if(e)return e}const today=new Date().toISOString().slice(0,10);return enabled.find(e=>String(e.event_date)===today)||null}
-  async function canAccess(eventId){return Boolean(await myCheckin(eventId))}
+  async function activeEvent(){const enabled=(await events()).filter(isActiveEvent),all=await attendance.listCheckins(),keys=myKeys(),tg=String(profile().telegramId||"");const mine=all.filter(r=>keys.has(String(r.user_key||""))||(tg&&String(r.telegram_id||"")===tg)).sort((a,b)=>String(b.checked_in_at||"").localeCompare(String(a.checked_in_at||"")));for(const row of mine){const e=enabled.find(x=>String(x.id)===String(row.event_id));if(e)return e}const today=new Date().toISOString().slice(0,10);return enabled.find(e=>String(e.event_date)===today)||null}
+  async function canAccess(eventId){const event=await eventById(eventId);return Boolean(event&&isActiveEvent(event)&&await myCheckin(eventId))}
   async function entries(eventId="",all=false){const rows=await merge("night_crown_entries",ENTRY_KEY,eventId);return rows.filter(r=>all||r.status==="approved")}
   async function myEntry(eventId){const key=myKey(),tg=String(profile().telegramId||"");return(await entries(eventId,true)).find(r=>String(r.user_key)===key||(tg&&String(r.telegram_id||"")===tg))||null}
   async function join(eventId,{gender,photo}){
     const event=await eventById(eventId);if(!event||!(event.night_crown_enabled===true||event.night_crown_enabled==="true"))return{ok:false,message:"Конкурс для этого мероприятия не активирован"};
-    if(!(await canAccess(eventId)))return{ok:false,message:"Участие доступно только после подтверждения входа по QR"};
+    if(!(await canAccess(eventId)))return{ok:false,message:"Участие доступно только во время мероприятия после подтверждения входа по QR"};
     if(!["female","male"].includes(gender))return{ok:false,message:"Выберите женский или мужской сектор"};if(!photo)return{ok:false,message:"Загрузите фотографию, сделанную в клубе BALI"};
     const p=profile(),id=`crown-entry-${safe(eventId)}-${safe(myKey())}`,previous=await myEntry(eventId);
     const row={...(previous||{}),id,event_id:String(eventId),event_title:event.title||"Мероприятие BALI",event_date:event.event_date||"",user_key:myKey(),telegram_id:p.telegramId||null,name:p.name||"Гость BALI",username:p.username||p.telegram||"",gender,photo_url:photo,status:"pending",moderation_note:"",joined_at:previous?.joined_at||now(),updated_at:now(),approved_at:null,rejected_at:null};
@@ -43,14 +51,20 @@
     if(!(await adminSession())&&store.cloudEnabled)return{ok:false,message:"Требуется вход администратора"};const row=(await entries("",true)).find(x=>String(x.id)===String(id));if(!row)return{ok:false,message:"Заявка не найдена"};
     const next={...row,status,moderation_note:note||"",updated_at:now(),approved_at:status==="approved"?now():row.approved_at,rejected_at:status==="rejected"?now():null};await save("night_crown_entries",ENTRY_KEY,next);return{ok:true,entry:next};
   }
-  async function votes(eventId=""){return merge("night_crown_votes",VOTE_KEY,eventId)}
+  async function rawVotes(eventId=""){return merge("night_crown_votes",VOTE_KEY,eventId)}
+  async function votes(eventId=""){
+    const rows=(await rawVotes(eventId)).sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")));
+    const latest=new Map();
+    for(const row of rows){const key=`${row.event_id}:${row.voter_key}:${row.candidate_gender||"unknown"}`;if(!latest.has(key))latest.set(key,row)}
+    return[...latest.values()];
+  }
   async function toggleVote(eventId,candidateKey){
-    if(!(await canAccess(eventId)))return{ok:false,message:"Голосовать могут только гости этого мероприятия после QR-входа"};
+    if(!(await canAccess(eventId)))return{ok:false,message:"Голосовать можно только во время мероприятия после QR-входа"};
     const candidate=(await entries(eventId)).find(x=>String(x.user_key)===String(candidateKey));
     if(!candidate)return{ok:false,message:"Участник не допущен к голосованию"};
     if(String(candidate.user_key)===myKey())return{ok:false,message:"Нельзя голосовать за себя"};
 
-    const voter=myKey(),allVotes=await votes(eventId);
+    const voter=myKey(),allVotes=await rawVotes(eventId);
     const sectorVotes=allVotes.filter(v=>String(v.event_id)===String(eventId)&&String(v.voter_key)===voter&&String(v.candidate_gender)===String(candidate.gender));
     const targetWasActive=sectorVotes.some(v=>String(v.candidate_key)===String(candidateKey));
     const replaced=sectorVotes.some(v=>String(v.candidate_key)!==String(candidateKey));
@@ -75,5 +89,5 @@
     if(type==="reward"&&value){try{loyalty?.grantReward?.(String(value),{userKey:targetKey,name:entry.name},`Приз конкурса ${entry.event_title}`)}catch{}}
     await save("night_crown_prizes",PRIZE_KEY,row);return{ok:true,prize:row};
   }
-  window.BaliNightCrown={ENTRY_KEY,VOTE_KEY,PRIZE_KEY,events,eventById,activeEvent,myCheckin,canAccess,entries,myEntry,join,moderate,votes,toggleVote,ranking,history,award,myKey};
+  window.BaliNightCrown={ENTRY_KEY,VOTE_KEY,PRIZE_KEY,events,eventById,activeEvent,myCheckin,canAccess,entries,myEntry,join,moderate,votes,toggleVote,ranking,history,award,myKey,eventEnd,isActiveEvent};
 })();
