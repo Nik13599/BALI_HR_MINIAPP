@@ -6,9 +6,10 @@ on:
     paths:
       - "site/demo-*.js"
       - "site/beta4-stable.html"
-      - "site/bali-user-clean.js"
-      - "site/bali-user-clean.css"
-      - "site/bali-event-attendance.js"
+      - "site/beta4-square-loader.js"
+      - "site/legacy-nav-final-beta4.css"
+      - "site/legacy-nav-final-beta4.js"
+      - "site/legacy-event-attendance-beta4.js"
       - "site/admin-beta4.html"
       - "site/admin-beta4-categories.html"
       - "tests/demo-smoke.mjs"
@@ -33,9 +34,10 @@ jobs:
           node --check site/demo-live-sync.js
           node --check site/demo-user-toolbar.js
           node --check site/demo-admin-toolbar.js
-          node --check site/bali-user-clean.js
-          node --check site/bali-event-attendance.js
+          node --check site/beta4-square-loader.js
+          node --check site/legacy-nav-final-beta4.js
+          node --check site/legacy-event-attendance-beta4.js
       - name: Run demo data smoke test
         run: node tests/demo-smoke.mjs
-      - name: Run clean user navigation smoke test
+      - name: Run restored legacy navigation smoke test
         run: node tests/bottom-nav-smoke.mjs
