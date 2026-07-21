@@ -1,46 +1,20 @@
 (() => {
   if (window.BaliChipRequests) return;
-  const points = window.BaliPoints;
-  const game = window.BaliBeta4Game;
-  const loyalty = window.BaliBeta4Loyalty;
-  const store = window.BaliStore;
-  if (!points || !game || !loyalty) return;
-  const KEY = "bali_chip_requests_v1";
-  const now = () => new Date().toISOString();
-  const uid = () => `chip-request-${crypto.randomUUID?.() || Date.now()}`;
-  const readLocal = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
-  const writeLocal = rows => { localStorage.setItem(KEY, JSON.stringify(rows)); window.dispatchEvent(new CustomEvent("bali:chip-requests-changed", { detail:{ count:rows.length } })); return rows; };
-  const rate = () => Math.max(1, Number(loyalty.config()?.chipRatePoints || 100));
-  const identity = profile => ({ user_key:String(profile.id || profile.userKey || points.profile().userKey || profile.code || ""), telegram_id:profile.telegramId || null, name:profile.name || "Гость BALI", phone:profile.phone || "", telegram:profile.username || profile.telegram || "" });
+  const points=window.BaliPoints,game=window.BaliBeta4Game,loyalty=window.BaliBeta4Loyalty,store=window.BaliStore;
+  if(!points||!game||!loyalty)return;
+  const KEY="bali_chip_requests_v1",now=()=>new Date().toISOString(),uid=()=>`chip-request-${crypto.randomUUID?.()||Date.now()}`,secret=()=>crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const readLocal=()=>{try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch{return[]}},writeLocal=rows=>{localStorage.setItem(KEY,JSON.stringify(rows));window.dispatchEvent(new CustomEvent("bali:chip-requests-changed",{detail:{count:rows.length}}));return rows};
+  const rate=()=>Math.max(1,Number(loyalty.config()?.chipRatePoints||100));
+  const identity=p=>({user_key:String(p.id||p.userKey||points.profile().userKey||p.code||""),telegram_id:p.telegramId||null,name:p.name||"Гость BALI",phone:p.phone||"",telegram:p.username||p.telegram||""});
   async function isAdminSession(){if(!store?.cloudEnabled||!store.client)return false;try{const{data}=await store.client.auth.getSession();return Boolean(data?.session?.user)}catch{return false}}
-  async function saveCloud(row) {
-    if (!store?.cloudEnabled || !store.client) return null;
-    try {
-      if(await isAdminSession()){
-        const { data, error } = await store.client.from("chip_requests").upsert(row).select().single();
-        return error ? null : data;
-      }
-      const { error } = await store.client.from("chip_requests").insert(row);
-      return error ? null : row;
-    } catch { return null; }
-  }
-  async function listCloud() {
-    if (!store?.cloudEnabled || !store.client || !(await isAdminSession())) return [];
-    try { const { data, error } = await store.client.from("chip_requests").select("*").order("created_at", { ascending:false }); return error ? [] : (data || []); }
-    catch { return []; }
-  }
-  async function list() { const local=readLocal(),cloud=await listCloud(); return [...new Map([...cloud,...local].map(row=>[String(row.id),row])).values()].sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||""))); }
-  async function create(quantity) {
-    const chips=Math.max(1,Math.floor(Number(quantity||0)));if(!Number.isFinite(chips)||chips<1)return{ok:false,message:"Укажите количество фишек"};
-    const cost=chips*rate(),profile=game.profile(),spent=loyalty.spendPoints(cost,`Заявка на ${chips} фиш.`,"chip_request");if(!spent.ok)return spent;
-    const row={id:uid(),...identity(profile),quantity:chips,points_cost:cost,rate_points:rate(),status:"pending",created_at:now(),fulfilled_at:null,fulfilled_by:"",cancelled_at:null,refund_at:null};
-    const rows=readLocal();rows.unshift(row);writeLocal(rows.slice(0,1000));const cloud=await saveCloud(row);
-    if(store?.cloudEnabled&&!cloud){points.adjustAccount(points.profile(),cost,`Возврат: заявка на ${chips} фиш. не отправлена`);writeLocal(readLocal().filter(x=>x.id!==row.id));return{ok:false,message:"Не удалось отправить заявку администратору. Баллы возвращены"}}
-    return{ok:true,request:row,balance:Number(spent.balance||0)};
-  }
-  async function update(id,patch){const rows=readLocal(),index=rows.findIndex(row=>String(row.id)===String(id));let row=index>=0?{...rows[index],...patch}:{id,...patch};if(index>=0)rows[index]=row;else rows.unshift(row);writeLocal(rows.slice(0,1000));const cloud=await saveCloud(row);return cloud||row}
-  async function fulfill(id,adminName="BALI Admin"){const rows=await list(),current=rows.find(row=>String(row.id)===String(id));if(!current)return{ok:false,message:"Заявка не найдена"};if(current.status==="fulfilled")return{ok:false,message:"Фишки уже вручены"};return{ok:true,request:await update(id,{...current,status:"fulfilled",fulfilled_at:now(),fulfilled_by:adminName})}}
-  async function cancel(id,refund=true,adminName="BALI Admin"){const rows=await list(),current=rows.find(row=>String(row.id)===String(id));if(!current)return{ok:false,message:"Заявка не найдена"};if(current.status==="fulfilled")return{ok:false,message:"Вручённую заявку нельзя отменить"};let refundAt=current.refund_at||null;if(refund&&!refundAt){points.adjustAccount({userKey:current.user_key,name:current.name,phone:current.phone,telegram:current.telegram},Number(current.points_cost||0),`Возврат за отменённую заявку на ${Number(current.quantity||0)} фиш.`);refundAt=now()}return{ok:true,request:await update(id,{...current,status:"cancelled",cancelled_at:now(),cancelled_by:adminName,refund_at:refundAt})}}
-  function mine(rows=readLocal()){const p=game.profile(),keys=new Set(game.identityKeys(p).map(String));return rows.filter(row=>keys.has(String(row.user_key||""))||(p.telegramId&&String(row.telegram_id||"")===String(p.telegramId)))}
+  async function saveCloud(row){if(!store?.cloudEnabled||!store.client)return null;try{if(await isAdminSession()){const{data,error}=await store.client.from("chip_requests").upsert(row).select().single();return error?null:data}const{error}=await store.client.from("chip_requests").insert(row);return error?null:row}catch{return null}}
+  async function listAdminCloud(){if(!store?.cloudEnabled||!store.client||!(await isAdminSession()))return[];try{const{data,error}=await store.client.from("chip_requests").select("*").order("created_at",{ascending:false});return error?[]:data||[]}catch{return[]}}
+  async function syncMine(local){if(!store?.cloudEnabled||!store.client||await isAdminSession())return local;let changed=false;const rows=[...local];await Promise.all(rows.slice(0,50).map(async(row,index)=>{if(!row.lookup_token)return;try{const{data,error}=await store.client.rpc("get_chip_request_status",{p_id:row.id,p_token:row.lookup_token});const status=Array.isArray(data)?data[0]:data;if(error||!status)return;const next={...row,...status};if(JSON.stringify(next)!==JSON.stringify(row)){rows[index]=next;changed=true}}catch{}}));if(changed)writeLocal(rows);return rows}
+  async function list(){const local=readLocal();if(await isAdminSession()){const cloud=await listAdminCloud();return[...new Map([...cloud,...local].map(r=>[String(r.id),r])).values()].sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")))}return(await syncMine(local)).sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")))}
+  async function create(quantity){const chips=Math.max(1,Math.floor(Number(quantity||0)));if(!Number.isFinite(chips)||chips<1)return{ok:false,message:"Укажите количество фишек"};const cost=chips*rate(),profile=game.profile(),spent=loyalty.spendPoints(cost,`Заявка на ${chips} фиш.`,"chip_request");if(!spent.ok)return spent;const row={id:uid(),lookup_token:secret(),...identity(profile),quantity:chips,points_cost:cost,rate_points:rate(),status:"pending",created_at:now(),fulfilled_at:null,fulfilled_by:"",cancelled_at:null,cancelled_by:"",refund_at:null};const rows=readLocal();rows.unshift(row);writeLocal(rows.slice(0,1000));const cloud=await saveCloud(row);if(store?.cloudEnabled&&!cloud){points.adjustAccount(points.profile(),cost,`Возврат: заявка на ${chips} фиш. не отправлена`);writeLocal(readLocal().filter(x=>x.id!==row.id));return{ok:false,message:"Не удалось отправить заявку администратору. Баллы возвращены"}}return{ok:true,request:row,balance:Number(spent.balance||0)}}
+  async function update(id,patch){const rows=readLocal(),index=rows.findIndex(r=>String(r.id)===String(id));let row=index>=0?{...rows[index],...patch}:{id,...patch};if(index>=0)rows[index]=row;else rows.unshift(row);writeLocal(rows.slice(0,1000));const cloud=await saveCloud(row);return cloud||row}
+  async function fulfill(id,adminName="BALI Admin"){const rows=await list(),current=rows.find(r=>String(r.id)===String(id));if(!current)return{ok:false,message:"Заявка не найдена"};if(current.status==="fulfilled")return{ok:false,message:"Фишки уже вручены"};return{ok:true,request:await update(id,{...current,status:"fulfilled",fulfilled_at:now(),fulfilled_by:adminName})}}
+  async function cancel(id,refund=true,adminName="BALI Admin"){const rows=await list(),current=rows.find(r=>String(r.id)===String(id));if(!current)return{ok:false,message:"Заявка не найдена"};if(current.status==="fulfilled")return{ok:false,message:"Вручённую заявку нельзя отменить"};let refundAt=current.refund_at||null;if(refund&&!refundAt){points.adjustAccount({userKey:current.user_key,name:current.name,phone:current.phone,telegram:current.telegram},Number(current.points_cost||0),`Возврат за отменённую заявку на ${Number(current.quantity||0)} фиш.`);refundAt=now()}return{ok:true,request:await update(id,{...current,status:"cancelled",cancelled_at:now(),cancelled_by:adminName,refund_at:refundAt})}}
+  function mine(rows=readLocal()){const p=game.profile(),keys=new Set(game.identityKeys(p).map(String));return rows.filter(r=>keys.has(String(r.user_key||""))||(p.telegramId&&String(r.telegram_id||"")===String(p.telegramId)))}
   window.BaliChipRequests={KEY,rate,list,mine,create,fulfill,cancel,update};
 })();
