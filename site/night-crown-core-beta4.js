@@ -45,9 +45,23 @@
   }
   async function votes(eventId=""){return merge("night_crown_votes",VOTE_KEY,eventId)}
   async function toggleVote(eventId,candidateKey){
-    if(!(await canAccess(eventId)))return{ok:false,message:"Голосовать могут только гости этого мероприятия после QR-входа"};const candidate=(await entries(eventId)).find(x=>String(x.user_key)===String(candidateKey));if(!candidate)return{ok:false,message:"Участник не допущен к голосованию"};if(String(candidate.user_key)===myKey())return{ok:false,message:"Нельзя голосовать за себя"};
-    const id=`crown-vote-${safe(eventId)}-${safe(myKey())}-${safe(candidateKey)}`,rows=votesLocal(),found=rows.find(x=>x.id===id);if(found){await remove("night_crown_votes",VOTE_KEY,id);return{ok:true,active:false}}
-    const event=await eventById(eventId),row={id,event_id:String(eventId),event_title:event?.title||candidate.event_title||"Мероприятие BALI",event_date:event?.event_date||candidate.event_date||"",voter_key:myKey(),candidate_key:String(candidateKey),candidate_name:candidate.name,candidate_gender:candidate.gender,created_at:now()};await save("night_crown_votes",VOTE_KEY,row);return{ok:true,active:true};
+    if(!(await canAccess(eventId)))return{ok:false,message:"Голосовать могут только гости этого мероприятия после QR-входа"};
+    const candidate=(await entries(eventId)).find(x=>String(x.user_key)===String(candidateKey));
+    if(!candidate)return{ok:false,message:"Участник не допущен к голосованию"};
+    if(String(candidate.user_key)===myKey())return{ok:false,message:"Нельзя голосовать за себя"};
+
+    const voter=myKey(),allVotes=await votes(eventId);
+    const sectorVotes=allVotes.filter(v=>String(v.event_id)===String(eventId)&&String(v.voter_key)===voter&&String(v.candidate_gender)===String(candidate.gender));
+    const targetWasActive=sectorVotes.some(v=>String(v.candidate_key)===String(candidateKey));
+    const replaced=sectorVotes.some(v=>String(v.candidate_key)!==String(candidateKey));
+
+    for(const vote of sectorVotes) await remove("night_crown_votes",VOTE_KEY,vote.id);
+    if(targetWasActive)return{ok:true,active:false,replaced:false,gender:candidate.gender};
+
+    const event=await eventById(eventId),id=`crown-vote-${safe(eventId)}-${safe(voter)}-${safe(candidateKey)}`;
+    const row={id,event_id:String(eventId),event_title:event?.title||candidate.event_title||"Мероприятие BALI",event_date:event?.event_date||candidate.event_date||"",voter_key:voter,candidate_key:String(candidateKey),candidate_name:candidate.name,candidate_gender:candidate.gender,created_at:now()};
+    await save("night_crown_votes",VOTE_KEY,row);
+    return{ok:true,active:true,replaced,gender:candidate.gender};
   }
   async function ranking(eventId,gender=""){
     const [list,allVotes]=await Promise.all([entries(eventId),votes(eventId)]),filtered=list.filter(x=>!gender||x.gender===gender),total=allVotes.filter(v=>!gender||v.candidate_gender===gender).length;
