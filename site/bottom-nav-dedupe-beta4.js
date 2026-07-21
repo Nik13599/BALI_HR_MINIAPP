@@ -16,31 +16,44 @@
 
   function normalizeButton(button, page) {
     const meta = META[page];
-    if (!meta) return;
-
+    if (!meta) return false;
+    let changed = false;
     const icons = [...button.querySelectorAll(":scope > i")];
     const labels = [...button.querySelectorAll(":scope > span")];
 
-    icons.slice(1).forEach(node => node.remove());
-    labels.slice(1).forEach(node => node.remove());
+    icons.slice(1).forEach(node => { node.remove(); changed = true; });
+    labels.slice(1).forEach(node => { node.remove(); changed = true; });
 
     let icon = icons[0];
     if (!icon) {
       icon = document.createElement("i");
+      icon.textContent = meta[0];
       button.prepend(icon);
+      changed = true;
+    } else if (!icon.textContent?.trim()) {
+      icon.textContent = meta[0];
+      changed = true;
     }
-    if (!icon.textContent?.trim()) icon.textContent = meta[0];
 
     let label = labels[0];
     if (!label) {
       label = document.createElement("span");
+      label.textContent = meta[1];
       button.append(label);
+      changed = true;
+    } else if (!label.textContent?.trim()) {
+      label.textContent = meta[1];
+      changed = true;
     }
-    if (!label.textContent?.trim()) label.textContent = meta[1];
 
-    button.type = "button";
-    button.style.pointerEvents = "auto";
-    button.removeAttribute("disabled");
+    if (button.type !== "button") { button.type = "button"; changed = true; }
+    if (button.style.pointerEvents !== "auto") { button.style.pointerEvents = "auto"; changed = true; }
+    if (button.disabled) { button.disabled = false; changed = true; }
+    return changed;
+  }
+
+  function sameOrder(current, desired) {
+    return current.length === desired.length && current.every((button, index) => button === desired[index]);
   }
 
   function clean() {
@@ -48,16 +61,13 @@
     cleaning = true;
     try {
       const shell = document.querySelector(".shell");
-      const navs = shell
-        ? [...shell.querySelectorAll(":scope > .nav")]
-        : [...document.querySelectorAll("nav.nav")];
+      const navs = shell ? [...shell.querySelectorAll(":scope > .nav")] : [...document.querySelectorAll("nav.nav")];
       if (!navs.length) return;
 
       const nav = navs[0];
       navs.slice(1).forEach(extra => extra.remove());
-      nav.style.pointerEvents = "auto";
-      nav.style.zIndex = "50";
-
+      if (nav.style.pointerEvents !== "auto") nav.style.pointerEvents = "auto";
+      if (nav.style.zIndex !== "50") nav.style.zIndex = "50";
       nav.querySelectorAll(':scope > button[data-page="ranking"]').forEach(button => button.remove());
 
       const keep = new Map();
@@ -77,18 +87,18 @@
         }
       });
 
-      ORDER.forEach(page => {
-        const button = keep.get(page);
-        if (!button) return;
-        normalizeButton(button, page);
-        nav.appendChild(button);
-      });
+      const current = [...nav.querySelectorAll(":scope > button[data-page]")];
+      const desired = [
+        ...ORDER.map(page => keep.get(page)).filter(Boolean),
+        ...current.filter(button => !ORDER.includes(String(button.dataset.page || "")))
+      ];
+      desired.forEach(button => normalizeButton(button, String(button.dataset.page || "")));
+      if (!sameOrder(current, desired)) desired.forEach(button => nav.appendChild(button));
 
-      nav.style.setProperty(
-        "grid-template-columns",
-        `repeat(${Math.max(1, nav.querySelectorAll(":scope > button[data-page]").length)}, minmax(0, 1fr))`,
-        "important"
-      );
+      const columns = `repeat(${Math.max(1, desired.length)}, minmax(0, 1fr))`;
+      if (nav.style.getPropertyValue("grid-template-columns") !== columns) {
+        nav.style.setProperty("grid-template-columns", columns, "important");
+      }
     } finally {
       cleaning = false;
     }
@@ -97,12 +107,8 @@
   function activate(page) {
     const screen = document.querySelector(`.page[data-screen="${CSS.escape(page)}"]`);
     if (!screen) return;
-    document.querySelectorAll(".page[data-screen]").forEach(node => {
-      node.classList.toggle("active", node === screen);
-    });
-    document.querySelectorAll(".nav button[data-page]").forEach(button => {
-      button.classList.toggle("active", button.dataset.page === page);
-    });
+    document.querySelectorAll(".page[data-screen]").forEach(node => node.classList.toggle("active", node === screen));
+    document.querySelectorAll(".nav button[data-page]").forEach(button => button.classList.toggle("active", button.dataset.page === page));
     try { screen.scrollTo(0, 0); } catch {}
     window.dispatchEvent(new CustomEvent("bali:page-opened", { detail: { page } }));
   }
