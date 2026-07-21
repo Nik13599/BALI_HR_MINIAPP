@@ -16,11 +16,11 @@
     const badge = document.getElementById("modeBadge");
     if (badge) badge.textContent = "ДЕМО · 6 ГОСТЕЙ";
     document.querySelectorAll('a[href*="beta4-stable.html"]').forEach(link => {
-      link.href = "./beta4-stable.html?v=bali-legacy-fixed-1";
+      link.href = "./beta4-stable.html?v=bali-legacy-full-profile-2";
       link.textContent = "Открыть пользователя ↗";
     });
     const hint = document.getElementById("loginHint");
-    if (hint) hint.textContent = "Демо-база загружена: пользователи, брони, баллы, VIP и конкурс.";
+    if (hint) hint.textContent = "Демо-база загружена: пользователи, брони, баллы, VIP, магазин, фишки и конкурс.";
   }
 
   [0, 120, 350, 800, 1400].forEach(delay => setTimeout(openDemo, delay));
