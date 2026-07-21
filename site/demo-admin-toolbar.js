@@ -2,6 +2,13 @@
   if (window.__BALI_DEMO_ADMIN_TOOLBAR__ || !window.BaliDemo) return;
   window.__BALI_DEMO_ADMIN_TOOLBAR__ = true;
 
+  if (window.BaliStore) {
+    window.BaliStore.resetDemo = () => {
+      window.BaliDemo.reset();
+      location.reload();
+    };
+  }
+
   function openDemo() {
     const button = document.getElementById("demoLogin");
     const app = document.getElementById("appView");
