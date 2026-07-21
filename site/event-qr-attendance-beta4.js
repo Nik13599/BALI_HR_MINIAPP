@@ -7,20 +7,25 @@
 
   const CHECKIN_KEY = "bali_event_checkins_v1";
   const RSVP_KEY = "bali_event_rsvps_v1";
-  const APP_URL = window.BALI_CONFIG?.checkinAppUrl || "https://nik13599.github.io/BALI_HR_MINIAPP/site/beta4-square-app.html";
+  const TRUST_KEY = "bali_event_qr_trust_v2";
+  const OLD_QR_KEY = "bali_event_qr_registry_v1";
+  const APP_URL = window.BALI_CONFIG?.checkinAppUrl || "https://nik13599.github.io/BALI_HR_MINIAPP/site/beta4-qr-app.html";
   const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
   const write = (key, value) => { localStorage.setItem(key, JSON.stringify(value)); window.dispatchEvent(new CustomEvent("bali:data-changed", { detail: { table: "event_checkins" } })); return value; };
   const now = () => new Date().toISOString();
   const randomToken = () => Array.from(crypto.getRandomValues(new Uint8Array(18))).map(byte => byte.toString(16).padStart(2, "0")).join("");
   const safeKey = value => String(value || "guest").replace(/[^a-zA-Z0-9_-]/g, "-");
   const encode = value => btoa(unescape(encodeURIComponent(JSON.stringify(value)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-  const decode = value => JSON.parse(decodeURIComponent(escape(atob(String(value).replace(/-/g, "+").replace(/_/g, "/") + "===".slice((String(value).length + 3) % 4)))));
+  const decode = value => {
+    const source = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
+    const padded = source + "=".repeat((4 - source.length % 4) % 4);
+    return JSON.parse(decodeURIComponent(escape(atob(padded))));
+  };
 
   async function ensureEvent(event) {
     if (!event) throw new Error("Мероприятие не найдено");
     if (event.qr_token) return event;
-    const saved = await store.save("events", { ...event, qr_token: randomToken(), qr_created_at: now() });
-    return saved;
+    return store.save("events", { ...event, qr_token: randomToken(), qr_created_at: now() });
   }
 
   async function ensureAllEvents() {
@@ -32,7 +37,7 @@
 
   function payload(event) {
     if (!event?.id || !event?.qr_token) throw new Error("QR-код мероприятия ещё не создан");
-    return encode({ v: 1, eventId: event.id, token: event.qr_token });
+    return encode({ v: 2, eventId: event.id, token: event.qr_token, title: event.title || "Мероприятие BALI", date: event.event_date || "", time: event.event_time || "23:00", issuedAt: now() });
   }
 
   function payloadUrl(event) {
@@ -41,22 +46,34 @@
     return url.toString();
   }
 
+  function normalizePayload(data) {
+    if (!data || !data.eventId || !data.token) throw new Error("QR-код имеет неверный формат");
+    return { v: Number(data.v || 1), eventId: String(data.eventId), token: String(data.token), title: String(data.title || data.eventTitle || ""), date: String(data.date || data.eventDate || ""), time: String(data.time || data.eventTime || "23:00") };
+  }
+
   function parse(raw) {
     const source = String(raw || "").trim();
     if (!source) throw new Error("QR-код пустой");
-    let encoded = source;
     try {
       const url = new URL(source);
-      encoded = url.searchParams.get("checkin") || "";
+      const encoded = url.searchParams.get("checkin");
+      if (encoded) return normalizePayload(decode(encoded));
+      const eventId = url.searchParams.get("event") || url.searchParams.get("eventId");
+      const token = url.searchParams.get("token");
+      if (eventId && token) return normalizePayload({ v: 1, eventId, token });
     } catch {}
-    if (source.startsWith("BALI-EVENT:")) encoded = source.slice("BALI-EVENT:".length);
-    if (!encoded) throw new Error("Это не QR-код мероприятия BALI");
-    const data = decode(encoded);
-    if (Number(data.v) !== 1 || !data.eventId || !data.token) throw new Error("QR-код имеет неверный формат");
-    return data;
+    if (source.startsWith("BALI-EVENT:")) {
+      const body = source.slice("BALI-EVENT:".length);
+      try { return normalizePayload(decode(body)); } catch {}
+      const separator = body.indexOf(":");
+      if (separator > 0) return normalizePayload({ v: 1, eventId: body.slice(0, separator), token: body.slice(separator + 1) });
+    }
+    try { return normalizePayload(JSON.parse(source)); } catch {}
+    try { return normalizePayload(decode(source)); }
+    catch { throw new Error("Это не QR-код мероприятия BALI"); }
   }
 
-  function localCheckins() { return read(CHECKIN_KEY, {}); }
+  const localCheckins = () => read(CHECKIN_KEY, {});
 
   async function cloudCheckins(eventId = "") {
     if (!store.cloudEnabled || !store.client) return [];
@@ -64,16 +81,14 @@
       let query = store.client.from("event_checkins").select("*");
       if (eventId) query = query.eq("event_id", eventId);
       const { data, error } = await query;
-      if (error) return [];
-      return data || [];
+      return error ? [] : data || [];
     } catch { return []; }
   }
 
   async function listCheckins(eventId = "") {
     const local = Object.values(localCheckins()).filter(row => !eventId || String(row.event_id) === String(eventId));
     const cloud = await cloudCheckins(eventId);
-    return [...new Map([...cloud, ...local].map(row => [`${row.event_id}:${row.user_key || row.telegram_id || row.id}`, row])).values()]
-      .sort((a, b) => String(b.checked_in_at || "").localeCompare(String(a.checked_in_at || "")));
+    return [...new Map([...cloud, ...local].map(row => [`${row.event_id}:${row.user_key || row.telegram_id || row.id}`, row])).values()].sort((a, b) => String(b.checked_in_at || "").localeCompare(String(a.checked_in_at || "")));
   }
 
   async function updateCustomer(profile) {
@@ -89,13 +104,30 @@
     try { await store.client.from("event_checkins").upsert(row, { onConflict: "event_id,user_key" }); } catch {}
   }
 
+  function validateLocalToken(event, parsed) {
+    const oldRegistry = read(OLD_QR_KEY, {});
+    const trusted = read(TRUST_KEY, {});
+    const oldEntry = oldRegistry[parsed.eventId];
+    if (oldEntry?.active === false) return false;
+    const expected = event?.qr_token || oldEntry?.token || trusted[parsed.eventId] || "";
+    if (expected) return String(expected) === String(parsed.token);
+    trusted[parsed.eventId] = parsed.token;
+    localStorage.setItem(TRUST_KEY, JSON.stringify(trusted));
+    return true;
+  }
+
   async function checkIn(raw) {
     if (!game || !points) return { ok: false, message: "Профиль пользователя ещё не загрузился" };
     let parsed;
     try { parsed = parse(raw); } catch (error) { return { ok: false, message: error.message }; }
+
     const events = await store.list("events");
-    const event = events.find(item => String(item.id) === String(parsed.eventId));
-    if (!event || !event.qr_token || event.qr_token !== parsed.token) return { ok: false, message: "QR-код не принадлежит активному мероприятию BALI" };
+    let event = events.find(item => String(item.id) === String(parsed.eventId));
+    if (!event && parsed.v >= 2 && parsed.title) event = { id: parsed.eventId, title: parsed.title, event_date: parsed.date, event_time: parsed.time, active: true, qr_token: parsed.token };
+    if (!event || event.active === false) return { ok: false, message: "Мероприятие не найдено или уже закрыто" };
+
+    const tokenIsValid = store.cloudEnabled ? Boolean(event.qr_token && String(event.qr_token) === String(parsed.token)) : validateLocalToken(event, parsed);
+    if (!tokenIsValid) return { ok: false, message: "Этот QR-код создан для другой версии мероприятия. Обновите QR в админке и отсканируйте новый код." };
 
     const profile = game.profile();
     const userKey = String(profile.id || profile.userKey || points.profile().userKey);
@@ -110,24 +142,7 @@
     game.recordVisit();
     points.add("attendance", pointAmount, `Посещение «${event.title}»`, `event-checkin-${event.id}-${userKey}`);
     const after = game.profile();
-    const row = {
-      id,
-      event_id: event.id,
-      event_title: event.title,
-      event_date: event.event_date,
-      event_time: event.event_time || "23:00",
-      user_key: userKey,
-      telegram_id: profile.telegramId || null,
-      telegram: profile.username || "",
-      name: profile.name || "Гость BALI",
-      phone: profile.phone || "",
-      checked_in_at: now(),
-      source: "event_qr",
-      reward: pointAmount,
-      xp: Math.max(0, Number(after.xp || 0) - Number(before.xp || 0)),
-      visits: Number(after.visits || 0),
-      level: game.levelFor(after.xp).current.name
-    };
+    const row = { id, event_id: event.id, event_title: event.title, event_date: event.event_date || parsed.date, event_time: event.event_time || parsed.time || "23:00", user_key: userKey, telegram_id: profile.telegramId || null, telegram: profile.username || "", name: profile.name || "Гость BALI", phone: profile.phone || "", checked_in_at: now(), source: "event_qr", reward: pointAmount, xp: Math.max(0, Number(after.xp || 0) - Number(before.xp || 0)), visits: Number(after.visits || 0), level: game.levelFor(after.xp).current.name };
     registry[id] = row;
     write(CHECKIN_KEY, registry);
 
