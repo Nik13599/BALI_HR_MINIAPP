@@ -1,8 +1,8 @@
 (() => {
   if (window.__BALI_ADMIN_MOBILE_RUNTIME__) return;
   window.__BALI_ADMIN_MOBILE_RUNTIME__ = true;
-  const VERSION = "beta4-admin-sections-4";
-  const moduleSets={dashboard:[],menu:[],hall:[],settings:["home-design-core-beta4.js","admin-home-design-beta4.js","admin-home-design-upload-fix-beta4.js"],events:["event-qr-attendance-beta4.js","admin-events-mobile-list.js","event-attendees-admin-beta3.js","admin-event-qr-beta4.js"],bookings:["event-layouts-beta3.js","booking-admin-beta3.js"],customers:["points-core.js","customer-admin-beta3.js"],bonuses:["points-core.js","beta4-game.js","beta4-loyalty-core.js","beta4-reward-icons-core.js","reward-png-validator-beta4.js","points-admin.js","points-admin-manual.js","admin-vip-beta4.js","admin-loyalty-economy-beta4.js","admin-custom-rewards-beta4.js","admin-reward-icon-list-beta4.js","admin-bonuses-hub-beta4.js"]};
+  const VERSION = "beta4-admin-sections-5";
+  const moduleSets={dashboard:[],menu:[],hall:[],settings:["home-design-core-beta4.js","admin-home-design-upload-fix-beta4.js","admin-home-design-beta4.js"],events:["event-qr-attendance-beta4.js","admin-events-mobile-list.js","event-attendees-admin-beta3.js","admin-event-qr-beta4.js"],bookings:["event-layouts-beta3.js","booking-admin-beta3.js"],customers:["points-core.js","customer-admin-beta3.js"],bonuses:["points-core.js","beta4-game.js","beta4-loyalty-core.js","beta4-reward-icons-core.js","reward-png-validator-beta4.js","points-admin.js","points-admin-manual.js","admin-vip-beta4.js","admin-loyalty-economy-beta4.js","admin-custom-rewards-beta4.js","admin-reward-icon-list-beta4.js","admin-bonuses-hub-beta4.js"]};
   const viewTitles={dashboard:"Обзор",menu:"Меню",events:"Афиши + рассадка + QR входа",hall:"Базовый шаблон",bonuses:"Баллы + VIP",bookings:"Бронирования",customers:"Клиентская база",settings:"Настройки дизайна и системы"};
   const loaded=new Set(),loading=new Map();let requestId=0;
   document.querySelectorAll("script[src]").forEach(s=>{const n=String(s.getAttribute("src")||"").split("?")[0].split("/").pop();if(n)loaded.add(n)});
