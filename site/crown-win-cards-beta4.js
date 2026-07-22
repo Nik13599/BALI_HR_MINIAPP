@@ -85,4 +85,5 @@
 
   styles();
   window.BaliCrownWinCards = { winCounts, injectPublic };
+  window.dispatchEvent(new CustomEvent("bali:crown-win-cards-ready"));
 })();
