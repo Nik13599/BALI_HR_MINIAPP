@@ -15,8 +15,9 @@
       if (!Number(wins.miss || 0) && !Number(wins.mister || 0)) return;
       const photo = card.querySelector('.person-v2-photo');
       if (!photo) return;
-      [...photo.classList].filter(name => name.startsWith('people-status-') || name.startsWith('people-level-')).forEach(name => photo.classList.remove(name));
-      photo.classList.add('people-status-crown');
+      const conflicting = [...photo.classList].filter(name => (name.startsWith('people-status-') || name.startsWith('people-level-')) && name !== 'people-status-crown');
+      conflicting.forEach(name => photo.classList.remove(name));
+      if (!photo.classList.contains('people-status-crown')) photo.classList.add('people-status-crown');
       const body = card.querySelector('.person-v2-body');
       if (!body) return;
       let badge = body.querySelector('.people-status-chip');
@@ -25,7 +26,8 @@
         badge.className = 'people-status-chip';
         body.appendChild(badge);
       }
-      badge.textContent = wins.miss ? `Королева ночи · ${Number(wins.miss)}×` : `Король ночи · ${Number(wins.mister)}×`;
+      const text = wins.miss ? `Королева ночи · ${Number(wins.miss)}×` : `Король ночи · ${Number(wins.mister)}×`;
+      if (badge.textContent !== text) badge.textContent = text;
     }));
   }
 
@@ -40,7 +42,12 @@
   }
 
   new MutationObserver(records => {
-    if (records.some(record => record.addedNodes.length || record.removedNodes.length)) schedule();
+    const relevant = records.some(record => [...record.addedNodes, ...record.removedNodes].some(node => {
+      if (node.nodeType !== 1) return false;
+      return node.matches?.('[data-open-social-person],.people-v2-grid,#socialV2Content')
+        || node.querySelector?.('[data-open-social-person]');
+    }));
+    if (relevant) schedule();
   }).observe(document.body, { childList: true, subtree: true });
   ['bali:social-changed','bali:crown-win-cards-ready','bali:night-crown-changed','bali:data-changed'].forEach(name => window.addEventListener(name, schedule));
   schedule();
