@@ -95,8 +95,8 @@
     const card = document.getElementById("clubLinks");
     if (!card) return;
     blockStyle(card, current.contacts);
-    const title = card.querySelector(".card-head h3");
-    if (title) title.textContent = current.contacts.title || "";
+    const contactTitle = card.querySelector('[data-contact-title="contact"]');
+    if (contactTitle && current.contacts.title) contactTitle.textContent = current.contacts.title;
     [...card.querySelectorAll(".club-links a")].forEach(link => {
       const key = link.dataset.contactKey || "";
       const item = current.contacts[key] || {};
