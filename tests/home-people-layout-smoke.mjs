@@ -13,7 +13,7 @@ const demographics = fs.readFileSync("site/profile-demographics-beta4.js", "utf8
 const home = fs.readFileSync("site/home-layout-final-beta4.js", "utf8");
 const homeLinks = fs.readFileSync("site/beta4-home-links.js", "utf8");
 
-assert.ok(html.includes("bali-home-contacts-1"), "Published HTML must use the ordered home contacts build");
+assert.ok(html.includes("bali-social-inbox-1"), "Published HTML must use the social inbox build");
 assert.ok(loader.includes("home-layout-final-beta4.js"), "The final user home layout must be loaded");
 assert.ok(loader.includes("bali-people-search-ranking-beta4.js"), "The safe discovery module must be loaded");
 assert.ok(loader.includes("bali-people-status-sync-beta4.js"), "Purchased VIP must sync into the public profile");
