@@ -28,9 +28,18 @@
   -webkit-tap-highlight-color:transparent!important;
   -webkit-user-select:none!important;
   user-select:none!important;
+  transition:opacity .16s ease,filter .16s ease!important;
 }
+.shell>nav.nav[data-navigation-ready="true"]>button[data-page].navigation-loading{
+  opacity:.48!important;
+  filter:grayscale(.55)!important;
+  pointer-events:none!important;
+}
+.shell>nav.nav[data-navigation-ready="true"]>button[data-page].navigation-loading>i{animation:baliNavPulse 1s ease-in-out infinite alternate}
 .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i,
 .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>span{pointer-events:none!important}
 .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i{display:block!important;transform:none!important;line-height:1!important}
 .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>span{display:block!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:7px!important}
+@keyframes baliNavPulse{from{opacity:.45}to{opacity:1}}
 @media(max-width:370px){.shell>nav.nav[data-navigation-ready="true"]>button[data-page]>span{font-size:6px!important}}
+@media(prefers-reduced-motion:reduce){.shell>nav.nav[data-navigation-ready="true"]>button[data-page].navigation-loading>i{animation:none!important}}
