@@ -18,7 +18,11 @@ on:
       - "site/event-qr-attendance-beta4.js"
       - "site/night-crown-*.js"
       - "site/bali-people-*.js"
+      - "site/beta4-social-page.js"
       - "site/crown-win-cards-beta4.js"
+      - "site/beta4-home-links.js"
+      - "site/beta4-home-design.js"
+      - "site/home-layout-final-beta4.js"
       - "site/admin-beta4.html"
       - "site/admin-beta4-categories.html"
       - "site/admin-mobile-runtime.js"
@@ -60,8 +64,14 @@ jobs:
           node --check site/night-crown-cloud-beta4.js
           node --check site/night-crown-presence-fix-beta4.js
           node --check site/night-crown-vote-lock-beta4.js
+          node --check site/beta4-social-page.js
+          node --check site/bali-people-search-ranking-beta4.js
           node --check site/bali-people-public-cards-beta4.js
+          node --check site/bali-people-crown-frame-beta4.js
           node --check site/crown-win-cards-beta4.js
+          node --check site/beta4-home-links.js
+          node --check site/beta4-home-design.js
+          node --check site/home-layout-final-beta4.js
           node --check site/admin-booking-manager-beta4.js
           node --check site/admin-bonuses-final-beta4.js
           node --check site/admin-customer-dossier-beta4.js
@@ -76,3 +86,5 @@ jobs:
         run: node tests/crown-live-event-smoke.mjs
       - name: Run final admin and BALI People smoke test
         run: node tests/final-admin-people-smoke.mjs
+      - name: Run final home and discovery layout smoke test
+        run: node tests/home-people-layout-smoke.mjs
