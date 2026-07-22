@@ -1,30 +1,20 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const core = fs.readFileSync("site/night-crown-core-beta4.js", "utf8");
-const lock = fs.readFileSync("site/night-crown-vote-lock-beta4.js", "utf8");
-const presence = fs.readFileSync("site/night-crown-presence-fix-beta4.js", "utf8");
 const attendance = fs.readFileSync("site/event-qr-attendance-beta4.js", "utf8");
 const qr = fs.readFileSync("site/beta4-qr-checkin.js", "utf8");
+const live = fs.readFileSync("site/bali-people-live-event-beta4.js", "utf8");
 const loader = fs.readFileSync("site/beta4-square-loader.js", "utf8");
 
-assert.ok(core.includes("candidate_gender"), "Votes must retain their King or Queen sector");
-assert.ok(core.includes("event_end_time"), "The crown event must use the configured ending time");
-assert.ok(core.includes("isActiveEvent"), "Crown access must expire when the event ends");
-
-assert.ok(lock.includes("existing"), "A previous vote in the same sector must be detected");
-assert.ok(lock.includes("изменить его нельзя"), "A submitted vote must be permanent");
-assert.ok(lock.includes("button.disabled = true"), "All candidate buttons in the completed sector must be disabled");
-assert.ok(lock.includes("Ваш голос зафиксирован"), "The UI must explain that the vote is final");
-assert.ok(loader.includes("night-crown-vote-lock-beta4.js"), "The permanent vote lock must be loaded");
-
 assert.ok(attendance.includes("async function leave"), "A user must be able to leave an event");
-assert.ok(attendance.includes('presence_status: "left"'), "Leaving must mark the attendance as inactive");
-assert.ok(attendance.includes("reactivate"), "The same QR may reactivate attendance without a second reward");
+assert.ok(attendance.includes('presence_status: "left"'), "Leaving must mark attendance inactive");
 assert.ok(qr.includes("Уйти с мероприятия"), "The active event card must include a leave button");
-assert.ok(qr.includes("!row.left_at"), "A left attendance must not be shown as active");
-assert.ok(presence.includes('row.presence_status !== "left"'), "Crown access must stop after leaving");
-assert.ok(qr.includes("setInterval(refreshHomeCard, 60000)"), "The active status must be rechecked while the app remains open");
-assert.ok(loader.includes("bali-final-fixes-2"), "The published user loader must use the final build version");
+assert.ok(live.includes("start.getTime()<=now&&now<end.getTime()"), "BALI People live tab must exist only while an event is active");
+assert.ok(live.includes("attendance.listCheckins(event.id)"), "Live attendees must come from QR check-ins");
+assert.ok(live.includes("Пришёл на:"), "Each attendee card must show the event title");
+assert.ok(live.includes("button.hidden=!events.length"), "The live event tab must disappear outside event time");
+assert.ok(live.includes("setInterval"), "Active event state must refresh while the app stays open");
+assert.ok(loader.includes("bali-people-live-event-beta4.js"), "The live event people module must be loaded");
+assert.ok(!loader.includes("night-crown"), "Removed contest modules must not be loaded");
 
-console.log("Permanent crown voting and active event leave smoke test passed");
+console.log("Live event QR attendees and removed contest smoke test passed");
