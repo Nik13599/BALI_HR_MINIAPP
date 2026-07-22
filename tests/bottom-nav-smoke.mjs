@@ -12,9 +12,13 @@ const loyaltyUi = fs.readFileSync("site/beta4-loyalty-ui-stable.js", "utf8");
 const chipUi = fs.readFileSync("site/chip-requests-user-beta4.js", "utf8");
 
 assert.ok(html.includes("beta4-square-loader.js"), "Previous modular application must be restored");
+assert.ok(html.includes("bali-fast-nav-1"), "Published HTML must use the fast navigation build");
 assert.ok(!html.includes("bali-user-clean.js"), "The replacement clean application must not be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.css"), "Stable legacy navigation CSS must be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.js"), "Final navigation composer must be loaded");
+assert.ok(loader.includes("'beta4-app.js','legacy-nav-final-beta4.js'"), "Bottom navigation must load immediately after the base application");
+assert.ok(loader.indexOf("legacy-nav-final-beta4.js") < loader.indexOf("beta4-social-page.js"), "Navigation must appear before delayed social modules");
+assert.ok(loader.indexOf("legacy-nav-final-beta4.js") < loader.indexOf("night-crown-beta4.js"), "Navigation must appear before delayed crown modules");
 assert.ok(loader.includes("legacy-event-attendance-beta4.js"), "Unified event attendance must be loaded");
 assert.ok(loader.includes("profile-full-restore-beta4.js"), "Full profile restore layer must be loaded");
 assert.ok(loader.includes("beta4-loyalty-core.js"), "Points economy core must be loaded");
@@ -28,13 +32,16 @@ assert.ok(!loader.includes("night-crown-nav-fix-beta4.js"), "The old navigation 
 assert.ok(!loader.includes("bottom-nav-controller-beta4.js"), "The conflicting navigation interceptor must not be loaded");
 assert.ok(!loader.includes("bottom-nav-dedupe-beta4.js"), "The old navigation deduper must not be loaded");
 
-assert.match(css, /nav\.nav:not\(\[data-navigation-ready="true"\]\)\{visibility:hidden/, "Intermediate navigation states must stay hidden");
+assert.match(css, /nav\.nav:not\(\[data-navigation-ready="true"\]\)\{visibility:hidden/, "Only the tiny pre-mount navigation state may stay hidden");
 assert.match(css, /display:flex!important/, "Final navigation must use one stable flex row");
 assert.match(css, /flex:1 1 0!important/, "Every button must own an equal physical hit area");
-assert.match(css, /pointer-events:none!important/, "Icon and label taps must resolve to the button itself");
+assert.ok(css.includes("navigation-loading"), "Late sections must have a visible loading state");
 assert.ok(!nav.includes("MutationObserver"), "Final navigation must not be rebuilt by an observer");
 assert.equal((nav.match(/\["(?:home|events|menu|dating|crown|profile)"/g) || []).length, 6, "Final navigation must contain exactly six sections");
-assert.ok(nav.includes("replaceChildren"), "Navigation must be finalized atomically once");
+assert.ok(nav.includes("replaceChildren"), "Navigation must be finalized atomically");
+assert.ok(nav.includes("nav.dataset.navigationReady = 'true'"), "Navigation must become visible immediately after mounting");
+assert.ok(nav.includes("button.disabled = !available"), "Buttons for late screens must remain safely disabled until ready");
+assert.ok(!nav.includes("function ready()"), "Navigation must not wait for every feature screen before appearing");
 
 assert.ok(profileV2.includes("Магазин VIP"), "Extended points dialog must include the VIP shop");
 assert.ok(profileV2.includes("Обмен баллов на фишки"), "Extended points dialog must include chip exchange");
@@ -58,4 +65,4 @@ assert.ok(attendance.includes("Забронировали столик"), "Booke
 assert.ok(attendance.includes("Хотят пойти без бронирования"), "Interested guests must have their own section");
 assert.match(attendance, /root\.innerHTML = `<button class="legacy-attendance-total"/, "The event page must render only the compact attendance button, not the full people list");
 
-console.log("BALI restored navigation, dialog attendance and full profile smoke test passed");
+console.log("BALI fast navigation, dialog attendance and full profile smoke test passed");
