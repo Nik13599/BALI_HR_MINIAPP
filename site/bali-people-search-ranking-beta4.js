@@ -115,14 +115,14 @@
     const vip = activeVipFor(person, account);
     if (vip) {
       const plan = game.config().plans.find(row => String(row.id) === String(vip.planId));
-      if (vip.planId === "legend") return { className: "people-status-legend", label: plan?.name || "BALI LEGEND", locked: true };
-      if (vip.planId === "black") return { className: "people-status-black", label: plan?.name || "BALI BLACK", locked: true };
-      return { className: "people-status-vip", label: plan?.name || "BALI VIP", locked: true };
+      if (vip.planId === "legend") return { className: "people-status-legend", label: plan?.name || "BALI LEGEND" };
+      if (vip.planId === "black") return { className: "people-status-black", label: plan?.name || "BALI BLACK" };
+      return { className: "people-status-vip", label: plan?.name || "BALI VIP" };
     }
     const xp = Number(account.xp || person?.xp || 0);
     const level = game.levelFor(xp).current;
     const className = `people-level-${normalize(level.name).replace(/\s+/g, "-")}`;
-    return { className, label: level.name, locked: false };
+    return { className, label: level.name };
   }
 
   function clearStatus(photo) {
@@ -133,23 +133,16 @@
     const photo = card.querySelector(".person-v2-photo");
     const body = card.querySelector(".person-v2-body");
     if (!photo || !body) return;
-    clearStatus(photo);
     const status = baseStatus(person);
-    let finalStatus = status;
-    if (!status.locked && window.BaliCrownWinCards?.winCounts) {
-      try {
-        const wins = await window.BaliCrownWinCards.winCounts(person);
-        if (Number(wins.miss || 0) + Number(wins.mister || 0) > 0) finalStatus = { className: "people-status-crown", label: wins.miss ? "Королева ночи" : "Король ночи" };
-      } catch {}
-    }
-    photo.classList.add(finalStatus.className);
+    clearStatus(photo);
+    if (!photo.classList.contains(status.className)) photo.classList.add(status.className);
     let badge = body.querySelector(".people-status-chip");
     if (!badge) {
       badge = document.createElement("span");
       badge.className = "people-status-chip";
       body.querySelector(".people-rank-badge")?.insertAdjacentElement("afterend", badge) || body.appendChild(badge);
     }
-    badge.textContent = finalStatus.label;
+    if (badge.textContent !== status.label) badge.textContent = status.label;
   }
 
   function ensureSearch() {
@@ -188,9 +181,10 @@
       const position = positionFor(person);
       const age = ageFor(person);
       const gender = genderFor(person);
-      card.dataset.peopleSearch = normalize(person.name || "");
-      card.dataset.peopleGender = gender;
-      card.dataset.peopleAge = String(age || 0);
+      const searchValue = normalize(person.name || "");
+      if (card.dataset.peopleSearch !== searchValue) card.dataset.peopleSearch = searchValue;
+      if (card.dataset.peopleGender !== gender) card.dataset.peopleGender = gender;
+      if (card.dataset.peopleAge !== String(age || 0)) card.dataset.peopleAge = String(age || 0);
 
       let meta = body.querySelector(".people-demographic-meta");
       if (!meta) {
@@ -198,7 +192,8 @@
         meta.className = "people-demographic-meta";
         body.querySelector("p")?.insertAdjacentElement("afterend", meta);
       }
-      meta.textContent = `${age ? `${age} лет` : "Возраст не указан"} · ${genderLabel(gender)}`;
+      const metaText = `${age ? `${age} лет` : "Возраст не указан"} · ${genderLabel(gender)}`;
+      if (meta.textContent !== metaText) meta.textContent = metaText;
 
       let rank = body.querySelector(".people-rank-badge");
       if (!rank) {
@@ -206,7 +201,8 @@
         rank.className = "people-rank-badge";
         meta.insertAdjacentElement("afterend", rank);
       }
-      rank.textContent = position ? `Рейтинг #${position.position}` : "Без места в рейтинге";
+      const rankText = position ? `Рейтинг #${position.position}` : "Без места в рейтинге";
+      if (rank.textContent !== rankText) rank.textContent = rankText;
       tasks.push(applyStatus(card, person));
     });
     await Promise.all(tasks);
@@ -222,7 +218,8 @@
       const nameMismatch = Boolean(query && !name.includes(query));
       const genderMismatch = genderFilter !== "all" && gender !== genderFilter;
       const ageMismatch = customAge && (!age || age < Math.min(ageMin, ageMax) || age > Math.max(ageMin, ageMax));
-      card.hidden = nameMismatch || genderMismatch || ageMismatch;
+      const hidden = nameMismatch || genderMismatch || ageMismatch;
+      if (card.hidden !== hidden) card.hidden = hidden;
     });
   }
 
@@ -240,7 +237,8 @@
       controls.prepend(button);
     }
     const total = rankingRows().length;
-    button.innerHTML = `<span>Рейтинг</span><small>${position ? `#${position.position} из ${total}` : `нет места · ${total}`}</small>`;
+    const html = `<span>Рейтинг</span><small>${position ? `#${position.position} из ${total}` : `нет места · ${total}`}</small>`;
+    if (button.innerHTML !== html) button.innerHTML = html;
   }
 
   async function refresh() {
@@ -272,8 +270,13 @@
   styles();
   refresh();
   new MutationObserver(records => {
-    if (refreshing || !records.some(record => record.addedNodes.length || record.removedNodes.length)) return;
-    schedule();
+    if (refreshing) return;
+    const relevant = records.some(record => [...record.addedNodes, ...record.removedNodes].some(node => {
+      if (node.nodeType !== 1) return false;
+      return node.matches?.('[data-screen="dating"],[data-open-social-person],#socialV2Content,.people-v2-grid')
+        || node.querySelector?.('[data-open-social-person],[data-screen="dating"]');
+    }));
+    if (relevant) schedule();
   }).observe(document.body, { childList: true, subtree: true });
   ["bali:social-changed", "bali:beta4-changed", "bali:points-changed", "bali:data-changed", "bali:night-crown-changed", "bali:crown-win-cards-ready"].forEach(name => window.addEventListener(name, schedule));
 })();
