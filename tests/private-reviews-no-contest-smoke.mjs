@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+const loader=fs.readFileSync("site/beta4-square-loader.js","utf8");
+const review=fs.readFileSync("site/review-eligibility-private-beta4.js","utf8");
+const admin=fs.readFileSync("site/admin-beta4.html","utf8");
+const runtime=fs.readFileSync("site/admin-mobile-runtime.js","utf8");
+assert.ok(loader.includes("review-eligibility-private-beta4.js"));
+assert.ok(loader.includes("remove-contest-final-beta4.js"));
+assert.ok(!loader.includes("night-crown"));
+assert.ok(review.includes("12*60*60*1000"));
+assert.ok(review.includes("attendance.listCheckins"));
+assert.ok(review.includes('visibility:"admin_only"'));
+assert.ok(!admin.includes('data-view="crown"'));
+assert.ok(!admin.includes("night-crown"));
+assert.ok(!runtime.includes("crown:"));
+console.log("Private review eligibility and contest removal smoke test passed");
