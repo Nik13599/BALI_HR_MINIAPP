@@ -11,12 +11,7 @@
     if (document.getElementById("profileRecentRewardsStyle")) return;
     const style = document.createElement("style");
     style.id = "profileRecentRewardsStyle";
-    style.textContent = `
-      .profile-photo-shell{position:relative!important}
-      .profile-visit-history{position:absolute;right:-7px;bottom:-7px;z-index:3;display:grid;gap:1px;min-width:82px;min-height:43px;padding:6px 10px;border:1px solid rgba(200,255,61,.3);border-radius:13px;background:#101510e8;color:#fff;box-shadow:0 8px 24px #0008;text-align:center}
-      .profile-visit-history span{font-size:8px;color:var(--muted)}.profile-visit-history strong{font-size:11px;color:var(--lime)}
-      .profile-recent-icons{display:flex;align-items:center;gap:7px;margin-top:7px}.profile-recent-icons i{width:34px;height:34px;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(200,255,61,.22);border-radius:11px;background:rgba(200,255,61,.07);font-style:normal;font-size:18px}.profile-recent-icons i img{width:100%;height:100%;object-fit:contain}.profile-recent-empty{color:var(--muted);font-size:8px}
-    `;
+    style.textContent = `.profile-recent-icons{display:flex;align-items:center;gap:7px;margin-top:7px}.profile-recent-icons i{width:34px;height:34px;display:grid;place-items:center;overflow:hidden;border:1px solid rgba(200,255,61,.22);border-radius:11px;background:rgba(200,255,61,.07);font-style:normal;font-size:18px}.profile-recent-icons i img{width:100%;height:100%;object-fit:contain}.profile-recent-empty{color:var(--muted);font-size:8px}`;
     document.head.appendChild(style);
   }
 
@@ -29,28 +24,14 @@
     return [...standard, ...custom].sort((a,b) => String(b.earnedAt || "").localeCompare(String(a.earnedAt || "")));
   }
 
-  function moveVisits() {
-    const stats = document.getElementById("profileStats");
-    stats?.classList.remove("profile-stats-hidden");
-    const hero = document.getElementById("profileHero");
-    const photo = hero?.firstElementChild;
-    if (!photo) return;
-    photo.classList.add("profile-photo-shell");
-    hero.querySelector('.profile-v2-controls [data-open-profile-history]')?.remove();
-    let button = photo.querySelector(".profile-visit-history");
-    if (!button) {
-      button = document.createElement("button");
-      button.type = "button";
-      button.className = "profile-visit-history";
-      button.dataset.openProfileHistory = "";
-      photo.appendChild(button);
-    }
-    const html = `<span>ИСТОРИЯ</span><strong>${Number(game.profile().visits || 0)} посещений</strong>`;
-    if (button.innerHTML !== html) button.innerHTML = html;
-  }
-
   function apply() {
-    moveVisits();
+    const stats = document.getElementById("profileStats");
+    if (stats) {
+      stats.innerHTML = "";
+      stats.hidden = true;
+      stats.classList.add("profile-v2-hidden");
+    }
+    document.querySelector(".profile-visit-history")?.remove();
     const quick = document.getElementById("profileV2Quick");
     if (!quick) return;
     const tile = quick.querySelector("[data-open-profile-rewards]");
@@ -66,14 +47,11 @@
   const refresh = () => {
     if (lock) return;
     lock = true;
-    requestAnimationFrame(() => {
-      lock = false;
-      apply();
-    });
+    requestAnimationFrame(() => { lock = false; apply(); });
   };
   refresh();
   new MutationObserver(records => {
     if (records.some(record => record.addedNodes.length || record.removedNodes.length)) refresh();
   }).observe(document.body, { childList:true, subtree:true });
-  ["bali:beta4-changed", "bali:loyalty-changed", "bali:points-changed"].forEach(name => window.addEventListener(name, refresh));
+  ["bali:beta4-changed", "bali:loyalty-changed", "bali:points-changed", "bali:social-changed"].forEach(name => window.addEventListener(name, refresh));
 })();
