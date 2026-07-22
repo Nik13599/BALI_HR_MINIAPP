@@ -8,12 +8,13 @@ const nav = fs.readFileSync("site/legacy-nav-final-beta4.js", "utf8");
 const attendance = fs.readFileSync("site/legacy-event-attendance-beta4.js", "utf8");
 const profileRestore = fs.readFileSync("site/profile-full-restore-beta4.js", "utf8");
 const profileV2 = fs.readFileSync("site/beta4-profile-v2.js", "utf8");
+const profileControls = fs.readFileSync("site/profile-controls-final-beta4.js", "utf8");
 const vipVariants = fs.readFileSync("site/vip-duration-options-beta4.js", "utf8");
 const loyaltyUi = fs.readFileSync("site/beta4-loyalty-ui-stable.js", "utf8");
 const chipUi = fs.readFileSync("site/chip-requests-user-beta4.js", "utf8");
 
 assert.ok(html.includes("beta4-square-loader.js"), "The modular application must be loaded");
-assert.ok(html.includes("bali-compact-profile-1"), "Published HTML must use the compact profile build");
+assert.ok(html.includes("bali-social-inbox-1"), "Published HTML must use the social inbox build");
 assert.ok(!html.includes("bali-user-clean.js"), "The replacement clean application must not be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.css"), "Stable legacy navigation CSS must be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.js"), "Final navigation composer must be loaded");
@@ -31,6 +32,8 @@ assert.ok(!loader.includes("bali-people-present-beta4.js"), "The conflicting pre
 
 assert.ok(loader.includes("legacy-event-attendance-beta4.js"), "Unified event attendance must be loaded");
 assert.ok(loader.includes("profile-full-restore-beta4.js"), "Compact profile guard must be loaded");
+assert.ok(loader.includes("profile-controls-final-beta4.js"), "Final profile controls must be loaded");
+assert.ok(loader.indexOf("profile-full-restore-beta4.js") < loader.indexOf("profile-controls-final-beta4.js"), "Final profile controls must run last");
 assert.ok(loader.includes("beta4-loyalty-core.js"), "Points economy core must be loaded");
 assert.ok(loader.includes("beta4-loyalty-ui-stable.js"), "Points shop data UI must be loaded");
 assert.ok(loader.includes("chip-requests-core-beta4.js"), "Chip request core must be loaded");
@@ -57,9 +60,14 @@ assert.ok(!nav.includes("function ready()"), "Navigation must not wait for every
 assert.ok(profileV2.includes("BALI Shop"), "Profile must expose one BALI Shop button and dialog");
 assert.ok(profileV2.includes("data-open-profile-points data-open-profile-vip"), "The BALI Shop button must also initialize VIP variants");
 assert.ok(profileV2.includes("Мои награды"), "Profile must expose one combined rewards button");
+assert.ok(profileV2.includes("data-open-profile-invitations"), "Profile must expose incoming invitations");
+assert.ok(profileV2.includes("data-open-profile-gifts"), "Profile must expose incoming gifts");
 assert.ok(profileV2.includes("data-open-profile-settings"), "Profile settings must open from the gear button");
-assert.ok(profileV2.includes("profileVipBody"), "VIP statuses must render inside the BALI Shop dialog");
+assert.ok(profileV2.includes("data-open-profile-history"), "History must open from the lower profile button");
+assert.ok(profileV2.includes("profileVipBody"), "VIP statuses must render inside BALI Shop");
 assert.ok(profileV2.includes("Обмен баллов на фишки"), "BALI Shop must include chip exchange");
+assert.ok(profileV2.includes('stats.hidden = true'), "Profile counters must stay hidden");
+assert.ok(profileControls.includes('[data-open-profile-settings],[data-open-profile-history]'), "Only settings and history may remain in profile controls");
 assert.ok(!profileV2.includes("profileVipDialog"), "A separate VIP dialog must not return");
 assert.ok(vipVariants.includes('document.getElementById("profileVipBody")'), "All VIP variants must render in the BALI Shop section");
 assert.ok(vipVariants.includes('document.getElementById("profilePointsDialog")?.open'), "VIP variants must refresh while BALI Shop is open");
@@ -74,4 +82,4 @@ assert.ok(attendance.includes("legacyAttendanceDialog"), "The attendance list mu
 assert.ok(attendance.includes("Забронировали столик"), "Booked parties must have their own section");
 assert.ok(attendance.includes("Хотят пойти без бронирования"), "Interested guests must have their own section");
 
-console.log("BALI compact profile, navigation, home and attendance smoke test passed");
+console.log("BALI social inbox profile, navigation, home and attendance smoke test passed");
