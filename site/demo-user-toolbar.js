@@ -11,7 +11,7 @@
   const root = document.createElement("div");
   root.className = "bali-demo-launch";
   const active = demo.activeUser();
-  root.innerHTML = `<button class="bali-demo-toggle" type="button"><b>DEMO</b><span>${active.name}</span> ⚙</button><section class="bali-demo-panel"><h3>Тестовый пользователь</h3><p>Выберите гостя с другим балансом, VIP и историей посещений.</p><label><span>Профиль</span><select data-demo-user-select>${demo.users.map(user => `<option value="${user.key}" ${user.key === active.key ? "selected" : ""}>${user.name} · ${user.balance} баллов</option>`).join("")}</select></label><div class="bali-demo-actions"><button class="primary" type="button" data-demo-apply>Открыть профиль</button><button type="button" data-demo-refresh>Обновить</button><a href="./admin-beta4-categories.html?v=beta4-admin-sections-13-crown-birthdays-final" target="_blank">Админ ↗</a><button class="danger" type="button" data-demo-reset>Сбросить</button></div><div class="bali-demo-note">Админка и приложение используют одну тестовую базу в этом браузере. После изменений в админке нажмите «Обновить».</div></section>`;
+  root.innerHTML = `<button class="bali-demo-toggle" type="button"><b>DEMO</b><span>${active.name}</span> ⚙</button><section class="bali-demo-panel"><h3>Тестовый пользователь</h3><p>Выберите гостя с другим балансом, VIP и историей посещений.</p><label><span>Профиль</span><select data-demo-user-select>${demo.users.map(user => `<option value="${user.key}" ${user.key === active.key ? "selected" : ""}>${user.name} · ${user.balance} баллов</option>`).join("")}</select></label><div class="bali-demo-actions"><button class="primary" type="button" data-demo-apply>Открыть профиль</button><button type="button" data-demo-refresh>Обновить</button><a href="./admin-beta4-categories.html?v=beta4-admin-content-1" target="_blank">Админ ↗</a><button class="danger" type="button" data-demo-reset>Сбросить</button></div><div class="bali-demo-note">Админка и приложение используют одну тестовую базу в этом браузере. После изменений в админке нажмите «Обновить».</div></section>`;
   document.body.appendChild(root);
 
   const panel = root.querySelector(".bali-demo-panel");
@@ -31,6 +31,9 @@
   root.querySelector("[data-demo-reset]").addEventListener("click", () => {
     if (!confirm("Вернуть первоначальные тестовые данные BALI?")) return;
     demo.reset();
+    localStorage.removeItem("bali_event_content_demo_seed_v1");
+    localStorage.removeItem("bali_venue_content_v1");
+    localStorage.removeItem("bali_reviews_v1");
     location.reload();
   });
 })();
