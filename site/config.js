@@ -12,5 +12,6 @@ window.BALI_CONFIG = {
   telegramChannelUrl: "https://t.me/baliclubminsk",
   managerTelegramUrl: "https://t.me/BALI_MINSK",
   instagramUrl: "https://www.instagram.com/baliminsk/",
+  tiktokUrl: "https://www.tiktok.com/@baliminsk",
   yandexMapUrl: "https://yandex.by/maps/org/bali_night_club/104137822369/"
 };
