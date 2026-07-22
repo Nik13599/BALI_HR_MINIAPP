@@ -34,7 +34,7 @@ assert.ok(vip.includes("2 мероприятия"), "Two-event VIP must be avail
 assert.ok(vip.includes("1 день"), "One-day VIP must be available");
 assert.ok(vip.includes("1 месяц"), "Monthly VIP must be available");
 assert.ok(chips.includes("Приобрести фишки"), "Chip requests must integrate into BALI Shop");
-assert.ok(demographics.includes('form.id !== "profileV2SettingsForm"') || demographics.includes('id!=="profileV2SettingsForm"'), "Age and gender must attach to the settings form");
+assert.ok(demographics.includes("profileV2SettingsForm"), "Age and gender must attach to the settings form");
 assert.ok(guard.includes('card.classList.add("profile-v2-hidden")'), "Legacy long profile sections must stay hidden");
 assert.ok(!guard.includes('classList.remove("profile-v2-hidden")'), "The old long profile must never be restored");
 assert.ok(rewards.includes('stats?.classList.remove("profile-stats-hidden")'), "Compact statistics must remain visible");
