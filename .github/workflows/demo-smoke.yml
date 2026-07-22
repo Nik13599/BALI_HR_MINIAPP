@@ -13,6 +13,7 @@ on:
       - "site/legacy-event-attendance-beta4.js"
       - "site/profile-full-restore-beta4.js"
       - "site/beta4-profile-v2.js"
+      - "site/profile-demographics-beta4.js"
       - "site/beta4-loyalty-ui-stable.js"
       - "site/chip-requests-user-beta4.js"
       - "site/beta4-qr-checkin.js"
@@ -23,7 +24,7 @@ on:
       - "site/crown-win-cards-beta4.js"
       - "site/beta4-home-links.js"
       - "site/beta4-home-design.js"
-      - "site/home-final-layout-beta4.js"
+      - "site/home-layout-final-beta4.js"
       - "site/admin-beta4.html"
       - "site/admin-beta4-categories.html"
       - "site/admin-mobile-runtime.js"
@@ -58,6 +59,7 @@ jobs:
           node --check site/legacy-event-attendance-beta4.js
           node --check site/profile-full-restore-beta4.js
           node --check site/beta4-profile-v2.js
+          node --check site/profile-demographics-beta4.js
           node --check site/beta4-loyalty-ui-stable.js
           node --check site/chip-requests-user-beta4.js
           node --check site/event-qr-attendance-beta4.js
@@ -67,12 +69,15 @@ jobs:
           node --check site/night-crown-presence-fix-beta4.js
           node --check site/night-crown-vote-lock-beta4.js
           node --check site/beta4-social-page.js
+          node --check site/bali-people-status-sync-beta4.js
+          node --check site/bali-people-search-ranking-beta4.js
           node --check site/bali-people-public-cards-beta4.js
-          node --check site/bali-people-discovery-fast-beta4.js
+          node --check site/bali-people-vip-frame-beta4.js
           node --check site/crown-win-cards-beta4.js
+          node --check site/bali-people-crown-frame-beta4.js
           node --check site/beta4-home-links.js
           node --check site/beta4-home-design.js
-          node --check site/home-final-layout-beta4.js
+          node --check site/home-layout-final-beta4.js
           node --check site/admin-booking-manager-beta4.js
           node --check site/admin-bonuses-final-beta4.js
           node --check site/admin-customer-dossier-beta4.js
