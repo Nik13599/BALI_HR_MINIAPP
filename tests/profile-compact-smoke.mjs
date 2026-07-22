@@ -13,7 +13,7 @@ const rewards = fs.readFileSync("site/profile-recent-rewards-beta4.js", "utf8");
 const demographics = fs.readFileSync("site/profile-demographics-beta4.js", "utf8");
 const chips = fs.readFileSync("site/chip-requests-user-beta4.js", "utf8");
 
-assert.ok(html.includes("bali-event-venue-reviews-1"), "Published page must use the event content cache version");
+assert.ok(html.includes("bali-event-venue-reviews-2"), "Published page must use the final event content cache version");
 assert.ok(loader.includes("beta4-profile-v2.js"), "Compact profile controller must be loaded");
 assert.ok(loader.includes("profile-controls-final-beta4.js"), "Final profile controls must be loaded");
 assert.ok(loader.indexOf("profile-full-restore-beta4.js") < loader.indexOf("profile-controls-final-beta4.js"), "Final controls must run after legacy profile guards");
