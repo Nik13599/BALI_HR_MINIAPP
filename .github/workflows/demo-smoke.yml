@@ -8,6 +8,13 @@ on:
       - "site/beta4-stable.html"
       - "site/beta4-square-loader.js"
       - "site/config.js"
+      - "site/store.js"
+      - "site/reviews-public-save-beta4.js"
+      - "site/event-details-lineup-beta4.js"
+      - "site/venue-reviews-user-beta4.js"
+      - "site/admin-venue-reviews-beta4.js"
+      - "site/admin-posters.js"
+      - "site/supabase-event-content-reviews.sql"
       - "site/legacy-nav-final-beta4.css"
       - "site/legacy-nav-final-beta4.js"
       - "site/legacy-event-attendance-beta4.js"
@@ -55,10 +62,17 @@ jobs:
         run: |
           node --check site/demo-seed.js
           node --check site/demo-live-sync.js
+          node --check site/demo-event-content-seed-beta4.js
           node --check site/demo-user-toolbar.js
           node --check site/demo-admin-toolbar.js
           node --check site/beta4-square-loader.js
           node --check site/config.js
+          node --check site/store.js
+          node --check site/reviews-public-save-beta4.js
+          node --check site/event-details-lineup-beta4.js
+          node --check site/venue-reviews-user-beta4.js
+          node --check site/admin-venue-reviews-beta4.js
+          node --check site/admin-posters.js
           node --check site/legacy-nav-final-beta4.js
           node --check site/legacy-event-attendance-beta4.js
           node --check site/profile-full-restore-beta4.js
@@ -104,3 +118,5 @@ jobs:
         run: node tests/final-admin-people-smoke.mjs
       - name: Run final home and discovery layout smoke test
         run: node tests/home-people-layout-smoke.mjs
+      - name: Run event lineup venue and reviews smoke test
+        run: node tests/event-venue-reviews-smoke.mjs
