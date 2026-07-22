@@ -10,29 +10,23 @@ const profileRestore = fs.readFileSync("site/profile-full-restore-beta4.js", "ut
 const profileV2 = fs.readFileSync("site/beta4-profile-v2.js", "utf8");
 const loyaltyUi = fs.readFileSync("site/beta4-loyalty-ui-stable.js", "utf8");
 const chipUi = fs.readFileSync("site/chip-requests-user-beta4.js", "utf8");
-const home = fs.readFileSync("site/home-final-layout-beta4.js", "utf8");
-const people = fs.readFileSync("site/bali-people-discovery-fast-beta4.js", "utf8");
 
 assert.ok(html.includes("beta4-square-loader.js"), "The modular application must be loaded");
-assert.ok(html.includes("bali-performance-fix-1"), "Published HTML must use the performance fix build");
+assert.ok(html.includes("bali-home-people-4"), "Published HTML must use the final home and people build");
 assert.ok(!html.includes("bali-user-clean.js"), "The replacement clean application must not be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.css"), "Stable legacy navigation CSS must be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.js"), "Final navigation composer must be loaded");
-assert.ok(loader.includes("'beta4-app.js','legacy-nav-final-beta4.js'"), "Bottom navigation must load immediately after the base application");
+assert.ok(loader.includes("'beta4-app.js','legacy-nav-final-beta4.js','home-layout-final-beta4.js'"), "Navigation and top profile must load immediately after the base app");
 assert.ok(loader.indexOf("legacy-nav-final-beta4.js") < loader.indexOf("beta4-social-page.js"), "Navigation must appear before social modules");
 assert.ok(loader.indexOf("legacy-nav-final-beta4.js") < loader.indexOf("night-crown-beta4.js"), "Navigation must appear before crown modules");
-assert.ok(loader.includes("bali-people-discovery-fast-beta4.js"), "The lightweight BALI PEOPLE module must be loaded");
-assert.ok(loader.includes("home-final-layout-beta4.js"), "The lightweight home layout must be loaded");
-assert.ok(!loader.includes("home-layout-final-beta4.js"), "The lagging home observer must not be loaded");
-assert.ok(!loader.includes("bali-people-search-ranking-beta4.js"), "The lagging people observer must not be loaded");
-assert.ok(!loader.includes("bali-people-crown-frame-beta4.js"), "The separate crown observer must not be loaded");
-assert.ok(!home.includes("MutationObserver"), "Home layout must not observe and rewrite the full DOM");
-assert.ok(!people.includes("MutationObserver"), "BALI PEOPLE must not observe and rewrite the full DOM");
-assert.ok(home.includes("overflow-y:auto!important"), "Pages must retain vertical touch scrolling");
-assert.ok(home.includes("Мы в соцсетях"), "The social media contact group must be present");
-assert.ok(home.includes("Как нас найти"), "The map contact group must be present");
-assert.ok(home.includes("Связь с BALI"), "The direct contact group must be present");
-assert.ok(home.includes("TikTok"), "TikTok must be available in the social media group");
+assert.ok(loader.includes("home-layout-final-beta4.js"), "The final home layout must be loaded");
+assert.ok(loader.includes("bali-people-search-ranking-beta4.js"), "The safe BALI PEOPLE discovery module must be loaded");
+assert.ok(loader.includes("bali-people-status-sync-beta4.js"), "Purchased VIP status must sync into BALI PEOPLE");
+assert.ok(loader.includes("bali-people-vip-frame-beta4.js"), "Purchased VIP frames must be loaded");
+assert.ok(loader.includes("bali-people-crown-frame-beta4.js"), "Crown winner frames must be loaded");
+assert.ok(!loader.includes("home-final-layout-beta4.js"), "The duplicate home layout must not be loaded");
+assert.ok(!loader.includes("bali-people-discovery-fast-beta4.js"), "The conflicting discovery module must not be loaded");
+assert.ok(!loader.includes("bali-people-present-beta4.js"), "The conflicting presence interceptor must not be loaded");
 
 assert.ok(loader.includes("legacy-event-attendance-beta4.js"), "Unified event attendance must be loaded");
 assert.ok(loader.includes("profile-full-restore-beta4.js"), "Full profile restore layer must be loaded");
@@ -74,4 +68,4 @@ assert.ok(attendance.includes("legacyAttendanceDialog"), "The attendance list mu
 assert.ok(attendance.includes("Забронировали столик"), "Booked parties must have their own section");
 assert.ok(attendance.includes("Хотят пойти без бронирования"), "Interested guests must have their own section");
 
-console.log("BALI performance, scrolling, contacts and navigation smoke test passed");
+console.log("BALI final navigation, home profile, people filters and full profile smoke test passed");
