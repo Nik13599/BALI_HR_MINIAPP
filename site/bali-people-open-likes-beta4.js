@@ -41,7 +41,11 @@
         counter.className = "person-v2-like-count";
         body.querySelector(".person-v2-actions")?.insertAdjacentElement("beforebegin", counter);
       }
-      counter.innerHTML = `👍 <b>${social.likeCount(id)}</b> лайков`;
+      const count = social.likeCount(id);
+      if (counter.dataset.count !== String(count)) {
+        counter.dataset.count = String(count);
+        counter.innerHTML = `👍 <b>${count}</b> лайков`;
+      }
     });
 
     const profile = document.getElementById("socialPersonBody");
@@ -54,14 +58,31 @@
         counter.className = "person-v2-like-count";
         profile.querySelector(".person-v2-actions")?.insertAdjacentElement("beforebegin", counter);
       }
-      counter.innerHTML = `👍 <b>${social.likeCount(id)}</b> лайков`;
+      const count = social.likeCount(id);
+      if (counter.dataset.count !== String(count)) {
+        counter.dataset.count = String(count);
+        counter.innerHTML = `👍 <b>${count}</b> лайков`;
+      }
     }
   }
 
+  let scheduled = false;
+  const scheduleDecorate = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      decorate();
+    });
+  };
+
   addStyles();
-  const observer = new MutationObserver(() => requestAnimationFrame(decorate));
+  const observer = new MutationObserver(records => {
+    const relevant = records.some(record => [...record.addedNodes].some(node => node.nodeType === 1 && (node.matches?.(".person-v2,#socialPersonBody,.person-v2-photo") || node.querySelector?.(".person-v2,#socialPersonBody,.person-v2-photo"))));
+    if (relevant) scheduleDecorate();
+  });
   observer.observe(document.body, { childList: true, subtree: true });
-  [0, 120, 400, 900].forEach(delay => setTimeout(decorate, delay));
-  ["bali:social-changed", "bali:data-changed"].forEach(name => window.addEventListener(name, () => setTimeout(decorate, 0)));
-  window.BaliPeopleOpenLikes = { decorate, likeCount: social.likeCount };
+  [0, 120, 400].forEach(delay => setTimeout(scheduleDecorate, delay));
+  window.addEventListener("bali:social-changed", scheduleDecorate);
+  window.BaliPeopleOpenLikes = { decorate, scheduleDecorate, likeCount: social.likeCount };
 })();
