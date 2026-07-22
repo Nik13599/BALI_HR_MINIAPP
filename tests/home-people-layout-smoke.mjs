@@ -13,7 +13,7 @@ const demographics = fs.readFileSync("site/profile-demographics-beta4.js", "utf8
 const home = fs.readFileSync("site/home-layout-final-beta4.js", "utf8");
 const homeLinks = fs.readFileSync("site/beta4-home-links.js", "utf8");
 
-assert.ok(html.includes("bali-home-people-4"), "Published HTML must use the final home and people build");
+assert.ok(html.includes("bali-home-contacts-1"), "Published HTML must use the ordered home contacts build");
 assert.ok(loader.includes("home-layout-final-beta4.js"), "The final user home layout must be loaded");
 assert.ok(loader.includes("bali-people-search-ranking-beta4.js"), "The safe discovery module must be loaded");
 assert.ok(loader.includes("bali-people-status-sync-beta4.js"), "Purchased VIP must sync into the public profile");
@@ -47,8 +47,17 @@ assert.ok(home.includes("game.vip()"), "The header ring must reflect purchased o
 assert.ok(home.includes("repeat(3,minmax(0,1fr))"), "Three upcoming events must appear in one row");
 assert.ok(home.includes("article.dataset.event = button.dataset.event"), "Each upcoming event card must be clickable");
 assert.ok(home.includes("Остальные афиши"), "The home page must link to all other posters");
-assert.ok(home.includes("Мы в социальных сетях"), "Social networks must have their own lower group");
-assert.ok(home.includes("Связаться с BALI"), "Manager and phone must remain in the contact block");
-assert.ok(homeLinks.indexOf('data-contact-key="manager"') < homeLinks.indexOf('data-contact-key="instagram"'), "Manager, phone and map must appear before social networks");
+assert.ok(home.includes("home-social-links"), "Social networks must use a compact two-column row");
+assert.ok(home.includes("home-map-links"), "Yandex Maps must use a separate highlighted row");
+assert.ok(home.includes("home-contact-links"), "Phone and manager must use a compact two-column row");
+assert.ok(home.includes('a[data-contact-key="phone"]{order:1}'), "Phone must be first in the contact row");
+assert.ok(home.includes('a[data-contact-key="manager"]{order:2}'), "Telegram manager must be second in the contact row");
+const socialIndex = homeLinks.indexOf("home-social-section");
+const mapIndex = homeLinks.indexOf("home-map-section");
+const contactIndex = homeLinks.indexOf("home-contact-section");
+const phoneIndex = homeLinks.indexOf('data-contact-key="phone"');
+const managerIndex = homeLinks.indexOf('data-contact-key="manager"');
+assert.ok(socialIndex >= 0 && socialIndex < mapIndex && mapIndex < contactIndex, "Home order must be social networks, map, then contact information");
+assert.ok(phoneIndex >= 0 && phoneIndex < managerIndex, "Phone must appear before the Telegram manager");
 
-console.log("BALI final home, discovery filters, presence, demographics and status frames smoke test passed");
+console.log("BALI home contacts, discovery filters, presence, demographics and status frames smoke test passed");
