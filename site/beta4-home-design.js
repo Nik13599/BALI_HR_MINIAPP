@@ -97,12 +97,12 @@
     blockStyle(card, current.contacts);
     const title = card.querySelector(".card-head h3");
     if (title) title.textContent = current.contacts.title || "";
-    const keys = ["instagram","telegram","manager","phone","map"];
-    [...card.querySelectorAll(".club-links a")].forEach((link, index) => {
-      const key = keys[index], item = current.contacts[key] || {};
+    [...card.querySelectorAll(".club-links a")].forEach(link => {
+      const key = link.dataset.contactKey || "";
+      const item = current.contacts[key] || {};
       const strong = link.querySelector("strong"), small = link.querySelector("small"), icon = link.querySelector("i");
-      if (strong) strong.textContent = item.title || "";
-      if (small) small.textContent = item.subtitle || "";
+      if (strong && item.title) strong.textContent = item.title;
+      if (small && item.subtitle) small.textContent = item.subtitle;
       if (icon) {
         icon.classList.toggle("has-image", Boolean(item.icon));
         if (item.icon) icon.innerHTML = `<img src="${esc(item.icon)}" alt="">`;
