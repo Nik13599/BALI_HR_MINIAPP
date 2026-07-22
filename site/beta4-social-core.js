@@ -16,19 +16,21 @@
   function visiblePeople(){return people().filter(x=>x.id!==myId()&&x.active===true&&x.status!=="closed")}
   const thumbs=()=>read(KEYS.thumbs,[]);
   function setThumb(fromId,toId,active=true){const rows=thumbs().filter(x=>!(x.fromId===fromId&&x.toId===toId));if(active)rows.unshift({id:uid("thumb"),fromId,toId,decision:"thumb",createdAt:now()});write(KEYS.thumbs,rows.slice(0,3000));return active}
-  function toggleThumb(targetId){const active=!hasThumb(myId(),targetId);setThumb(myId(),targetId,active);return{active,connected:active&&isConnection(targetId)}}
+  function toggleThumb(targetId){const active=!hasThumb(myId(),targetId);setThumb(myId(),targetId,active);return{active,connected:false}}
   function hasThumb(fromId,toId){return thumbs().some(x=>x.fromId===fromId&&x.toId===toId&&(x.decision==="thumb"||x.decision==="like"))}
-  function isConnection(otherId){return hasThumb(myId(),otherId)&&hasThumb(otherId,myId())}
+  function isConnection(){return false}
+  function likeCount(userId){return thumbs().filter(x=>String(x.toId)===String(userId)&&(x.decision==="thumb"||x.decision==="like")).length}
   function incomingThumbs(){return visiblePeople().filter(person=>hasThumb(person.id,myId()))}
-  function connections(){return visiblePeople().filter(person=>isConnection(person.id))}
+  function connections(){return []}
   const requests=()=>read(KEYS.requests,[]);
   function requestEndAt(item){return item.eventEndAt||eventEndAt({event_date:item.eventDate,event_time:item.eventTime,event_end_date:item.eventEndDate,event_end_time:item.eventEndTime})}
   function isRequestActive(item){const end=requestEndAt(item);return Boolean(end&&new Date(end).getTime()>Date.now())}
   function activeIncomingRequests(){return requests().filter(item=>item.type==="event"&&String(item.toId)===myId()&&isRequestActive(item)).sort((a,b)=>String(a.eventDate||"").localeCompare(String(b.eventDate||"")))}
+  function activeOutgoingRequests(){return requests().filter(item=>item.type==="event"&&String(item.fromId)===myId()&&isRequestActive(item)).sort((a,b)=>String(a.eventDate||"").localeCompare(String(b.eventDate||"")))}
   function sendRequest(targetId,type="event",event=null){const target=people().find(x=>x.id===targetId);if(!target)return{ok:false,message:"Профиль не найден"};if(type!=="event"||!event?.id)return{ok:false,message:"Выберите мероприятие"};const endAt=eventEndAt(event);if(!endAt||new Date(endAt).getTime()<=Date.now())return{ok:false,message:"Мероприятие уже завершено"};if(requests().some(x=>x.fromId===myId()&&x.toId===targetId&&x.type==="event"&&String(x.eventId)===String(event.id)&&isRequestActive(x)))return{ok:false,message:"Приглашение на это мероприятие уже отправлено"};const item={id:uid("req"),fromId:myId(),fromName:profile().name,toId:targetId,toName:target.name,type:"event",status:"pending",eventId:event.id,eventTitle:event.title||"Мероприятие BALI",eventDate:event.event_date||"",eventTime:event.event_time||"23:00",eventEndDate:event.event_end_date||event.end_date||"",eventEndTime:event.event_end_time||event.end_time||"06:00",eventEndAt:endAt,createdAt:now()};const rows=requests();rows.unshift(item);write(KEYS.requests,rows.slice(0,1000));return{ok:true,item}}
   function respond(id,decision){const rows=requests(),index=rows.findIndex(x=>x.id===id&&String(x.toId)===myId());if(index<0||!isRequestActive(rows[index]))return null;const status=decision===true?"accepted":decision===false?"declined":["accepted","declined","pending"].includes(decision)?decision:"pending";rows[index]={...rows[index],status,respondedAt:now()};write(KEYS.requests,rows);return rows[index]}
   const gifts=()=>read(KEYS.gifts,[]);
   const incomingGifts=()=>gifts().filter(item=>String(item.toId)===myId()).sort((a,b)=>String(b.createdAt||"").localeCompare(String(a.createdAt||"")));
   function recordGift(targetId,giftId,source="beta_demo"){const gift=GIFT_CATALOG.find(x=>x.id===giftId),target=people().find(x=>x.id===targetId);if(!gift||!target)return null;const item={id:uid("gift"),fromId:myId(),fromName:profile().name,toId:targetId,toName:target.name,giftId,giftName:gift.name,icon:gift.icon,stars:gift.stars,source,createdAt:now()};const rows=gifts();rows.unshift(item);write(KEYS.gifts,rows.slice(0,500));return item}
-  window.BaliBeta4Social={KEYS,STATUSES,GIFT_CATALOG,profile,saveProfile,people,visiblePeople,thumbs,toggleThumb,setThumb,hasThumb,isConnection,incomingThumbs,connections,requests,sendRequest,respond,eventEndAt,requestEndAt,isRequestActive,activeIncomingRequests,gifts,incomingGifts,recordGift,myId};
+  window.BaliBeta4Social={KEYS,STATUSES,GIFT_CATALOG,profile,saveProfile,people,visiblePeople,thumbs,toggleThumb,setThumb,hasThumb,isConnection,likeCount,incomingThumbs,connections,requests,sendRequest,respond,eventEndAt,requestEndAt,isRequestActive,activeIncomingRequests,activeOutgoingRequests,gifts,incomingGifts,recordGift,myId};
 })();
