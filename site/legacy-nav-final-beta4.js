@@ -62,7 +62,7 @@
     availabilityAttempts += 1;
     const nav = document.querySelector('.shell > nav.nav[data-navigation-ready="true"]');
     if (!nav) return;
-    if (syncAvailability(nav) || availabilityAttempts >= 200) clearInterval(availabilityTimer);
+    if (syncAvailability(nav) || availabilityAttempts >= 1200) clearInterval(availabilityTimer);
   }, 50);
 
   window.BaliLegacyNavigation = { finalize, syncAvailability };
