@@ -41,6 +41,7 @@ assert.equal((nav.match(/\["(?:home|events|menu|dating|crown|profile)"/g) || [])
 assert.ok(nav.includes("replaceChildren"), "Navigation must be finalized atomically");
 assert.ok(nav.includes("nav.dataset.navigationReady = 'true'"), "Navigation must become visible immediately after mounting");
 assert.ok(nav.includes("button.disabled = !available"), "Buttons for late screens must remain safely disabled until ready");
+assert.ok(nav.includes("availabilityAttempts >= 1200"), "Delayed feature modules must have enough time to enable their buttons");
 assert.ok(!nav.includes("function ready()"), "Navigation must not wait for every feature screen before appearing");
 
 assert.ok(profileV2.includes("Магазин VIP"), "Extended points dialog must include the VIP shop");
