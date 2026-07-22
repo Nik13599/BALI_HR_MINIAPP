@@ -12,7 +12,7 @@ const loyaltyUi = fs.readFileSync("site/beta4-loyalty-ui-stable.js", "utf8");
 const chipUi = fs.readFileSync("site/chip-requests-user-beta4.js", "utf8");
 
 assert.ok(html.includes("beta4-square-loader.js"), "Previous modular application must be restored");
-assert.ok(html.includes("bali-fast-nav-1"), "Published HTML must use the fast navigation build");
+assert.ok(html.includes("bali-fast-nav-2"), "Published HTML must use the fast navigation build");
 assert.ok(!html.includes("bali-user-clean.js"), "The replacement clean application must not be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.css"), "Stable legacy navigation CSS must be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.js"), "Final navigation composer must be loaded");
