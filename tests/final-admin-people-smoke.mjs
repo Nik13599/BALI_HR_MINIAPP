@@ -23,10 +23,11 @@ assert.ok(publicCards.includes("Текущий уровень"), "Public cards m
 assert.ok(crownWins.includes("МИСС BALI"), "Miss BALI win counts must be shown");
 assert.ok(crownWins.includes("МИСТЕР BALI"), "Mister BALI win counts must be shown");
 
-assert.ok(adminHtml.includes("STABLE 16"), "The final admin build must be opened");
+assert.ok(adminHtml.includes("CONTENT 1"), "The event content admin build must be opened");
 assert.ok(adminHtml.includes("admin-customer-dossier-beta4.js"), "The full user dossier must be globally loaded");
 assert.ok(adminHtml.includes("admin-user-card-links-beta4.js"), "User names must open the dossier across admin sections");
 assert.ok(adminHtml.includes("crown-win-cards-beta4.js"), "Admin dossiers must show crown wins");
+assert.ok(adminHtml.includes("admin-venue-reviews-beta4.js"), "Venue settings and reviews must be globally loaded");
 assert.ok(adminRuntime.includes("admin-bonuses-final-beta4.js"), "The compact points and VIP workflow must be loaded");
 assert.ok(bonuses.includes("Новые заявки на фишки"), "Pending chip requests must appear immediately at the top");
 assert.ok(bonuses.includes("Открыть историю вручения фишек"), "Chip handover history must open only on request");
@@ -35,4 +36,4 @@ assert.ok(dossier.includes("История баллов и бонусов"), "Th
 assert.ok(dossier.includes("Полученные награды"), "The dossier must include rewards");
 assert.ok(userLinks.includes("Открыть полную карточку пользователя"), "Names across the admin must be actionable");
 
-console.log("Final admin blocks, global dossiers and BALI People cards smoke test passed");
+console.log("Final admin blocks, content tools, global dossiers and BALI People cards smoke test passed");
