@@ -19,7 +19,7 @@
     const badge = document.getElementById("modeBadge");
     if (badge) badge.textContent = "ДЕМО · 6 ГОСТЕЙ";
     document.querySelectorAll('a[href*="beta4-stable.html"]').forEach(link => {
-      link.href = "./beta4-stable.html?v=bali-event-venue-reviews-1-final";
+      link.href = "./beta4-stable.html?v=bali-event-venue-reviews-2-final";
       link.textContent = "Открыть пользователя ↗";
     });
     const hint = document.getElementById("loginHint");
