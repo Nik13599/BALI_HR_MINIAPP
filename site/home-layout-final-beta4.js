@@ -69,16 +69,18 @@
       button = document.createElement("button");
       button.type = "button";
       button.id = "topProfileButton";
-      button.className = "top-profile-button";
       button.dataset.page = "profile";
       top.appendChild(button);
     }
     const profile = game.profile();
     const status = profileStatus();
-    button.className = `top-profile-button ${status.className}`.trim();
-    button.title = `Мой профиль · ${status.label}`;
-    button.setAttribute("aria-label", `Мой профиль. Статус: ${status.label}`);
-    button.innerHTML = `<span class="top-profile-avatar">${profile.avatar ? `<img src="${esc(profile.avatar)}" alt="${esc(profile.name || "Мой профиль")}">` : esc(initials(profile.name))}</span><span class="top-profile-status">${esc(status.icon)}</span>`;
+    const className = `top-profile-button ${status.className}`.trim();
+    const title = `Мой профиль · ${status.label}`;
+    const html = `<span class="top-profile-avatar">${profile.avatar ? `<img src="${esc(profile.avatar)}" alt="${esc(profile.name || "Мой профиль")}">` : esc(initials(profile.name))}</span><span class="top-profile-status">${esc(status.icon)}</span>`;
+    if (button.className !== className) button.className = className;
+    if (button.title !== title) button.title = title;
+    if (button.getAttribute("aria-label") !== `Мой профиль. Статус: ${status.label}`) button.setAttribute("aria-label", `Мой профиль. Статус: ${status.label}`);
+    if (button.innerHTML !== html) button.innerHTML = html;
     return true;
   }
 
@@ -95,14 +97,14 @@
     if (!card) return;
     const title = card.querySelector(".card-head h3");
     const all = card.querySelector('.card-head [data-page="events"]');
-    if (title) title.textContent = "Ближайшие события";
-    if (all) all.textContent = "Остальные афиши";
+    if (title && title.textContent !== "Ближайшие события") title.textContent = "Ближайшие события";
+    if (all && all.textContent !== "Остальные афиши") all.textContent = "Остальные афиши";
     card.querySelectorAll("#homeEvents .compact-event").forEach(article => {
       const button = article.querySelector("[data-event]");
       if (button?.dataset.event) {
-        article.dataset.event = button.dataset.event;
-        article.setAttribute("role", "button");
-        article.tabIndex = 0;
+        if (article.dataset.event !== button.dataset.event) article.dataset.event = button.dataset.event;
+        if (article.getAttribute("role") !== "button") article.setAttribute("role", "button");
+        if (article.tabIndex !== 0) article.tabIndex = 0;
       }
     });
   }
@@ -112,7 +114,7 @@
     const links = card?.querySelector(".club-links");
     if (!card || !links) return;
     const title = card.querySelector(".card-head h3");
-    if (title) title.textContent = "Связаться с BALI";
+    if (title && title.textContent !== "Связаться с BALI") title.textContent = "Связаться с BALI";
     let label = links.querySelector(".home-social-label");
     const instagram = links.querySelector('[data-contact-key="instagram"]');
     if (!label && instagram) {
@@ -137,7 +139,11 @@
       const title = about.querySelector(".card-head h3");
       if (title && title.textContent.trim() === "О клубе") title.textContent = "Клуб BALI";
     }
-    [hero, actions, checkin, upcoming, contacts, about].filter(Boolean).forEach(node => inner.appendChild(node));
+    const desired = [hero, actions, checkin, upcoming, contacts, about].filter(Boolean);
+    const desiredSet = new Set(desired);
+    const current = [...inner.children].filter(node => desiredSet.has(node));
+    const orderChanged = current.length !== desired.length || desired.some((node, index) => current[index] !== node);
+    if (orderChanged) desired.forEach(node => inner.appendChild(node));
     decorateEvents();
     decorateContacts();
     return Boolean(hero && checkin && upcoming && contacts);
