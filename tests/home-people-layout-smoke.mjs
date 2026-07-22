@@ -12,13 +12,15 @@ const crownFrame = fs.readFileSync("site/bali-people-crown-frame-beta4.js", "utf
 const demographics = fs.readFileSync("site/profile-demographics-beta4.js", "utf8");
 const home = fs.readFileSync("site/home-layout-final-beta4.js", "utf8");
 const homeLinks = fs.readFileSync("site/beta4-home-links.js", "utf8");
+const venue = fs.readFileSync("site/venue-reviews-user-beta4.js", "utf8");
 
-assert.ok(html.includes("bali-social-inbox-1"), "Published HTML must use the social inbox build");
+assert.ok(html.includes("bali-event-venue-reviews-1"), "Published HTML must use the event content build");
 assert.ok(loader.includes("home-layout-final-beta4.js"), "The final user home layout must be loaded");
 assert.ok(loader.includes("bali-people-search-ranking-beta4.js"), "The safe discovery module must be loaded");
 assert.ok(loader.includes("bali-people-status-sync-beta4.js"), "Purchased VIP must sync into the public profile");
 assert.ok(loader.includes("bali-people-vip-frame-beta4.js"), "Purchased VIP frames must be loaded");
 assert.ok(loader.includes("bali-people-crown-frame-beta4.js"), "Crown winner frames must be loaded");
+assert.ok(loader.includes("venue-reviews-user-beta4.js"), "Venue details and feedback must be loaded");
 assert.ok(!loader.includes("home-final-layout-beta4.js"), "The duplicate home layout must not be loaded");
 assert.ok(!loader.includes("bali-people-discovery-fast-beta4.js"), "The conflicting discovery module must not be loaded");
 assert.ok(!loader.includes("bali-people-present-beta4.js"), "The conflicting attendance interceptor must not be loaded");
@@ -52,6 +54,8 @@ assert.ok(home.includes("home-map-links"), "Yandex Maps must use a separate high
 assert.ok(home.includes("home-contact-links"), "Phone and manager must use a compact two-column row");
 assert.ok(home.includes('a[data-contact-key="phone"]{order:1}'), "Phone must be first in the contact row");
 assert.ok(home.includes('a[data-contact-key="manager"]{order:2}'), "Telegram manager must be second in the contact row");
+assert.ok(venue.includes("Узнать подробнее о площадке"), "The final home card must open venue details");
+assert.ok(venue.includes("Оставить отзыв"), "The home page must expose the feedback form");
 const socialIndex = homeLinks.indexOf("home-social-section");
 const mapIndex = homeLinks.indexOf("home-map-section");
 const contactIndex = homeLinks.indexOf("home-contact-section");
@@ -60,4 +64,4 @@ const managerIndex = homeLinks.indexOf('data-contact-key="manager"');
 assert.ok(socialIndex >= 0 && socialIndex < mapIndex && mapIndex < contactIndex, "Home order must be social networks, map, then contact information");
 assert.ok(phoneIndex >= 0 && phoneIndex < managerIndex, "Phone must appear before the Telegram manager");
 
-console.log("BALI home contacts, discovery filters, presence, demographics and status frames smoke test passed");
+console.log("BALI home contacts, venue, feedback, discovery filters and status frames smoke test passed");
