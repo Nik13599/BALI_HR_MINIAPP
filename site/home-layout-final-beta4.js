@@ -32,13 +32,28 @@
       #homeEvents .compact-event h3{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:9px!important;line-height:1.25!important}
       #homeEvents .compact-event p{margin-top:4px!important;font-size:7px!important;line-height:1.35}
       #homeEvents .compact-event button{display:none!important}
-      #clubLinks .club-links{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}
-      #clubLinks .club-links a{min-width:0}
-      #clubLinks .club-links a[data-contact-key="manager"],#clubLinks .club-links a[data-contact-key="map"]{grid-column:1/-1}
-      #clubLinks .home-social-label{grid-column:1/-1;margin:5px 1px -1px;padding-top:10px;border-top:1px solid var(--line);color:var(--muted);font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-      #clubLinks .club-links a[data-contact-key="instagram"],#clubLinks .club-links a[data-contact-key="telegram"]{background:rgba(200,255,61,.035)}
+      #clubLinks.home-links-card{display:grid!important;gap:14px!important;padding:13px!important}
+      #clubLinks .home-links-section{display:grid;gap:8px}
+      #clubLinks .home-links-section+.home-links-section{padding-top:13px;border-top:1px solid var(--line)}
+      #clubLinks .home-links-heading{display:flex;align-items:end;justify-content:space-between;gap:10px}
+      #clubLinks .home-links-heading span{color:var(--muted);font-size:7px;font-weight:900;letter-spacing:.12em}
+      #clubLinks .home-links-heading h3{margin:0;font-size:13px}
+      #clubLinks .home-social-links,#clubLinks .home-contact-links{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+      #clubLinks .home-map-links{display:block!important}
+      #clubLinks .club-links a{min-width:0;min-height:58px;padding:9px!important;border-radius:13px!important}
+      #clubLinks .club-links a i{width:34px!important;height:34px!important;flex:0 0 34px!important;border-radius:10px!important}
+      #clubLinks .club-links a strong{font-size:9px!important;line-height:1.25}
+      #clubLinks .club-links a small{font-size:7px!important;line-height:1.25}
+      #clubLinks .home-map-links a{display:grid!important;grid-template-columns:42px minmax(0,1fr) auto!important;min-height:72px!important;padding:12px!important;border-color:rgba(200,255,61,.34)!important;background:linear-gradient(135deg,rgba(200,255,61,.14),rgba(200,255,61,.04))!important}
+      #clubLinks .home-map-links a i{width:42px!important;height:42px!important;flex-basis:42px!important;background:var(--lime)!important;color:#080a0a!important;font-size:20px!important}
+      #clubLinks .home-map-links a strong{font-size:11px!important}
+      #clubLinks .home-map-links a b{color:var(--lime);font-size:18px}
+      #clubLinks .home-contact-links a{display:flex!important;justify-content:center!important;min-height:52px!important;padding:8px!important;text-align:left}
+      #clubLinks .home-contact-links a small{display:block!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      #clubLinks .home-contact-links a[data-contact-key="phone"]{order:1}
+      #clubLinks .home-contact-links a[data-contact-key="manager"]{order:2}
       .home-club-footer{order:99}
-      @media(max-width:370px){#homeEvents{gap:5px!important}#homeEvents .compact-event{padding:5px!important}#homeEvents .compact-event h3{font-size:8px!important}#homeEvents .compact-event p{font-size:6px!important}.top-profile-button{width:42px;height:42px}}
+      @media(max-width:370px){#homeEvents{gap:5px!important}#homeEvents .compact-event{padding:5px!important}#homeEvents .compact-event h3{font-size:8px!important}#homeEvents .compact-event p{font-size:6px!important}.top-profile-button{width:42px;height:42px}#clubLinks .club-links a{padding:7px!important}#clubLinks .home-contact-links a strong{font-size:8px!important}}
     `;
     document.head.appendChild(style);
   }
@@ -111,18 +126,13 @@
 
   function decorateContacts() {
     const card = document.getElementById("clubLinks");
-    const links = card?.querySelector(".club-links");
-    if (!card || !links) return;
-    const title = card.querySelector(".card-head h3");
-    if (title && title.textContent !== "Связаться с BALI") title.textContent = "Связаться с BALI";
-    let label = links.querySelector(".home-social-label");
-    const instagram = links.querySelector('[data-contact-key="instagram"]');
-    if (!label && instagram) {
-      label = document.createElement("div");
-      label.className = "home-social-label";
-      label.textContent = "Мы в социальных сетях";
-      instagram.before(label);
-    }
+    if (!card) return;
+    const socialTitle = card.querySelector(".home-social-section h3");
+    const mapTitle = card.querySelector(".home-map-section h3");
+    const contactTitle = card.querySelector(".home-contact-section h3");
+    if (socialTitle && socialTitle.textContent !== "Мы в соцсетях") socialTitle.textContent = "Мы в соцсетях";
+    if (mapTitle && mapTitle.textContent !== "Как нас найти") mapTitle.textContent = "Как нас найти";
+    if (contactTitle && contactTitle.textContent !== "Связаться с BALI") contactTitle.textContent = "Связаться с BALI";
   }
 
   function arrangeHome() {
