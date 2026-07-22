@@ -14,7 +14,7 @@ const reviewBridge = fs.readFileSync("site/reviews-public-save-beta4.js", "utf8"
 const demoSeed = fs.readFileSync("site/demo-event-content-seed-beta4.js", "utf8");
 const migration = fs.readFileSync("site/supabase-event-content-reviews.sql", "utf8");
 
-assert.ok(html.includes("bali-event-venue-reviews-1-final"), "Published HTML must use the final event content version");
+assert.ok(html.includes("bali-event-venue-reviews-2-final"), "Published HTML must use the final event content version");
 assert.ok(loader.includes("reviews-public-save-beta4.js"), "Private public review submission bridge must load");
 assert.ok(loader.includes("demo-event-content-seed-beta4.js"), "Demo event content must load");
 assert.ok(loader.includes("event-details-lineup-beta4.js"), "Detailed event lineup must load");
