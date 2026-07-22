@@ -15,15 +15,18 @@ on:
       - "site/beta4-loyalty-ui-stable.js"
       - "site/chip-requests-user-beta4.js"
       - "site/beta4-qr-checkin.js"
-      - "site/night-crown-core-beta4.js"
-      - "site/night-crown-cloud-beta4.js"
+      - "site/event-qr-attendance-beta4.js"
+      - "site/night-crown-*.js"
+      - "site/bali-people-*.js"
+      - "site/crown-win-cards-beta4.js"
       - "site/admin-beta4.html"
       - "site/admin-beta4-categories.html"
+      - "site/admin-mobile-runtime.js"
       - "site/admin-booking-manager-beta4.js"
-      - "tests/demo-smoke.mjs"
-      - "tests/bottom-nav-smoke.mjs"
-      - "tests/admin-booking-manager-smoke.mjs"
-      - "tests/crown-live-event-smoke.mjs"
+      - "site/admin-bonuses-final-beta4.js"
+      - "site/admin-customer-dossier-beta4.js"
+      - "site/admin-user-card-links-beta4.js"
+      - "tests/*.mjs"
       - ".github/workflows/demo-smoke.yml"
   workflow_dispatch:
 
@@ -51,10 +54,18 @@ jobs:
           node --check site/beta4-profile-v2.js
           node --check site/beta4-loyalty-ui-stable.js
           node --check site/chip-requests-user-beta4.js
+          node --check site/event-qr-attendance-beta4.js
           node --check site/beta4-qr-checkin.js
           node --check site/night-crown-core-beta4.js
           node --check site/night-crown-cloud-beta4.js
+          node --check site/night-crown-presence-fix-beta4.js
+          node --check site/night-crown-vote-lock-beta4.js
+          node --check site/bali-people-public-cards-beta4.js
+          node --check site/crown-win-cards-beta4.js
           node --check site/admin-booking-manager-beta4.js
+          node --check site/admin-bonuses-final-beta4.js
+          node --check site/admin-customer-dossier-beta4.js
+          node --check site/admin-user-card-links-beta4.js
       - name: Run demo data smoke test
         run: node tests/demo-smoke.mjs
       - name: Run full user application smoke test
@@ -63,3 +74,5 @@ jobs:
         run: node tests/admin-booking-manager-smoke.mjs
       - name: Run crown and active event smoke test
         run: node tests/crown-live-event-smoke.mjs
+      - name: Run final admin and BALI People smoke test
+        run: node tests/final-admin-people-smoke.mjs
