@@ -12,11 +12,11 @@ const loyaltyUi = fs.readFileSync("site/beta4-loyalty-ui-stable.js", "utf8");
 const chipUi = fs.readFileSync("site/chip-requests-user-beta4.js", "utf8");
 
 assert.ok(html.includes("beta4-square-loader.js"), "Previous modular application must be restored");
-assert.ok(html.includes("bali-fast-nav-2"), "Published HTML must use the fast navigation build");
+assert.ok(html.includes("bali-home-people-3"), "Published HTML must use the unified home and people build");
 assert.ok(!html.includes("bali-user-clean.js"), "The replacement clean application must not be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.css"), "Stable legacy navigation CSS must be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.js"), "Final navigation composer must be loaded");
-assert.ok(loader.includes("'beta4-app.js','legacy-nav-final-beta4.js'"), "Bottom navigation must load immediately after the base application");
+assert.ok(loader.includes("'beta4-app.js','legacy-nav-final-beta4.js','home-layout-final-beta4.js'"), "Bottom navigation and top profile must load immediately after the base application");
 assert.ok(loader.indexOf("legacy-nav-final-beta4.js") < loader.indexOf("beta4-social-page.js"), "Navigation must appear before delayed social modules");
 assert.ok(loader.indexOf("legacy-nav-final-beta4.js") < loader.indexOf("night-crown-beta4.js"), "Navigation must appear before delayed crown modules");
 assert.ok(loader.includes("legacy-event-attendance-beta4.js"), "Unified event attendance must be loaded");
@@ -66,4 +66,4 @@ assert.ok(attendance.includes("Забронировали столик"), "Booke
 assert.ok(attendance.includes("Хотят пойти без бронирования"), "Interested guests must have their own section");
 assert.match(attendance, /root\.innerHTML = `<button class="legacy-attendance-total"/, "The event page must render only the compact attendance button, not the full people list");
 
-console.log("BALI fast navigation, dialog attendance and full profile smoke test passed");
+console.log("BALI fast navigation, home profile, dialog attendance and full profile smoke test passed");
