@@ -12,7 +12,9 @@
     menu_items: "bali_menu_v2",
     hall_tables: "bali_tables_v2",
     customers: "bali_customers_v2",
-    bookings: "bali_bookings_v2"
+    bookings: "bali_bookings_v2",
+    venue_content: "bali_venue_content_v1",
+    reviews: "bali_reviews_v1"
   };
 
   const now = new Date();
@@ -24,9 +26,9 @@
 
   const seed = {
     events: [
-      { id: "event-tropic", title: "Tropic Party", event_date: isoDate(5), event_time: "23:00", description: "Тропическая ночь, DJ-сеты и свободный вход.", image_url: "", active: true, sort_order: 1 },
-      { id: "event-weekend", title: "BALI Weekend", event_date: isoDate(12), event_time: "23:00", description: "Главная вечеринка выходных: музыка, бар и кальяны.", image_url: "", active: true, sort_order: 2 },
-      { id: "event-special", title: "Special Night", event_date: isoDate(19), event_time: "23:00", description: "Специальная программа и приглашённые артисты.", image_url: "", active: true, sort_order: 3 }
+      { id: "event-tropic", title: "Tropic Party", event_date: isoDate(5), event_time: "23:00", description: "Тропическая ночь, DJ-сеты и свободный вход.", details_description: "Тропическая вечеринка BALI с яркой сценографией, клубной музыкой, баром, кальянами и танцами до утра.", performers: [], image_url: "", active: true, sort_order: 1 },
+      { id: "event-weekend", title: "BALI Weekend", event_date: isoDate(12), event_time: "23:00", description: "Главная вечеринка выходных: музыка, бар и кальяны.", details_description: "Большой клубный уикенд с насыщенной музыкальной программой и специальными участниками.", performers: [], image_url: "", active: true, sort_order: 2 },
+      { id: "event-special", title: "Special Night", event_date: isoDate(19), event_time: "23:00", description: "Специальная программа и приглашённые артисты.", details_description: "Специальная ночь BALI с приглашёнными артистами и расширенной шоу-программой.", performers: [], image_url: "", active: true, sort_order: 3 }
     ],
     menu_items: [
       { id: "menu-1", category: "Коктейли", name: "BALI Signature", description: "Тропический фирменный коктейль", price: 25, active: true, sort_order: 1 },
@@ -46,7 +48,17 @@
       { id: "table-7", name: "VIP 2", seats: 10, x: 70, y: 76, shape: "vip", active: true }
     ],
     customers: [],
-    bookings: []
+    bookings: [],
+    venue_content: [{
+      id: "venue-main",
+      title: "Площадка BALI",
+      description: "BALI — многофункциональная клубная площадка в центре Минска с танцполом, большими экранами, профессиональным звуком, контактным баром, кухней, кальянами и комфортной рассадкой.",
+      formats: "Клубные вечеринки, концерты, DJ-сеты, спортивные трансляции, закрытые мероприятия, презентации, дни рождения и корпоративные события.",
+      media: [],
+      active: true,
+      updated_at: new Date().toISOString()
+    }],
+    reviews: []
   };
 
   function readLocal(table) {
