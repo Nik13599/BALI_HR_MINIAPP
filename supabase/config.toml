@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.telegram-prepare-share]
 verify_jwt = false
 
+[functions.telegram-auth-bootstrap]
+verify_jwt = false
+
 [functions.loyalty-action]
 verify_jwt = false
 
