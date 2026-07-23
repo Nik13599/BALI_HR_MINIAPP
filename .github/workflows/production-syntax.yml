@@ -26,5 +26,6 @@ jobs:
           node --check site/production-local-cleanup.js
           node --check site/social-cloud-production.js
           node --check site/event-checkin-cloud-production.js
+          node --check site/event-lifecycle-core-beta4.js
           node --check site/beta4-square-loader.js
           node --check site/beta4-game.js
