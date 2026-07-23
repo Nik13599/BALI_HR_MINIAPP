@@ -22,6 +22,13 @@
     });
   }
 
+  function decorateSettings() {
+    if (!$('#adminNav [data-view="settings"].active')) return;
+    const steps = document.querySelector("#content .steps");
+    if (!steps || steps.querySelector("[data-runtime-migration]")) return;
+    steps.insertAdjacentHTML("beforeend", '<div class="step" data-runtime-migration><b>4</b><div><strong>QR и BALI People</strong><p>После основной схемы выполните <a href="/bali-production-runtime-migration.sql" target="_blank">production runtime migration</a>.</p></div></div>');
+  }
+
   function ensureMessageBadge() {
     const button = $('#adminNav [data-view="messages"]');
     if (!button) return null;
@@ -97,8 +104,7 @@
         refund_at:row.refund_at || now
       }).eq("id", row.id);
       if (updateError) throw updateError;
-      const overview = $('#adminNav [data-view="dashboard"]');
-      overview?.click();
+      $('#adminNav [data-view="dashboard"]')?.click();
     } catch (error) {
       const toast = document.getElementById("toast");
       if (toast) {
@@ -109,6 +115,6 @@
     }
   }, true);
 
-  new MutationObserver(() => cleanWording()).observe(document.body, { childList:true, subtree:true });
-  [0,300,1000].forEach(delay => setTimeout(() => { cleanWording(); updateMessageBadge(); subscribe(); }, delay));
+  new MutationObserver(() => { cleanWording(); decorateSettings(); }).observe(document.body, { childList:true, subtree:true });
+  [0,300,1000].forEach(delay => setTimeout(() => { cleanWording(); decorateSettings(); updateMessageBadge(); subscribe(); }, delay));
 })();
