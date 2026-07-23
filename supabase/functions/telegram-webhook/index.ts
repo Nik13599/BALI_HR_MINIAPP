@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       payload: message,
       delivery_status: "received",
       created_at: message.date ? new Date(Number(message.date) * 1000).toISOString() : now,
-    }, { onConflict: "telegram_message_id", ignoreDuplicates: true });
+    }, { onConflict: "conversation_id,telegram_message_id", ignoreDuplicates: true });
     if (messageError) throw messageError;
 
     if (String(message.text || "").startsWith("/start")) {
