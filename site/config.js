@@ -8,7 +8,7 @@ window.BALI_CONFIG = {
   telegramAuthEndpoint: "",
   vipInvoiceEndpoint: "",
   socialGiftInvoiceEndpoint: "",
-  checkinAppUrl: "https://bali-minsk-app.pages.dev/beta4-qr-app.html",
+  checkinAppUrl: "https://bali-minsk-app.pages.dev",
   venueName: "BALI Minsk",
   venuePhone: "+375296700300",
   venueAddress: "г. Минск, ул. Кирова, д. 13",
