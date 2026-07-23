@@ -1,6 +1,6 @@
 window.BALI_CONFIG = {
-  supabaseUrl: "",
-  supabaseAnonKey: "",
+  supabaseUrl: "https://zusoprnxqohoeonaqwiv.supabase.co",
+  supabaseAnonKey: "sb_publishable_SRiRO55cVNg3Qo8oez-fFQ_5xVyjuuy",
   telegramUsername: "BaliMinskAppBot",
   adminLogin: "BaliBali",
   adminEmail: "balibali@bali.local",
