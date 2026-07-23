@@ -39,7 +39,10 @@ create table if not exists public.telegram_messages (
 create index if not exists telegram_conversations_last_message_idx on public.telegram_conversations(last_message_at desc nulls last);
 create index if not exists telegram_conversations_unread_idx on public.telegram_conversations(unread_admin) where unread_admin > 0;
 create index if not exists telegram_messages_conversation_created_idx on public.telegram_messages(conversation_id, created_at);
-create unique index if not exists telegram_messages_telegram_id_idx on public.telegram_messages(telegram_message_id) where telegram_message_id is not null;
+drop index if exists public.telegram_messages_telegram_id_idx;
+create unique index if not exists telegram_messages_chat_message_idx
+  on public.telegram_messages(conversation_id, telegram_message_id)
+  where telegram_message_id is not null;
 
 alter table public.telegram_conversations enable row level security;
 alter table public.telegram_messages enable row level security;
