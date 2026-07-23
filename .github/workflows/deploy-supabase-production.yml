@@ -1,0 +1,82 @@
+name: Deploy Supabase production
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+      TELEGRAM_WEBAPP_URL: https://nik13599.github.io/BALI_HR_MINIAPP/site/
+      TELEGRAM_BOT_USERNAME: BaliMinskAppBot
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF TELEGRAM_BOT_TOKEN TELEGRAM_WEBHOOK_SECRET; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+          github-token: ${{ github.token }}
+
+      - name: Store Telegram secrets in Supabase
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase secrets set \
+            TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" \
+            TELEGRAM_WEBHOOK_SECRET="$TELEGRAM_WEBHOOK_SECRET" \
+            TELEGRAM_WEBAPP_URL="$TELEGRAM_WEBAPP_URL" \
+            TELEGRAM_BOT_USERNAME="$TELEGRAM_BOT_USERNAME" \
+            --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy all Edge Functions
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Configure Telegram webhook
+        shell: bash
+        run: |
+          set -euo pipefail
+          WEBHOOK_URL="https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/telegram-webhook"
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+            --header "Content-Type: application/json" \
+            --data "$(jq -n \
+              --arg url "$WEBHOOK_URL" \
+              --arg secret "$TELEGRAM_WEBHOOK_SECRET" \
+              '{url:$url,secret_token:$secret,allowed_updates:["message","edited_message"],drop_pending_updates:false}')"
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setMyCommands" \
+            --header "Content-Type: application/json" \
+            --data '{"commands":[{"command":"start","description":"Открыть BALI и написать администрации"}]}'
+
+          echo
+          echo "Webhook info:"
+          curl --fail-with-body --silent --show-error \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo" | jq '{ok,result:{url,pending_update_count,last_error_date,last_error_message}}'
