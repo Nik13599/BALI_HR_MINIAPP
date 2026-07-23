@@ -5,7 +5,7 @@ window.BALI_CONFIG = {
   adminLogin: "BaliBali",
   adminEmail: "balibali@bali.local",
   miniAppUrl: "https://nik13599.github.io/BALI_HR_MINIAPP/site/",
-  telegramAuthEndpoint: "",
+  telegramAuthEndpoint: "https://zusoprnxqohoeonaqwiv.supabase.co/functions/v1/telegram-auth-bootstrap",
   vipInvoiceEndpoint: "",
   socialGiftInvoiceEndpoint: "",
   checkinAppUrl: "https://nik13599.github.io/BALI_HR_MINIAPP/site/",
