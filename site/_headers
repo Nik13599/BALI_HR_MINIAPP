@@ -1,0 +1,29 @@
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/admin/*
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/config.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/beta4-square-loader.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/admin-production.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/admin-production-fixes.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/*.sql
+  Cache-Control: no-cache
+
+/*.css
+  Cache-Control: public, max-age=3600
+
+/*.png
+  Cache-Control: public, max-age=86400
+
+/*.jpg
+  Cache-Control: public, max-age=86400
