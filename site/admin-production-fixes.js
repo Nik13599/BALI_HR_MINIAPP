@@ -6,6 +6,14 @@
   let channel = null;
   let refreshTimer = 0;
 
+  function showToast(message) {
+    const toast = document.getElementById("toast");
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 3000);
+  }
+
   function cleanWording() {
     const replacements = new Map([
       ["Демонстрационные данные отключены", "Используется только рабочая база"],
@@ -25,8 +33,13 @@
   function decorateSettings() {
     if (!$('#adminNav [data-view="settings"].active')) return;
     const steps = document.querySelector("#content .steps");
-    if (!steps || steps.querySelector("[data-runtime-migration]")) return;
-    steps.insertAdjacentHTML("beforeend", '<div class="step" data-runtime-migration><b>4</b><div><strong>QR и BALI People</strong><p>После основной схемы выполните <a href="/bali-production-runtime-migration.sql" target="_blank">production runtime migration</a>.</p></div></div>');
+    if (!steps) return;
+    if (!steps.querySelector("[data-runtime-migration]")) {
+      steps.insertAdjacentHTML("beforeend", '<div class="step" data-runtime-migration><b>4</b><div><strong>QR и BALI People</strong><p>После основной схемы выполните <a href="/bali-production-runtime-migration.sql" target="_blank">production runtime migration</a>.</p></div></div>');
+    }
+    if (!steps.querySelector("[data-telegram-setup]")) {
+      steps.insertAdjacentHTML("beforeend", '<div class="step" data-telegram-setup><b>5</b><div><strong>Telegram webhook</strong><p>После размещения Edge Functions и Secrets нажмите кнопку ниже.</p><button class="primary" type="button" id="setupTelegramWebhook">Подключить Telegram webhook</button><small id="telegramWebhookResult"></small></div></div>');
+    }
   }
 
   function ensureMessageBadge() {
@@ -78,6 +91,27 @@
   }
 
   document.addEventListener("click", async event => {
+    const setup = event.target.closest("#setupTelegramWebhook");
+    if (setup) {
+      event.preventDefault();
+      if (!store?.cloudEnabled || !store.client) return showToast("Сначала подключите Supabase");
+      setup.disabled = true;
+      setup.textContent = "Подключение…";
+      try {
+        const { data, error } = await store.client.functions.invoke("telegram-setup-webhook", { body:{} });
+        if (error || data?.error) throw error || new Error(data.error);
+        const result = document.getElementById("telegramWebhookResult");
+        if (result) result.textContent = ` Подключено: ${data.info?.url || data.url || "Telegram webhook активен"}`;
+        showToast("Telegram webhook подключён");
+      } catch (error) {
+        showToast(error?.message || "Не удалось подключить webhook");
+      } finally {
+        setup.disabled = false;
+        setup.textContent = "Подключить Telegram webhook";
+      }
+      return;
+    }
+
     const reject = event.target.closest("[data-chip-reject]");
     if (!reject || !store?.cloudEnabled || !store.client) return;
     event.preventDefault();
@@ -106,12 +140,7 @@
       if (updateError) throw updateError;
       $('#adminNav [data-view="dashboard"]')?.click();
     } catch (error) {
-      const toast = document.getElementById("toast");
-      if (toast) {
-        toast.textContent = error?.message || "Не удалось отклонить заявку";
-        toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 2600);
-      }
+      showToast(error?.message || "Не удалось отклонить заявку");
     }
   }, true);
 
