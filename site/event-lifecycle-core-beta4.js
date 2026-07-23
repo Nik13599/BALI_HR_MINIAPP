@@ -5,7 +5,7 @@
 
   const dateAt = (date, time = "00:00") => {
     if (!date) return null;
-    const value = new Date(`${String(date).slice(0, 10)}T${String(time || "00:00").slice(0, 5)}:00`);
+    const value = new Date(`${String(date).slice(0, 10)}T${String(time || "00:00").slice(0, 5)}:00+03:00`);
     return Number.isNaN(value.getTime()) ? null : value;
   };
 
@@ -16,10 +16,10 @@
     let endDate = event.event_end_date || event.eventEndDate || event.end_date || startDate;
     if (!endDate) return null;
     if (!event.event_end_date && !event.eventEndDate && !event.end_date && String(endTime) <= String(startTime)) {
-      const next = dateAt(startDate, "12:00");
-      if (next) {
-        next.setDate(next.getDate() + 1);
-        endDate = next.toISOString().slice(0, 10);
+      const next = new Date(`${String(startDate).slice(0,10)}T12:00:00+03:00`);
+      if (!Number.isNaN(next.getTime())) {
+        next.setUTCDate(next.getUTCDate() + 1);
+        endDate = new Intl.DateTimeFormat("en-CA", { timeZone:"Europe/Minsk", year:"numeric", month:"2-digit", day:"2-digit" }).format(next);
       }
     }
     return dateAt(endDate, endTime);
