@@ -1,0 +1,30 @@
+name: Production syntax check
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check production JavaScript
+        run: |
+          node --check site/store.js
+          node --check site/admin-production.js
+          node --check site/admin-production-fixes.js
+          node --check site/admin-event-qr-production.js
+          node --check site/cloud-loyalty-production.js
+          node --check site/user-production-features.js
+          node --check site/user-message-read-production.js
+          node --check site/user-production-cleanup.js
+          node --check site/production-local-cleanup.js
+          node --check site/social-cloud-production.js
+          node --check site/event-checkin-cloud-production.js
+          node --check site/beta4-square-loader.js
+          node --check site/beta4-game.js
