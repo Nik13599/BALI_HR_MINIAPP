@@ -59,13 +59,14 @@ Deno.serve(async req=>{
     await creditOnce(db,userKey,reward,`Посещение «${event.title}»`,`event-checkin:${event.id}:${userKey}`);
     await db.from("customers").update({visits:Number(count||0)+1,updated_at:now}).eq("telegram_id",user.id);
     return json({ok:true,row:created,event:{id:event.id,title:event.title,event_date:event.event_date,event_time:event.event_time},points:reward,balance:await getBalance(db,userKey)});
-  }catch(error){console.error(error);const status=(error as any)?.duplicate?409:500;return json({error:error instanceof Error?error.message:"Ошибка QR-входа"},status)}
+  }catch(error){console.error(error);return json({error:error instanceof Error?error.message:"Ошибка QR-входа"},500)}
 });
 
 function eventEnded(event:any){
   const start=String(event.event_date||"").slice(0,10),startTime=String(event.event_time||"23:00").slice(0,5),endTime=String(event.event_end_time||"06:00").slice(0,5);
-  let end=String(event.event_end_date||start).slice(0,10);if(!event.event_end_date&&endTime<=startTime){const d=new Date(`${start}T12:00:00`);d.setDate(d.getDate()+1);end=d.toISOString().slice(0,10)}
-  return new Date(`${end}T${endTime}:00`).getTime()<=Date.now();
+  let end=String(event.event_end_date||start).slice(0,10);
+  if(!event.event_end_date&&endTime<=startTime){const date=new Date(`${start}T12:00:00+03:00`);date.setUTCDate(date.getUTCDate()+1);end=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Minsk",year:"numeric",month:"2-digit",day:"2-digit"}).format(date)}
+  return new Date(`${end}T${endTime}:00+03:00`).getTime()<=Date.now();
 }
 async function creditOnce(db:any,userKey:string,amount:number,title:string,actionKey:string){
   const {data:used}=await db.from("points_ledger").select("id").eq("user_key",userKey).eq("action_key",actionKey).maybeSingle();if(used)return;
