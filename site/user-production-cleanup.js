@@ -13,6 +13,8 @@
       node.textContent = "BALI Shop";
       node.style.fontSize = "14px";
     });
+    document.querySelectorAll("#profileV2Quick .profile-v2-tile.gifts span").forEach(node => node.remove());
+    document.querySelectorAll("#profileV2Quick .profile-v2-tile.rewards span").forEach(node => node.textContent = "Мои награды");
     const textWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const nodes=[];while(textWalker.nextNode())nodes.push(textWalker.currentNode);
     nodes.forEach(node=>{
