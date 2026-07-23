@@ -11,4 +11,18 @@
   attendance.checkIn=async raw=>{let parsed;try{parsed=original.parse(raw)}catch(error){return{ok:false,message:error.message}}try{const data=await invoke("checkin",{event_id:parsed.eventId,qr_token:parsed.token});applyBalance(data.balance);if(!data.reentered){game?.recordVisit?.();try{game?.awardAchievement?.("first_visit")}catch{}}window.dispatchEvent(new CustomEvent("bali:checkin-complete",{detail:{event:data.event,result:data}}));return{ok:true,...data,points:Number(data.points||0),xp:Number(data.row?.xp||0),visits:Number(data.row?.visits||0),level:data.row?.level||game?.levelFor?.(game.profile().xp)?.current?.name||""}}catch(error){return{ok:false,duplicate:Boolean(error.duplicate),row:error.row||null,message:error.message||"Не удалось подтвердить вход"}}};
   attendance.leave=async eventId=>{try{const data=await invoke("leave",{event_id:eventId||""});window.dispatchEvent(new CustomEvent("bali:checkin-left",{detail:{eventId:data.row?.event_id,row:data.row}}));return{ok:true,row:data.row}}catch(error){return{ok:false,message:error.message||"Не удалось отметить выход"}}};
   window.BaliEventQrAttendance=attendance;
+
+  async function consumeQrStart(){
+    const start=String(tg?.initDataUnsafe?.start_param||"");
+    if(!start.startsWith("checkin_"))return;
+    const key=`bali_checkin_start_${start.slice(0,80)}`;
+    if(sessionStorage.getItem(key)==="1")return;
+    sessionStorage.setItem(key,"1");
+    const result=await attendance.checkIn(start.slice(8));
+    const message=result.ok
+      ? `${result.reentered?"Повторный вход подтверждён":"Вход подтверждён"}${result.event?.title?`\n${result.event.title}`:""}${Number(result.points||0)>0?`\n+${Number(result.points)} BALI-Баллов`:""}`
+      : result.message||"Не удалось подтвердить вход";
+    try{tg?.showAlert?.(message)}catch{alert(message)}
+  }
+  setTimeout(consumeQrStart,900);
 })();
