@@ -3,7 +3,7 @@
   const cloudEnabled = Boolean(cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase);
   const client = cloudEnabled
     ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
-        auth: { persistSession: true, autoRefreshToken: true }
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
       })
     : null;
 
@@ -17,238 +17,140 @@
     reviews: "bali_reviews_v1"
   };
 
-  const now = new Date();
-  const isoDate = (offset = 0) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() + offset);
-    return d.toISOString().slice(0, 10);
-  };
+  const LEGACY_DEMO_IDS = new Set([
+    "event-tropic", "event-weekend", "event-special",
+    "menu-1", "menu-2", "menu-3", "menu-4", "menu-5", "menu-6"
+  ]);
 
-  const seed = {
-    events: [
-      { id: "event-tropic", title: "Tropic Party", event_date: isoDate(5), event_time: "23:00", description: "Тропическая ночь, DJ-сеты и свободный вход.", details_description: "Тропическая вечеринка BALI с яркой сценографией, клубной музыкой, баром, кальянами и танцами до утра.", performers: [], image_url: "", active: true, sort_order: 1 },
-      { id: "event-weekend", title: "BALI Weekend", event_date: isoDate(12), event_time: "23:00", description: "Главная вечеринка выходных: музыка, бар и кальяны.", details_description: "Большой клубный уикенд с насыщенной музыкальной программой и специальными участниками.", performers: [], image_url: "", active: true, sort_order: 2 },
-      { id: "event-special", title: "Special Night", event_date: isoDate(19), event_time: "23:00", description: "Специальная программа и приглашённые артисты.", details_description: "Специальная ночь BALI с приглашёнными артистами и расширенной шоу-программой.", performers: [], image_url: "", active: true, sort_order: 3 }
-    ],
-    menu_items: [
-      { id: "menu-1", category: "Коктейли", name: "BALI Signature", description: "Тропический фирменный коктейль", price: 25, active: true, sort_order: 1 },
-      { id: "menu-2", category: "Коктейли", name: "Passion Spritz", description: "Маракуйя, цитрус, игристые ноты", price: 23, active: true, sort_order: 2 },
-      { id: "menu-3", category: "Шоты", name: "BALI Shot Set", description: "Сет из 5 фирменных шотов", price: 45, active: true, sort_order: 3 },
-      { id: "menu-4", category: "Пиво", name: "Пиво разливное", description: "Светлое, 0,5 л", price: 10, active: true, sort_order: 4 },
-      { id: "menu-5", category: "Кальяны", name: "Classic Hookah", description: "Классическая чаша", price: 45, active: true, sort_order: 5 },
-      { id: "menu-6", category: "Кальяны", name: "Premium Hookah", description: "Премиальная чаша и авторский микс", price: 60, active: true, sort_order: 6 }
-    ],
-    hall_tables: [
-      { id: "table-1", name: "Стол 1", seats: 4, x: 12, y: 18, shape: "round", active: true },
-      { id: "table-2", name: "Стол 2", seats: 4, x: 40, y: 18, shape: "round", active: true },
-      { id: "table-3", name: "Стол 3", seats: 6, x: 68, y: 18, shape: "round", active: true },
-      { id: "table-4", name: "Стол 4", seats: 4, x: 15, y: 52, shape: "square", active: true },
-      { id: "table-5", name: "Стол 5", seats: 6, x: 43, y: 52, shape: "square", active: true },
-      { id: "table-6", name: "VIP 1", seats: 8, x: 72, y: 50, shape: "vip", active: true },
-      { id: "table-7", name: "VIP 2", seats: 10, x: 70, y: 76, shape: "vip", active: true }
-    ],
-    customers: [],
-    bookings: [],
-    venue_content: [{
-      id: "venue-main",
-      title: "Площадка BALI",
-      description: "BALI — многофункциональная клубная площадка в центре Минска с танцполом, большими экранами, профессиональным звуком, контактным баром, кухней, кальянами и комфортной рассадкой.",
-      formats: "Клубные вечеринки, концерты, DJ-сеты, спортивные трансляции, закрытые мероприятия, презентации, дни рождения и корпоративные события.",
-      media: [],
-      active: true,
-      updated_at: new Date().toISOString()
-    }],
-    reviews: []
-  };
+  function purgeLegacyDemo() {
+    if (localStorage.getItem("bali_production_demo_purged_v1") === "1") return;
+    Object.entries(keys).forEach(([table, key]) => {
+      try {
+        const rows = JSON.parse(localStorage.getItem(key) || "[]");
+        if (!Array.isArray(rows)) return;
+        const cleaned = rows.filter(row => !LEGACY_DEMO_IDS.has(String(row?.id || "")) && !String(row?.id || "").startsWith("demo-"));
+        if (cleaned.length !== rows.length) localStorage.setItem(key, JSON.stringify(cleaned));
+      } catch {}
+    });
+    ["bali_admin_messages_demo_v1", "bali_demo_seed_version", "bali_demo_live_sync_v1"].forEach(key => localStorage.removeItem(key));
+    localStorage.setItem("bali_production_demo_purged_v1", "1");
+  }
+  purgeLegacyDemo();
 
-  function readLocal(table) {
-    const raw = localStorage.getItem(keys[table]);
-    if (!raw) {
-      const initial = seed[table] || [];
-      localStorage.setItem(keys[table], JSON.stringify(initial));
-      return structuredClone(initial);
-    }
-    try { return JSON.parse(raw); } catch { return []; }
+  function readCache(table) {
+    try {
+      const value = JSON.parse(localStorage.getItem(keys[table]) || "[]");
+      return Array.isArray(value) ? value : [];
+    } catch { return []; }
   }
 
-  function writeLocal(table, rows) {
-    localStorage.setItem(keys[table], JSON.stringify(rows));
+  function writeCache(table, rows) {
+    if (keys[table]) localStorage.setItem(keys[table], JSON.stringify(rows || []));
     window.dispatchEvent(new CustomEvent("bali:data-changed", { detail: { table } }));
-    return rows;
+    return rows || [];
   }
 
-  function makeId(prefix) {
-    return `${prefix}-${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
+  function requireCloud() {
+    if (!cloudEnabled || !client) throw new Error("Рабочая база Supabase ещё не подключена");
   }
 
   async function list(table, options = {}) {
     if (!cloudEnabled) {
-      let rows = readLocal(table);
+      let rows = readCache(table);
       if (options.filters) {
-        for (const [field, value] of Object.entries(options.filters)) rows = rows.filter((row) => String(row[field]) === String(value));
+        for (const [field, value] of Object.entries(options.filters)) rows = rows.filter(row => String(row?.[field]) === String(value));
       }
-      const order = options.order || "sort_order";
-      return rows.sort((a, b) => (a[order] ?? 0) - (b[order] ?? 0));
+      const order = options.order;
+      if (order) rows.sort((a, b) => String(a?.[order] ?? "").localeCompare(String(b?.[order] ?? "")));
+      return rows;
     }
-
     let query = client.from(table).select("*");
-    if (options.filters) {
-      for (const [field, value] of Object.entries(options.filters)) query = query.eq(field, value);
-    }
-    if (options.order) query = query.order(options.order, { ascending: options.ascending !== false });
+    if (options.filters) for (const [field, value] of Object.entries(options.filters)) query = query.eq(field, value);
+    if (options.order) query = query.order(options.order, { ascending: options.ascending !== false, nullsFirst: false });
     const { data, error } = await query;
     if (error) throw error;
+    if (keys[table]) writeCache(table, data || []);
     return data || [];
   }
 
   async function save(table, row) {
+    requireCloud();
     const payload = { ...row };
-    if (!payload.id) payload.id = makeId(table.replace(/s$/, ""));
-    if (!cloudEnabled) {
-      const rows = readLocal(table);
-      const index = rows.findIndex((item) => item.id === payload.id);
-      if (index >= 0) rows[index] = { ...rows[index], ...payload };
-      else rows.push(payload);
-      writeLocal(table, rows);
-      return payload;
-    }
+    if (!payload.id) payload.id = crypto.randomUUID?.() || `${table}-${Date.now()}`;
     const { data, error } = await client.from(table).upsert(payload).select().single();
     if (error) throw error;
     return data;
   }
 
   async function remove(table, id) {
-    if (!cloudEnabled) {
-      writeLocal(table, readLocal(table).filter((row) => row.id !== id));
-      return;
-    }
+    requireCloud();
     const { error } = await client.from(table).delete().eq("id", id);
     if (error) throw error;
   }
 
-  async function findOrCreateCustomer(data) {
-    const phone = String(data.phone || "").replace(/\s+/g, "");
-    if (!phone) return null;
-    const customers = await list("customers");
-    let customer = customers.find((item) => String(item.phone || "").replace(/\s+/g, "") === phone);
-    if (customer) {
-      customer = await save("customers", {
-        ...customer,
-        name: data.name || customer.name,
-        telegram: data.telegram || customer.telegram || "",
-        visits: Number(customer.visits || 0)
-      });
-      return customer;
-    }
-    return save("customers", {
-      name: data.name || "Гость",
-      phone,
-      telegram: data.telegram || "",
-      notes: "",
-      visits: 0,
-      total_spent: 0,
-      created_at: new Date().toISOString()
+  async function createBooking(data) {
+    requireCloud();
+    const { data: booking, error } = await client.rpc("create_public_booking", {
+      p_booking_date: data.booking_date,
+      p_booking_time: data.booking_time || "23:00",
+      p_table_id: data.table_id,
+      p_name: data.name || data.customer_name || "Гость",
+      p_phone: data.phone || "",
+      p_guests: Number(data.guests || 2),
+      p_telegram: data.telegram || "",
+      p_comment: data.comment || "",
+      p_event_id: data.event_id || null
     });
+    if (error) throw error;
+    return booking;
   }
 
-  async function createBooking(data) {
-    if (cloudEnabled) {
-      const { data: booking, error } = await client.rpc("create_public_booking", {
-        p_booking_date: data.booking_date,
-        p_booking_time: data.booking_time || "23:00",
-        p_table_id: data.table_id,
-        p_name: data.name || data.customer_name || "Гость",
-        p_phone: data.phone || "",
-        p_guests: Number(data.guests || 2),
-        p_telegram: data.telegram || "",
-        p_comment: data.comment || ""
-      });
-      if (error) throw error;
-      return booking;
-    }
-
-    const customer = await findOrCreateCustomer(data);
-    const tables = await list("hall_tables");
-    const table = tables.find((item) => item.id === data.table_id);
-    const occupied = (await list("bookings", { filters: { booking_date: data.booking_date } }))
-      .some((item) => item.table_id === data.table_id && !["cancelled", "completed"].includes(item.status));
-    if (occupied) throw new Error("Этот стол уже забронирован на выбранную дату");
-    return save("bookings", {
-      booking_date: data.booking_date,
-      booking_time: data.booking_time || "23:00",
-      table_id: data.table_id,
-      table_name: table?.name || data.table_id,
-      customer_id: customer?.id || null,
-      customer_name: data.name || customer?.name || "Гость",
-      phone: data.phone || customer?.phone || "",
-      guests: Number(data.guests || 2),
-      status: data.status || "pending",
-      comment: data.comment || "",
-      created_at: new Date().toISOString()
+  async function findOrCreateCustomer(data) {
+    requireCloud();
+    const phone = String(data.phone || "").replace(/\s+/g, "");
+    if (!phone) return null;
+    const rows = await list("customers");
+    const existing = rows.find(row => String(row.phone || "").replace(/\s+/g, "") === phone);
+    return save("customers", {
+      ...(existing || {}),
+      name: data.name || existing?.name || "Гость",
+      phone,
+      telegram: data.telegram || existing?.telegram || "",
+      notes: existing?.notes || "",
+      visits: Number(existing?.visits || 0),
+      total_spent: Number(existing?.total_spent || 0)
     });
   }
 
   async function getAvailability(date) {
-    if (cloudEnabled) {
-      const { data, error } = await client.rpc("get_table_availability", { p_date: date });
-      if (error) throw error;
-      const { data: authData } = await client.auth.getSession();
-      let privateBookings = [];
-      if (authData.session) privateBookings = await list("bookings", { filters: { booking_date: date } });
-      return (data || []).map((table) => {
-        const booking = privateBookings.find((item) => item.table_id === table.id && !["cancelled", "completed"].includes(item.status));
-        return {
-          ...table,
-          available: Boolean(table.available),
-          booking: booking || (table.available ? null : { status: table.booking_status })
-        };
-      });
-    }
-
-    const [tables, bookings] = await Promise.all([
-      list("hall_tables"),
-      list("bookings", { filters: { booking_date: date } })
-    ]);
-    const activeBookings = bookings.filter((b) => !["cancelled", "completed"].includes(b.status));
-    return tables.filter((t) => t.active !== false).map((table) => {
-      const booking = activeBookings.find((b) => b.table_id === table.id);
-      return { ...table, booking: booking || null, available: !booking };
+    if (!cloudEnabled) return [];
+    const { data, error } = await client.rpc("get_table_availability", { p_date: date });
+    if (error) throw error;
+    const { data: authData } = await client.auth.getSession();
+    let privateBookings = [];
+    if (authData.session) privateBookings = await list("bookings", { filters: { booking_date: date } });
+    return (data || []).map(table => {
+      const booking = privateBookings.find(item => item.table_id === table.id && !["cancelled", "completed"].includes(item.status));
+      return { ...table, available: Boolean(table.available), booking: booking || null };
     });
   }
 
   async function signIn(email, password) {
-    if (!cloudEnabled) return { user: { email: "demo@bali.local" }, demo: true };
+    requireCloud();
     const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw error;
     return data;
   }
-
-  async function signOut() {
-    if (cloudEnabled) await client.auth.signOut();
-  }
-
+  async function signOut() { if (client) await client.auth.signOut(); }
   async function getSession() {
-    if (!cloudEnabled) return { user: { email: "demo@bali.local" }, demo: true };
+    if (!client) return null;
     const { data } = await client.auth.getSession();
     return data.session;
   }
 
   window.BaliStore = {
-    cloudEnabled,
-    client,
-    list,
-    save,
-    remove,
-    createBooking,
-    findOrCreateCustomer,
-    getAvailability,
-    signIn,
-    signOut,
-    getSession,
-    resetDemo() {
-      Object.values(keys).forEach((key) => localStorage.removeItem(key));
-      Object.keys(seed).forEach(readLocal);
-      location.reload();
-    }
+    cloudEnabled, production: true, client, list, save, remove, createBooking,
+    findOrCreateCustomer, getAvailability, signIn, signOut, getSession,
+    readCache, writeCache, requireCloud
   };
 })();
