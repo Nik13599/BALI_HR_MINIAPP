@@ -1,94 +1,28 @@
 (() => {
-  if (window.__BALI_ADMIN_DASHBOARD_V12__) return;
-  window.__BALI_ADMIN_DASHBOARD_V12__ = true;
-  const attendance = window.BaliEventQrAttendance;
-  const appUsers = window.BaliAppUsers;
-  const points = window.BaliPoints;
-  const digits = value => String(value || "").replace(/\D/g, "");
-  const dateKey = value => {
-    if (!value) return "";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
-    const y = date.getFullYear(), m = String(date.getMonth() + 1).padStart(2, "0"), d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  };
-  const todayKey = () => dateKey(new Date());
-  const monthStart = value => `${String(value).slice(0,7)}-01`;
-
-  function styles() {
-    if (document.getElementById("adminDashboardV12Style")) return;
-    const style = document.createElement("style");
-    style.id = "adminDashboardV12Style";
-    style.textContent = `.dashboard-metrics-v12{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.dashboard-metric-v12{padding:15px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018))}.dashboard-metric-v12 span{display:block;color:var(--muted);font-size:8px;letter-spacing:.09em}.dashboard-metric-v12 strong{display:block;margin-top:7px;color:var(--lime);font:600 24px Unbounded}.dashboard-metric-v12 em{display:block;margin-top:5px;color:var(--muted);font-size:9px;font-style:normal}.visitor-period-panel{display:grid;gap:13px}.visitor-period-controls{display:flex;align-items:end;gap:8px;flex-wrap:wrap}.visitor-period-controls label{display:grid;gap:5px;flex:1;min-width:130px;color:var(--muted);font-size:9px;font-weight:800}.visitor-period-controls input{width:100%;min-height:43px;padding:0 11px;border:1px solid var(--line);border-radius:12px;background:#ffffff08;color:#fff}.visitor-period-result{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.visitor-period-result article{padding:12px;border:1px solid var(--line);border-radius:14px;background:#ffffff04}.visitor-period-result span{display:block;color:var(--muted);font-size:8px}.visitor-period-result strong{display:block;margin-top:5px;color:var(--lime);font:600 19px Unbounded}.upcoming-event-bookings{display:grid;gap:10px}.upcoming-event-booking{padding:14px;border:1px solid var(--line);border-radius:17px;background:#ffffff04}.upcoming-event-booking header{display:flex;justify-content:space-between;align-items:start;gap:10px}.upcoming-event-booking h4{margin:2px 0 0;font-size:14px}.upcoming-event-booking time{color:var(--muted);font-size:9px}.upcoming-event-totals{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.upcoming-event-totals span{padding:6px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:8px}.upcoming-event-totals b{color:var(--lime)}.upcoming-event-people{display:grid;gap:5px;margin-top:10px}.upcoming-event-person{display:flex;justify-content:space-between;gap:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);font-size:9px}.upcoming-event-person span{color:var(--muted)}@media(max-width:900px){.dashboard-metrics-v12{grid-template-columns:1fr 1fr}}@media(max-width:560px){.dashboard-metrics-v12,.visitor-period-result{grid-template-columns:1fr 1fr}.dashboard-metric-v12:last-child{grid-column:1/-1}.visitor-period-result article:last-child{grid-column:1/-1}}`;
-    document.head.appendChild(style);
+  if (window.__BALI_ADMIN_DASHBOARD_RESTORED__) return;
+  window.__BALI_ADMIN_DASHBOARD_RESTORED__ = true;
+  const attendance=window.BaliEventQrAttendance,appUsers=window.BaliAppUsers,points=window.BaliPoints;
+  const esc=(v="")=>String(v).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+  const digits=v=>String(v||"").replace(/\D/g,"");
+  const dateKey=value=>{if(!value)return"";const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value).slice(0,10);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
+  const todayKey=()=>dateKey(new Date());
+  const fmtDate=value=>value?new Date(`${String(value).slice(0,10)}T12:00:00`).toLocaleDateString("ru-RU",{day:"2-digit",month:"short",year:"numeric"}):"—";
+  function aliases(row={},fallback=""){const out=[];const key=row.user_key||row.userKey||row.ownerKey||row.code;if(key)out.push(`u:${key}`);const tg=row.telegram_id||row.telegramId;if(tg)out.push(`tg:${tg}`);const phone=digits(row.phone);if(phone)out.push(`p:${phone}`);const username=String(row.username||row.telegram||"").toLowerCase().replace(/^@/,"").trim();if(username)out.push(`n:${username}`);if(!out.length)out.push(`i:${row.id||fallback}`);return out}
+  function uniqueCount(rows=[]){const parent=new Map();const find=x=>{if(!parent.has(x))parent.set(x,x);const p=parent.get(x);if(p!==x)parent.set(x,find(p));return parent.get(x)};const union=(a,b)=>{const ra=find(a),rb=find(b);if(ra!==rb)parent.set(rb,ra)};rows.forEach((row,i)=>{const keys=aliases(row,i);keys.forEach(find);for(let n=1;n<keys.length;n++)union(keys[0],keys[n])});return new Set([...parent.keys()].map(find)).size}
+  function birthdayDistance(value){if(!value)return 9999;const raw=String(value).slice(0,10),b=new Date(`${raw}T12:00:00`);if(Number.isNaN(b.getTime()))return 9999;const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12),next=new Date(now.getFullYear(),b.getMonth(),b.getDate(),12);if(next<today)next.setFullYear(next.getFullYear()+1);return Math.round((next-today)/86400000)}
+  function styles(){if(document.getElementById("adminDashboardRestoredStyle"))return;const s=document.createElement("style");s.id="adminDashboardRestoredStyle";s.textContent=`.dashboard-metrics-v12{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.dashboard-metric-v12{padding:15px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));color:var(--text);text-align:left}.dashboard-metric-v12 span{display:block;color:var(--muted);font-size:8px;letter-spacing:.09em}.dashboard-metric-v12 strong{display:block;margin-top:7px;color:var(--lime);font:600 24px Unbounded}.dashboard-metric-v12 em{display:block;margin-top:5px;color:var(--muted);font-size:9px;font-style:normal}.dashboard-quick-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.dashboard-booking-row{display:grid;grid-template-columns:80px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.07)}.dashboard-booking-row:last-child{border-bottom:0}.dashboard-booking-row small{color:var(--muted)}.dashboard-period-dialog{width:min(720px,calc(100% - 14px));max-height:94dvh;padding:0;border:1px solid var(--line);border-radius:22px;background:#0a0d0c;color:#fff}.dashboard-period-dialog::backdrop{background:#000d}.dashboard-period-shell{padding:16px;display:grid;gap:12px}.dashboard-period-controls{display:flex;gap:8px;flex-wrap:wrap}.dashboard-period-controls input{min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:12px;background:#171b19;color:#fff}.dashboard-period-results{display:grid;gap:8px}.dashboard-period-row{padding:11px;border:1px solid var(--line);border-radius:14px;background:#ffffff05}@media(max-width:900px){.dashboard-metrics-v12{grid-template-columns:1fr 1fr}}@media(max-width:620px){.dashboard-booking-row{grid-template-columns:65px 1fr}.dashboard-booking-row>*:nth-child(n+3){grid-column:2}.dashboard-metrics-v12{grid-template-columns:1fr 1fr}}`;document.head.appendChild(s)}
+  function ensurePeriodDialog(){let d=document.getElementById("dashboardPeriodDialog");if(d)return d;document.body.insertAdjacentHTML("beforeend",`<dialog id="dashboardPeriodDialog" class="dashboard-period-dialog"><div class="dashboard-period-shell"><div class="panel-head"><div><span class="eyebrow">АНАЛИТИКА</span><h3>Посетители за период</h3></div><button type="button" class="ghost" data-close-dashboard-period>Закрыть</button></div><div class="dashboard-period-controls"><input id="dashboardPeriodFrom" type="date"><input id="dashboardPeriodTo" type="date" value="${todayKey()}"><button id="dashboardPeriodApply" class="primary" type="button">Показать</button></div><div id="dashboardPeriodSummary" class="visitor-period-result"></div><div id="dashboardPeriodRows" class="dashboard-period-results"></div></div></dialog>`);return document.getElementById("dashboardPeriodDialog")}
+  function bookingHtml(row){return`<div class="dashboard-booking-row"><strong>${esc(String(row.booking_time||"23:00").slice(0,5))}</strong><div><b>${esc(row.customer_name||row.name||"Гость")}</b><br><small>${fmtDate(row.booking_date)} · ${Number(row.guests||0)} гостей · ${esc(row.table_name||row.table_id||"без стола")}</small></div><span class="status ${esc(row.status||"pending")}">${row.status==="confirmed"?"Подтверждено":row.status==="cancelled"?"Отменено":"Ожидает"}</span>${row.status==="pending"?`<button class="ghost compact" type="button" data-dashboard-confirm="${esc(row.id)}">Подтвердить</button>`:""}</div>`}
+  async function renderDashboardRestored(root){
+    const [bookings,customers,checkins,registered]=await Promise.all([store.list("bookings"),store.list("customers"),attendance?.listCheckins?.()||[],appUsers?.listAdmin?.()||[]]);
+    const today=todayKey(),todayRows=checkins.filter(row=>dateKey(row.checked_in_at)===today&&!row.left_at&&row.presence_status!=="left"),accounts=Object.values(points?.accounts?.()||{}),allUsers=[...registered,...customers,...checkins,...accounts];
+    const birthdayRows=allUsers.filter(row=>row.birth_date||row.birthDate).map(row=>({...row,_distance:birthdayDistance(row.birth_date||row.birthDate)}));
+    const birthdayToday=birthdayRows.filter(row=>row._distance===0),upcoming=birthdayRows.filter(row=>row._distance>0&&row._distance<=62).sort((a,b)=>a._distance-b._distance);
+    const upcomingBookings=bookings.filter(row=>row.booking_date>=today&&!['cancelled','completed'].includes(row.status)).sort((a,b)=>`${a.booking_date}${a.booking_time}`.localeCompare(`${b.booking_date}${b.booking_time}`));
+    root.innerHTML=`<div class="dashboard-metrics-v12"><article class="dashboard-metric-v12"><span>ГОСТЕЙ СЕГОДНЯ</span><strong>${uniqueCount(todayRows)}</strong><em>вошли по QR-коду</em></article><article class="dashboard-metric-v12"><span>КЛИЕНТОВ В БАЗЕ</span><strong>${uniqueCount(allUsers)}</strong><em>уникальные пользователи BALI</em></article><button class="dashboard-metric-v12" type="button" data-open-birthdays="today"><span>ДЕНЬ РОЖДЕНИЯ СЕГОДНЯ</span><strong>${birthdayToday.length}</strong><em>${birthdayToday.length?birthdayToday.map(x=>esc(x.name||"Гость")).slice(0,2).join(", "):"сегодня нет"}</em></button><button class="dashboard-metric-v12" type="button" data-open-birthdays="upcoming"><span>БЛИЖАЙШИЕ ДНИ РОЖДЕНИЯ</span><strong>${upcoming.length}</strong><em>открыть список →</em></button></div><div class="dashboard-quick-actions"><button class="ghost" type="button" id="dashboardOpenPeriod">Посетители за период</button></div><div class="dashboard-grid"><section class="panel"><div class="panel-head"><div><h3>Ближайшие бронирования</h3><small>Добавление и подтверждение без перехода</small></div><button class="ghost" data-new="bookings">Добавить</button></div><div class="panel-body">${upcomingBookings.length?upcomingBookings.slice(0,12).map(bookingHtml).join(""):'<div class="empty">Ближайших броней нет</div>'}</div></section></div>`;
+    root.querySelector("#dashboardOpenPeriod")?.addEventListener("click",()=>{const d=ensurePeriodDialog();const draw=()=>{const from=d.querySelector("#dashboardPeriodFrom").value,to=d.querySelector("#dashboardPeriodTo").value,rows=checkins.filter(row=>{const key=dateKey(row.checked_in_at);return(!from||key>=from)&&(!to||key<=to)}),people=uniqueCount(rows),events=new Set(rows.map(r=>r.event_id||r.event_title).filter(Boolean)).size;d.querySelector("#dashboardPeriodSummary").innerHTML=`<article><span>УНИКАЛЬНЫХ ГОСТЕЙ</span><strong>${people}</strong></article><article><span>ПОСЕЩЕНИЙ</span><strong>${rows.length}</strong></article><article><span>МЕРОПРИЯТИЙ</span><strong>${events}</strong></article>`;d.querySelector("#dashboardPeriodRows").innerHTML=rows.length?rows.map(r=>`<div class="dashboard-period-row"><strong>${esc(r.name||"Гость BALI")}</strong><br><small>${esc(r.event_title||"Событие BALI")} · ${new Date(r.checked_in_at).toLocaleString("ru-RU")}</small></div>`).join(""):'<div class="empty">Посещений за период нет</div>'};d.querySelector("#dashboardPeriodApply").onclick=draw;draw();d.showModal()});
+    root.querySelectorAll("[data-dashboard-confirm]").forEach(button=>button.addEventListener("click",async()=>{const row=bookings.find(x=>String(x.id)===String(button.dataset.dashboardConfirm));if(!row)return;await store.save("bookings",{...row,status:"confirmed"});toast("Бронь подтверждена");window.render()}));
   }
-
-  function aliases(row = {}, fallback = "") {
-    const result = [];
-    const userKey = row.user_key || row.userKey || row.ownerKey || row.code;
-    if (userKey) result.push(`u:${String(userKey)}`);
-    const tgId = row.telegram_id || row.telegramId;
-    if (tgId) result.push(`tg:${String(tgId)}`);
-    const phone = digits(row.phone);
-    if (phone) result.push(`p:${phone}`);
-    const username = String(row.username || row.telegram || "").toLowerCase().replace(/^@/, "").trim();
-    if (username) result.push(`n:${username}`);
-    if (!result.length && (row.id || fallback)) result.push(`i:${row.id || fallback}`);
-    return result;
-  }
-
-  function uniquePeople(rows = []) {
-    const parent = new Map();
-    const find = value => { if (!parent.has(value)) parent.set(value, value); const p = parent.get(value); if (p !== value) parent.set(value, find(p)); return parent.get(value); };
-    const union = (a,b) => { const ra=find(a),rb=find(b); if (ra!==rb) parent.set(rb,ra); };
-    rows.forEach((row,index) => { const keys=aliases(row,index); keys.forEach(find); for(let i=1;i<keys.length;i++) union(keys[0],keys[i]); });
-    return new Set([...parent.keys()].map(find)).size;
-  }
-
-  function eventCard(event, bookings) {
-    const rows = bookings.filter(row => row.booking_date === event.event_date);
-    const active = rows.filter(row => row.status !== "cancelled");
-    const cancelled = rows.filter(row => row.status === "cancelled");
-    const guests = active.reduce((sum,row) => sum + Number(row.guests || 0), 0);
-    return `<article class="upcoming-event-booking"><header><div><time>${formatDate(event.event_date)} · ${esc(event.event_time || "23:00")}</time><h4>${esc(event.title)}</h4></div><button class="ghost compact" type="button" data-dashboard-open-bookings="${esc(event.event_date)}">Открыть</button></header><div class="upcoming-event-totals"><span><b>${active.length}</b> броней</span><span><b>${guests}</b> гостей</span><span>${cancelled.length} отмен</span></div>${active.length ? `<div class="upcoming-event-people">${active.slice(0,4).map(row => `<div class="upcoming-event-person"><strong>${esc(row.customer_name || row.name || "Гость")}</strong><span>${esc(row.booking_time || "23:00")} · ${Number(row.guests || 0)} чел.</span></div>`).join("")}</div>` : '<div class="empty" style="padding:12px 0 0">Бронирований пока нет</div>'}</article>`;
-  }
-
-  async function renderDashboardV12(root) {
-    const [events, bookings, customers, checkins, registered] = await Promise.all([
-      store.list("events"),
-      store.list("bookings"),
-      store.list("customers"),
-      attendance?.listCheckins?.() || [],
-      appUsers?.listAdmin?.() || []
-    ]);
-    const today = todayKey();
-    const todayRows = checkins.filter(row => dateKey(row.checked_in_at) === today);
-    const todayGuests = uniquePeople(todayRows);
-    const accountRows = Object.values(points?.accounts?.() || {});
-    const totalClients = uniquePeople([...registered, ...customers, ...checkins, ...accountRows]);
-    const upcomingEvents = events.filter(event => event.active !== false && event.event_date >= today).sort((a,b) => `${a.event_date}T${a.event_time || "23:00"}`.localeCompare(`${b.event_date}T${b.event_time || "23:00"}`)).slice(0,2);
-    const activeUpcomingBookings = bookings.filter(row => row.booking_date >= today && row.status !== "cancelled");
-    const defaultFrom = state.dashboardVisitorRange?.from || monthStart(today);
-    const defaultTo = state.dashboardVisitorRange?.to || today;
-
-    root.innerHTML = `<div class="dashboard-metrics-v12"><article class="dashboard-metric-v12"><span>ГОСТЕЙ СЕГОДНЯ</span><strong>${todayGuests}</strong><em>подтвердили вход по QR</em></article><article class="dashboard-metric-v12"><span>КЛИЕНТОВ В БАЗЕ ВСЕГО</span><strong>${totalClients}</strong><em>уникальные пользователи приложения</em></article><article class="dashboard-metric-v12"><span>БЛИЖАЙШИЕ МЕРОПРИЯТИЯ</span><strong>${upcomingEvents.length}</strong><em>показываются два следующих</em></article><article class="dashboard-metric-v12"><span>БУДУЩИХ БРОНЕЙ</span><strong>${activeUpcomingBookings.length}</strong><em>${activeUpcomingBookings.reduce((s,row)=>s+Number(row.guests||0),0)} гостей</em></article></div><div class="dashboard-grid"><section class="panel"><div class="panel-head"><div><h3>Посетители за период</h3><small>Учитываются подтверждённые входы по QR-коду.</small></div></div><div class="panel-body visitor-period-panel"><div class="visitor-period-controls"><label><span>С</span><input id="dashboardVisitorsFrom" type="date" value="${esc(defaultFrom)}"></label><label><span>По</span><input id="dashboardVisitorsTo" type="date" value="${esc(defaultTo)}"></label><button class="primary compact" id="dashboardVisitorsApply" type="button">Показать</button></div><div class="visitor-period-result" id="dashboardVisitorResult"></div></div></section><section class="panel"><div class="panel-head"><div><h3>Ближайшие бронирования</h3><small>Два следующих мероприятия</small></div><button class="ghost" data-new="bookings">Добавить</button></div><div class="panel-body upcoming-event-bookings">${upcomingEvents.length ? upcomingEvents.map(event => eventCard(event, bookings)).join("") : '<div class="empty">Ближайших мероприятий нет</div>'}</div></section></div>`;
-
-    const applyPeriod = () => {
-      const from = root.querySelector("#dashboardVisitorsFrom")?.value || "";
-      const to = root.querySelector("#dashboardVisitorsTo")?.value || "";
-      state.dashboardVisitorRange = { from, to };
-      const filtered = checkins.filter(row => { const key=dateKey(row.checked_in_at); return (!from || key>=from) && (!to || key<=to); });
-      const guests = uniquePeople(filtered);
-      const eventsCount = new Set(filtered.map(row => String(row.event_id || row.event_title || "")).filter(Boolean)).size;
-      const scans = filtered.length;
-      const target = root.querySelector("#dashboardVisitorResult");
-      if (target) target.innerHTML = `<article><span>УНИКАЛЬНЫХ ГОСТЕЙ</span><strong>${guests}</strong></article><article><span>ПОСЕЩЕНИЙ</span><strong>${scans}</strong></article><article><span>МЕРОПРИЯТИЙ</span><strong>${eventsCount}</strong></article>`;
-    };
-    root.querySelector("#dashboardVisitorsApply")?.addEventListener("click", applyPeriod);
-    root.querySelectorAll("[data-dashboard-open-bookings]").forEach(button => button.addEventListener("click", () => { const date=button.dataset.dashboardOpenBookings; state.bookingRange={from:date,to:date,preset:"custom"}; setView("bookings"); }));
-    applyPeriod();
-  }
-
-  styles();
-  window.renderDashboard = renderDashboardV12;
+  document.addEventListener("click",e=>{if(e.target.closest("[data-close-dashboard-period]"))e.target.closest("dialog")?.close()},true);
+  styles();window.renderDashboard=renderDashboardRestored;
 })();
