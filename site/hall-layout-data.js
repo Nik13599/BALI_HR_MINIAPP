@@ -1,5 +1,5 @@
 (() => {
-  const version = 4;
+  const version = 5;
   const versionKey = "bali_hall_layout_version";
   const storageKey = "bali_tables_v2";
   const layout = [
@@ -30,10 +30,13 @@
     { id:"table-26", name:"Стол 26", seats:4,  x:42.0, y:83.5, shape:"square", active:true }
   ];
 
-  if (!window.BaliStore?.cloudEnabled && Number(localStorage.getItem(versionKey) || 0) < version) {
-    localStorage.setItem(storageKey, JSON.stringify(layout));
-    localStorage.setItem(versionKey, String(version));
+  if (!window.BaliStore?.cloudEnabled) {
+    let current = [];
+    try { current = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch {}
+    if (!Array.isArray(current) || current.length === 0 || Number(localStorage.getItem(versionKey) || 0) < version) {
+      localStorage.setItem(storageKey, JSON.stringify(Array.isArray(current) && current.length ? current : layout));
+      localStorage.setItem(versionKey, String(version));
+    }
   }
-
   window.BALI_HALL_LAYOUT = layout;
 })();
