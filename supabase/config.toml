@@ -1,0 +1,22 @@
+project_id = ""
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.telegram-user-chat]
+verify_jwt = false
+
+[functions.telegram-prepare-share]
+verify_jwt = false
+
+[functions.loyalty-action]
+verify_jwt = false
+
+[functions.event-checkin-production]
+verify_jwt = false
+
+[functions.social-production]
+verify_jwt = false
+
+[functions.telegram-send-message]
+verify_jwt = true
