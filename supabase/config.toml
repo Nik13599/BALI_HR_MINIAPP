@@ -27,6 +27,12 @@ verify_jwt = false
 [functions.telegram-social-profile]
 verify_jwt = false
 
+[functions.telegram-loyalty-profile]
+verify_jwt = false
+
+[functions.telegram-people-directory]
+verify_jwt = false
+
 [functions.telegram-send-message]
 verify_jwt = true
 
