@@ -1,5 +1,6 @@
 (() => {
   if (window.BaliHomeDesign) return;
+
   const KEY = "bali_home_design_v1";
   const defaults = {
     brand: { logo: "", name: "BALI", subtitle: "МИНСК · NIGHT CLUB" },
@@ -52,27 +53,58 @@
       map: { title: "Как добраться", subtitle: "Яндекс Карты", icon: "" }
     }
   };
+
   const clone = value => JSON.parse(JSON.stringify(value));
   const merge = (base, patch) => {
     const out = clone(base);
     const walk = (target, source) => Object.entries(source || {}).forEach(([key, value]) => {
-      if (value && typeof value === "object" && !Array.isArray(value) && target[key] && typeof target[key] === "object" && !Array.isArray(target[key])) walk(target[key], value);
-      else target[key] = value;
+      if (value && typeof value === "object" && !Array.isArray(value) && target[key] && typeof target[key] === "object" && !Array.isArray(target[key])) {
+        walk(target[key], value);
+      } else {
+        target[key] = value;
+      }
     });
     walk(out, patch || {});
     return out;
   };
+
   const read = () => {
-    try { return merge(defaults, JSON.parse(localStorage.getItem(KEY) || "{}")); }
-    catch { return clone(defaults); }
+    try {
+      return merge(defaults, JSON.parse(localStorage.getItem(KEY) || "{}"));
+    } catch {
+      return clone(defaults);
+    }
   };
+
+  async function persistCloud(value) {
+    const store = window.BaliStore;
+    if (!document.getElementById("adminNav") || !store?.cloudEnabled || !store.client) return value;
+    const { error } = await store.client.from("venue_content").upsert({
+      id: "venue-main",
+      home_design: value,
+      updated_at: new Date().toISOString()
+    });
+    if (error) throw error;
+    window.dispatchEvent(new CustomEvent("bali:home-design-cloud-saved", { detail: value }));
+    return value;
+  }
+
   const write = value => {
     const next = merge(defaults, value || {});
     localStorage.setItem(KEY, JSON.stringify(next));
     window.dispatchEvent(new CustomEvent("bali:home-design-changed", { detail: next }));
+    persistCloud(next).catch(error => {
+      console.warn("[BALI home design save]", error?.message || error);
+      window.dispatchEvent(new CustomEvent("bali:home-design-cloud-error", { detail: error }));
+    });
     return next;
   };
-  const reset = () => { localStorage.removeItem(KEY); return write(defaults); };
+
+  const reset = () => {
+    localStorage.removeItem(KEY);
+    return write(defaults);
+  };
+
   const imageData = (file, max = 1600, quality = .86) => new Promise((resolve, reject) => {
     if (!file) return reject(new Error("Файл не выбран"));
     const image = new Image();
@@ -86,8 +118,12 @@
       URL.revokeObjectURL(url);
       resolve(canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", quality));
     };
-    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Не удалось прочитать изображение")); };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Не удалось прочитать изображение"));
+    };
     image.src = url;
   });
-  window.BaliHomeDesign = { KEY, defaults, read, write, reset, imageData };
+
+  window.BaliHomeDesign = { KEY, defaults, read, write, reset, imageData, persistCloud };
 })();
