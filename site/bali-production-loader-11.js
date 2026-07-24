@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-13";
+  const version = "bali-production-14";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -55,34 +55,20 @@
   await load("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2");
   await load("store.js");
   await Promise.all([
-    load("points-core.js"),
-    load("app-users-core-beta4.js"),
-    optional("home-design-cloud-bootstrap.js"),
-    optional("hall-layout-data.js"),
-    optional("reviews-public-save-beta4.js"),
-    optional("home-design-core-beta4.js"),
-    optional("seating-templates-core-beta4.js"),
-    optional("event-lifecycle-core-beta4.js")
+    load("points-core.js"), load("app-users-core-beta4.js"), optional("home-design-cloud-bootstrap.js"),
+    optional("hall-layout-data.js"), optional("reviews-public-save-beta4.js"), optional("home-design-core-beta4.js"),
+    optional("seating-templates-core-beta4.js"), optional("event-lifecycle-core-beta4.js")
   ]);
-
-  if (window.BaliHomeDesignCloudReady) {
-    await Promise.race([window.BaliHomeDesignCloudReady, new Promise(resolve => setTimeout(resolve, 1800))]);
-  }
+  if (window.BaliHomeDesignCloudReady) await Promise.race([window.BaliHomeDesignCloudReady, new Promise(resolve => setTimeout(resolve, 1800))]);
 
   await load("beta4-game.js");
   await Promise.all([
-    optional("bali-age-gate-beta4.js"),
-    optional("beta4-loyalty-core.js"),
-    optional("chip-requests-core-beta4.js"),
-    optional("beta4-reward-icons-core.js"),
-    optional("event-qr-attendance-beta4.js"),
-    optional("event-qr-local-bridge-beta4.js"),
+    optional("bali-age-gate-beta4.js"), optional("beta4-loyalty-core.js"), optional("chip-requests-core-beta4.js"),
+    optional("beta4-reward-icons-core.js"), optional("event-qr-attendance-beta4.js"), optional("event-qr-local-bridge-beta4.js"),
     load("beta4-social-core.js")
   ]);
-
   await Promise.all([
-    optional("social-cloud-sync-production.js", 9000),
-    optional("cloud-loyalty-production.js", 9000),
+    optional("social-cloud-sync-production.js", 9000), optional("cloud-loyalty-production.js", 9000),
     optional("event-checkin-cloud-production.js", 9000)
   ]);
   await load("beta4-app.js");
@@ -115,7 +101,7 @@
     window.dispatchEvent(new CustomEvent("bali:production-ready", { detail: { version, phase: "complete" } }));
   }, 0);
 })().catch(error => {
-  console.error("[BALI production loader 13]", error);
+  console.error("[BALI production loader 14]", error);
   document.getElementById("baliBoot")?.remove();
   delete document.documentElement.dataset.baliBoot;
   if (window.BaliTelegramAuth && !window.BaliTelegramAuth.isAuthenticated()) return;
