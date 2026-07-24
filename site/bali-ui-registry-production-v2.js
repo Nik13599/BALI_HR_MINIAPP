@@ -1,30 +1,9 @@
 (() => {
-  if (window.__BALI_UI_REGISTRY_PRODUCTION_V3__) return;
-  window.__BALI_UI_REGISTRY_PRODUCTION_V3__ = true;
+  if (window.__BALI_UI_REGISTRY_PRODUCTION_V4__) return;
+  window.__BALI_UI_REGISTRY_PRODUCTION_V4__ = true;
 
-  const STYLE_ID = "baliUiRegistryProductionV3Style";
-
-  function ensureStyle() {
-    if (document.getElementById(STYLE_ID)) return;
-    const style = document.createElement("style");
-    style.id = STYLE_ID;
-    style.textContent = `
-      [data-screen="home"] .inner{display:flex!important;flex-direction:column!important}
-      [data-screen="home"] .inner>[data-bali-home-order="1"]{order:1!important}
-      [data-screen="home"] .inner>[data-bali-home-order="2"]{order:2!important}
-      [data-screen="home"] .inner>[data-bali-home-order="3"]{order:3!important}
-      [data-screen="home"] .inner>[data-bali-home-order="4"]{order:4!important}
-      [data-screen="home"] .inner>[data-bali-home-order="5"]{order:5!important}
-      [data-screen="home"] .inner>[data-bali-home-order="6"]{order:6!important}
-      #profileV2Quick{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
-      #profileV2Quick .profile-v2-tile.shop{order:1!important}
-      #profileV2Quick .profile-v2-tile.rewards{order:2!important}
-      #profileV2Quick .profile-v2-tile.gifts{order:3!important;grid-column:1/-1!important}
-      #profileV2Quick .profile-v2-tile.invites,[data-open-profile-invitations]{display:none!important}
-      @media(max-width:400px){#profileV2Quick{gap:7px!important}}
-    `;
-    document.head.appendChild(style);
-  }
+  let applying = false;
+  let scheduled = false;
 
   function firstOnly(selector) {
     const nodes = [...document.querySelectorAll(selector)];
@@ -45,105 +24,104 @@
     }) || null;
   }
 
-  function assignHomeRoles() {
+  function referralCard(home) {
+    if (!home) return null;
+    return [...home.children].find(node => /пригласить\s+друга/i.test(String(node.textContent || ""))) || null;
+  }
+
+  function sameOrder(parent, nodes) {
+    const current = [...parent.children].filter(node => nodes.includes(node));
+    return current.length === nodes.length && current.every((node, index) => node === nodes[index]);
+  }
+
+  function stabilizeHome() {
     const home = document.querySelector('[data-screen="home"] .inner');
     if (!home) return;
 
     firstOnly("#clubLinks");
     firstOnly("#eventQrHomeCard");
-    firstOnly("#profileV2Quick");
 
     const hero = home.querySelector(":scope > .hero");
     const actions = home.querySelector(":scope > .actions");
-    const qr = document.getElementById("eventQrHomeCard");
     const events = eventCard();
     const about = aboutCard(home);
+    const referral = referralCard(home);
+    const qr = document.getElementById("eventQrHomeCard");
     const contacts = document.getElementById("clubLinks");
+    const known = new Set([hero, actions, events, about, referral, qr, contacts].filter(Boolean));
+    const extras = [...home.children].filter(node => !known.has(node));
+    const order = [hero, actions, events, about, referral, qr, ...extras, contacts].filter(Boolean);
 
-    [hero, actions, qr, events, about, contacts].forEach((node, index) => {
-      if (node) node.dataset.baliHomeOrder = String(index + 1);
-    });
+    if (!sameOrder(home, order)) order.forEach(node => home.appendChild(node));
 
     const eventsTitle = events?.querySelector(".card-head h3");
-    if (eventsTitle && eventsTitle.textContent !== "Ближайшие события") eventsTitle.textContent = "Ближайшие события";
-
+    if (eventsTitle) eventsTitle.textContent = "Ближайшие события";
     const aboutTitle = about?.querySelector(".card-head h3");
-    if (aboutTitle && aboutTitle.textContent !== "О клубе") aboutTitle.textContent = "О клубе";
+    if (aboutTitle) aboutTitle.textContent = "О клубе";
   }
 
-  function normalizeProfile() {
+  function stabilizeProfile() {
     const quick = firstOnly("#profileV2Quick");
     if (!quick) return;
+    const shop = quick.querySelector("[data-open-profile-points]");
+    const rewards = quick.querySelector("[data-open-profile-rewards]");
+    const gifts = quick.querySelector("[data-open-profile-gifts]");
+    const invites = quick.querySelector("[data-open-profile-invitations]");
+    invites?.remove();
 
-    const shop = quick.querySelector('[data-open-profile-points]');
-    const rewards = quick.querySelector('[data-open-profile-rewards]');
-    const gifts = quick.querySelector('[data-open-profile-gifts]');
-    const invites = quick.querySelector('[data-open-profile-invitations]');
-
-    shop?.classList.add("shop");
-    rewards?.classList.add("rewards");
-    gifts?.classList.add("gifts");
-    invites?.classList.add("invites");
-
-    const setStrong = (tile, text) => {
-      const strong = tile?.querySelector("strong");
-      if (strong && strong.textContent !== text) strong.textContent = text;
+    const setTile = (tile, smallText, strongText) => {
+      if (!tile) return;
+      const small = tile.querySelector("small");
+      const strong = tile.querySelector("strong");
+      if (small) small.textContent = smallText;
+      if (strong) strong.textContent = strongText;
     };
-    setStrong(shop, "BALI Shop");
-    setStrong(rewards, "Мои награды");
-    setStrong(gifts, "Мои подарки");
+    setTile(shop, "МАГАЗИН", "BALI Shop");
+    setTile(rewards, "МОИ НАГРАДЫ", "Мои награды");
+    setTile(gifts, "МОИ ПОДАРКИ", "Мои подарки");
 
-    const headings = {
-      profilePointsTitle: "BALI Shop",
-      profileRewardsTitle: "Мои награды",
-      profileGiftsTitle: "Мои подарки",
-      profileSettingsTitle: "Настройки профиля",
-      profileHistoryTitle: "История посещений"
-    };
-    Object.entries(headings).forEach(([id, text]) => {
-      const node = document.getElementById(id);
-      if (node && node.textContent !== text) node.textContent = text;
-    });
+    [shop, rewards, gifts].filter(Boolean).forEach(node => quick.appendChild(node));
   }
 
-  function normalizePeople() {
+  function stabilizePeople() {
     const pageTitle = document.querySelector('[data-screen="dating"] .head h2');
-    if (pageTitle && pageTitle.textContent !== "Люди BALI") pageTitle.textContent = "Люди BALI";
-    const labels = {
-      all: "Все",
-      inside: "Пришёл на мероприятие",
-      thumbs: "👍 Лайки"
-    };
+    if (pageTitle) pageTitle.textContent = "Люди BALI";
+    const labels = { all:"Все", inside:"Пришёл на мероприятие", thumbs:"👍 Лайки" };
     Object.entries(labels).forEach(([key, text]) => {
       const node = document.querySelector(`[data-social-v2-tab="${key}"]`);
-      if (node && node.textContent !== text) node.textContent = text;
+      if (node) node.textContent = text;
     });
   }
 
   function apply() {
-    ensureStyle();
-    assignHomeRoles();
-    normalizeProfile();
-    normalizePeople();
+    if (applying) return;
+    applying = true;
+    try {
+      stabilizeHome();
+      stabilizeProfile();
+      stabilizePeople();
+      window.BaliDomStability?.apply?.();
+    } finally {
+      applying = false;
+    }
   }
 
-  let queued = false;
-  const schedule = () => {
-    if (queued) return;
-    queued = true;
+  function schedule() {
+    if (scheduled) return;
+    scheduled = true;
     requestAnimationFrame(() => {
-      queued = false;
+      scheduled = false;
       apply();
     });
-  };
+  }
 
   new MutationObserver(records => {
     if (records.some(record => record.addedNodes.length || record.removedNodes.length)) schedule();
-  }).observe(document.body, { childList: true, subtree: true });
+  }).observe(document.body, { childList:true, subtree:true });
 
-  ["bali:production-ready", "bali:data-changed", "bali:points-changed", "bali:loyalty-changed", "bali:social-changed", "bali:beta4-changed"]
+  [0, 80, 250, 700, 1600, 3200].forEach(delay => setTimeout(apply, delay));
+  ["bali:production-ready","bali:data-changed","bali:points-changed","bali:loyalty-changed","bali:social-changed","bali:beta4-changed"]
     .forEach(name => window.addEventListener(name, schedule));
 
-  [0, 100, 400, 1000].forEach(delay => setTimeout(apply, delay));
-  window.BaliUiRegistry = { apply, assignHomeRoles, normalizeProfile, normalizePeople };
+  window.BaliUiRegistry = { apply, stabilizeHome, stabilizeProfile, stabilizePeople };
 })();
