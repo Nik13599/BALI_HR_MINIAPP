@@ -18,6 +18,9 @@ verify_jwt = false
 [functions.event-checkin-production]
 verify_jwt = false
 
+[functions.review-submit-production]
+verify_jwt = false
+
 [functions.social-production]
 verify_jwt = false
 
