@@ -1,0 +1,136 @@
+name: Validate production site
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "site/**"
+      - ".github/workflows/validate-production-site.yml"
+  pull_request:
+    paths:
+      - "site/**"
+      - ".github/workflows/validate-production-site.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-production-site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check production files exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            site/index.html
+            site/bali-production-loader-11.js
+            site/config.js
+            site/bali-error-boundary-production.js
+            site/telegram-auth-gate.js
+            site/store.js
+            site/reviews-public-save-beta4.js
+            site/points-core.js
+            site/beta4-game.js
+            site/app-users-core-beta4.js
+            site/event-lifecycle-core-beta4.js
+            site/beta4-loyalty-core.js
+            site/event-qr-attendance-beta4.js
+            site/beta4-social-core.js
+            site/social-cloud-sync-production.js
+            site/cloud-loyalty-production.js
+            site/event-checkin-cloud-production.js
+            site/loyalty-catalog-cloud-production.js
+            site/bali-app-stable-production.js
+            site/beta4-layout-map.js
+            site/bali-profile-runtime-production.js
+            site/beta4-social-page.js
+            site/event-details-lineup-beta4.js
+            site/venue-reviews-user-beta4.js
+            site/review-eligibility-private-beta4.js
+            site/bali-people-public-cards-beta4.js
+            site/beta4-qr-checkin.js
+          )
+          for file in "${files[@]}"; do
+            test -f "$file" || { echo "Missing production file: $file"; exit 1; }
+          done
+
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            site/bali-production-loader-11.js
+            site/config.js
+            site/bali-error-boundary-production.js
+            site/telegram-auth-gate.js
+            site/store.js
+            site/reviews-public-save-beta4.js
+            site/points-core.js
+            site/beta4-game.js
+            site/app-users-core-beta4.js
+            site/event-lifecycle-core-beta4.js
+            site/beta4-loyalty-core.js
+            site/event-qr-attendance-beta4.js
+            site/beta4-social-core.js
+            site/social-cloud-sync-production.js
+            site/cloud-loyalty-production.js
+            site/event-checkin-cloud-production.js
+            site/loyalty-catalog-cloud-production.js
+            site/bali-app-stable-production.js
+            site/beta4-layout-map.js
+            site/bali-profile-runtime-production.js
+            site/beta4-social-page.js
+            site/event-details-lineup-beta4.js
+            site/venue-reviews-user-beta4.js
+            site/review-eligibility-private-beta4.js
+            site/bali-people-public-cards-beta4.js
+            site/beta4-qr-checkin.js
+          )
+          for file in "${files[@]}"; do
+            echo "Checking $file"
+            node --check "$file"
+          done
+
+      - name: Reject conflicting legacy modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden=(
+            'beta4-app.js'
+            'beta4-profile-v2.js'
+            'beta4-profile-stable-production.js'
+            'legacy-nav-final-beta4.js'
+            'bali-dom-stability-production.js'
+            'bali-ui-registry-production-v2.js'
+            'beta4-home-links.js'
+          )
+          for module in "${forbidden[@]}"; do
+            if grep -Fq "\"$module\"" site/bali-production-loader-11.js; then
+              echo "Conflicting module returned to production loader: $module"
+              exit 1
+            fi
+          done
+
+      - name: Verify production version
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'bali-production-29' site/index.html
+          grep -Fq 'const version = "bali-production-29"' site/bali-production-loader-11.js
+          grep -Fq 'bali-app-stable-production.js' site/bali-production-loader-11.js
+          grep -Fq 'bali-profile-runtime-production.js' site/bali-production-loader-11.js
