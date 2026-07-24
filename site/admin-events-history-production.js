@@ -48,20 +48,13 @@
 
   function card(event, stats) {
     const [label, cls] = status(event);
-    const visitors = stats.rows.slice(0, 8).map(row => `<li><strong>${esc(row.name || row.telegram || "Гость BALI")}</strong><span>${row.checked_in_at ? new Date(row.checked_in_at).toLocaleString("ru-RU") : ""}${row.left_at ? " · вышел" : " · внутри"}</span></li>`).join("");
-    return `<article class="panel" style="margin-bottom:14px">
-      <div class="panel-head"><div><h3>${esc(event.title || "Мероприятие BALI")}</h3><small>${fmt(event.event_date)} · ${esc(event.event_time || "23:00")}</small></div><span class="status ${cls}">${label}</span></div>
-      <div class="panel-body">
-        <div class="stats" style="margin-bottom:14px"><article class="stat-card"><span>QR-СКАНИРОВАНИЙ</span><strong>${stats.total}</strong><em>уникальных гостей</em></article><article class="stat-card"><span>СЕЙЧАС ВНУТРИ</span><strong>${stats.inside}</strong><em>не отметили выход</em></article></div>
-        ${event.description ? `<p>${esc(event.description)}</p>` : ""}
-        <details><summary>История посещений (${stats.total})</summary>${visitors ? `<ul style="display:grid;gap:8px;padding:12px 0;list-style:none">${visitors}</ul>` : '<div class="empty">QR-код ещё никто не сканировал</div>'}</details>
-        <div class="row-actions" style="margin-top:12px"><button class="icon-btn" data-edit="events" data-id="${esc(event.id)}">✎</button><button class="icon-btn" data-delete="events" data-id="${esc(event.id)}">×</button></div>
-      </div>
-    </article>`;
+    const visitors = stats.rows.map(row => `<li><strong>${esc(row.name || row.telegram || "Гость BALI")}</strong><span>${row.checked_in_at ? new Date(row.checked_in_at).toLocaleString("ru-RU") : ""}${row.left_at ? " · вышел" : " · внутри"}</span></li>`).join("");
+    return `<article class="panel" style="margin-bottom:14px"><div class="panel-head"><div><h3>${esc(event.title || "Мероприятие BALI")}</h3><small>${fmt(event.event_date)} · ${esc(event.event_time || "23:00")}</small></div><span class="status ${cls}">${label}</span></div><div class="panel-body"><div class="stats" style="margin-bottom:14px"><article class="stat-card"><span>QR-СКАНИРОВАНИЙ</span><strong>${stats.total}</strong><em>уникальных гостей</em></article><article class="stat-card"><span>СЕЙЧАС ВНУТРИ</span><strong>${stats.inside}</strong><em>не отметили выход</em></article></div>${event.description ? `<p>${esc(event.description)}</p>` : ""}<details><summary>История посещений (${stats.total})</summary>${visitors ? `<ul style="display:grid;gap:8px;padding:12px 0;list-style:none">${visitors}</ul>` : '<div class="empty">QR-код ещё никто не сканировал</div>'}</details><div class="row-actions" style="margin-top:12px"><button class="icon-btn" data-edit="events" data-id="${esc(event.id)}">✎</button><button class="icon-btn" data-delete="events" data-id="${esc(event.id)}">×</button></div></div></article>`;
   }
 
   async function render() {
     opened = true;
+    if (typeof state !== "undefined") state.view = "events";
     const root = $("#content");
     if (!root) return;
     $("#pageTitle").textContent = "События и история";
@@ -84,6 +77,7 @@
     if (!nav) return;
     event.preventDefault();
     event.stopImmediatePropagation();
+    if (typeof state !== "undefined") state.view = "events";
     document.querySelectorAll("#adminNav button").forEach(button => button.classList.toggle("active", button === nav));
     render();
   }, true);
