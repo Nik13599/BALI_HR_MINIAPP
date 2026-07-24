@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-22";
+  const version = "bali-production-23";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -31,8 +31,7 @@
 
   function loadStyle(name) {
     return new Promise(resolve => {
-      const selector = `link[data-bali-style="${name}"]`;
-      if (document.querySelector(selector)) return resolve(name);
+      if (document.querySelector(`link[data-bali-style="${name}"]`)) return resolve(name);
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = url(name);
@@ -47,6 +46,8 @@
     console.warn("[BALI optional]", error?.message || error);
     return null;
   });
+
+  document.documentElement.dataset.baliBuild = version;
 
   await load("config.js");
   await load("telegram-auth-gate.js");
@@ -91,13 +92,7 @@
     "beta4-home-links.js",
     "beta4-menu-categories.js",
     "beta4-menu-media.js",
-    "beta4-profile-booking.js",
-    "beta4-loyalty-ui-stable.js",
     "beta4-profile-v2.js",
-    "profile-demographics-beta4.js",
-    "profile-ranking-full-beta4.js",
-    "profile-recent-rewards-beta4.js",
-    "profile-history-title-only-beta4.js",
     "beta4-social-page.js",
     "event-details-lineup-beta4.js",
     "venue-reviews-user-beta4.js",
@@ -111,13 +106,14 @@
   for (const module of modules) await optional(module, 5000);
 
   window.BaliUiRegistry?.apply?.();
+  window.BaliSocialCloud?.refresh?.();
   window.BaliPeoplePresenceVisibility?.refresh?.();
   document.getElementById("baliBoot")?.remove();
   window.dispatchEvent(new CustomEvent("bali:production-ready", {
     detail: { version, phase: "complete" }
   }));
 })().catch(error => {
-  console.error("[BALI loader 22]", error);
+  console.error("[BALI loader 23]", error);
   document.getElementById("baliBoot")?.remove();
   const root = document.getElementById("app");
   if (root && !root.children.length) root.innerHTML = `<main style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:#07100c;color:#fff;font-family:system-ui;text-align:center"><section><h2>Не удалось загрузить BALI</h2><p>${String(error?.message || "Ошибка загрузки")}</p><button onclick="location.reload()" style="min-height:46px;padding:0 20px;border:0;border-radius:13px;background:#c8ff3d;color:#07100c;font-weight:900">Повторить</button></section></main>`;
