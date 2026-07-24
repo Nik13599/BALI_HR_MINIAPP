@@ -102,22 +102,37 @@ async function registerUser(db:any,userKey:string,user:any){
   const now=new Date().toISOString();
   const {data:current}=await db.from("app_users").select("user_key").eq("user_key",userKey).maybeSingle();
   if(current){
-    await db.from("app_users").update({telegram_id:user.id,name,username:user.username?`@${user.username}`:"",avatar:user.photo_url||"",last_seen_at:now}).eq("user_key",userKey);
+    await db.from("app_users").update({telegram_id:user.id,name,username:user.username?`@${user.username}`:"",avatar:user.photo_url||"",last_seen_at:now,updated_at:now}).eq("user_key",userKey);
   }else{
     await db.from("app_users").insert({user_key:userKey,telegram_id:user.id,name,username:user.username?`@${user.username}`:"",avatar:user.photo_url||"",first_seen_at:now,last_seen_at:now,opens:1});
   }
   await db.from("points_accounts").upsert({user_key:userKey,telegram_id:user.id,name,telegram:user.username?`@${user.username}`:"",updated_at:now},{onConflict:"user_key"});
 }
+
 async function profilePayload(db:any,userKey:string){
   const now=new Date().toISOString();
-  const [{data:account},{data:vip},{data:plans},{data:requests}]=await Promise.all([
+  const [accountResult,vipResult,plansResult,requestsResult,rewardsResult,giftsResult]=await Promise.all([
     db.from("points_accounts").select("*").eq("user_key",userKey).single(),
     db.from("vip_memberships").select("*").eq("user_key",userKey).gt("expires_at",now).order("expires_at",{ascending:false}).limit(1).maybeSingle(),
     db.from("vip_plans").select("*").eq("active",true).order("sort_order"),
-    db.from("chip_requests").select("id,quantity,points_cost,status,created_at,fulfilled_at,cancelled_at").eq("user_key",userKey).order("created_at",{ascending:false}).limit(10)
+    db.from("chip_requests").select("id,quantity,points_cost,status,created_at,fulfilled_at,cancelled_at").eq("user_key",userKey).order("created_at",{ascending:false}).limit(10),
+    db.from("reward_grants").select("id,user_key,reward_id,reward_title,status,source,revoked_at,created_at,loyalty_rewards(id,title,description,icon,image,points_cost)").eq("user_key",userKey).is("revoked_at",null).order("created_at",{ascending:false}),
+    db.from("gift_grants").select("id,from_user_key,to_user_key,gift_id,gift_title,status,created_at,loyalty_gifts(id,title,description,icon,image,points_cost)").eq("to_user_key",userKey).order("created_at",{ascending:false})
   ]);
-  return {ok:true,balance:Number(account?.balance||0),account,vip:vip||null,plans:plans||[],chip_requests:requests||[]};
+  if (rewardsResult.error) console.warn("reward_grants:", rewardsResult.error.message);
+  if (giftsResult.error) console.warn("gift_grants:", giftsResult.error.message);
+  return {
+    ok:true,
+    balance:Number(accountResult.data?.balance||0),
+    account:accountResult.data,
+    vip:vipResult.data||null,
+    plans:plansResult.data||[],
+    chip_requests:requestsResult.data||[],
+    reward_grants:rewardsResult.data||[],
+    gift_grants:giftsResult.data||[]
+  };
 }
+
 async function debit(db:any,userKey:string,amount:number,title:string,actionKey:string){
   const {data:account,error}=await db.from("points_accounts").select("balance").eq("user_key",userKey).single();
   if(error)throw error;
@@ -127,6 +142,7 @@ async function debit(db:any,userKey:string,amount:number,title:string,actionKey:
   await db.from("points_accounts").update({balance:Number(account.balance)-amount,updated_at:new Date().toISOString()}).eq("user_key",userKey);
   await db.from("points_ledger").insert({user_key:userKey,type:"purchase",title,amount:-amount,action_key:actionKey});
 }
+
 async function credit(db:any,userKey:string,user:any,amount:number,title:string,actionKey:string){await creditByKey(db,userKey,user.id,amount,title,actionKey,user);}
 async function creditByKey(db:any,userKey:string,telegramId:number,amount:number,title:string,actionKey:string,user?:any){
   const {data:used}=await db.from("points_ledger").select("id").eq("user_key",userKey).eq("action_key",actionKey).maybeSingle();
