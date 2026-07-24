@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-30";
+  const version = "bali-production-31";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -115,7 +115,7 @@
   }));
 })().catch(error => {
   window.BaliErrorBoundary?.capture?.(error, { module:"production-loader", fatal:true });
-  console.error("[BALI loader 30]", error);
+  console.error("[BALI loader 31]", error);
   document.getElementById("baliBoot")?.remove();
   const root = document.getElementById("app");
   if (root && !root.children.length) {
