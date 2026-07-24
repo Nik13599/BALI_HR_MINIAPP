@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-11";
+  const version = "bali-production-12";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -114,7 +114,7 @@
     window.dispatchEvent(new CustomEvent("bali:production-ready", { detail: { version, phase: "complete" } }));
   }, 0);
 })().catch(error => {
-  console.error("[BALI production loader 11]", error);
+  console.error("[BALI production loader 12]", error);
   document.getElementById("baliBoot")?.remove();
   delete document.documentElement.dataset.baliBoot;
   if (window.BaliTelegramAuth && !window.BaliTelegramAuth.isAuthenticated()) return;
