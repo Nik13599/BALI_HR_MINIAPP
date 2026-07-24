@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-12";
+  const version = "bali-production-13";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -98,7 +98,8 @@
     "profile-ranking-full-beta4.js","profile-recent-rewards-beta4.js","beta4-home-design.js","profile-full-restore-beta4.js",
     "profile-controls-final-beta4.js","profile-invitations-split-beta4.js","profile-history-title-only-beta4.js",
     "event-details-lineup-beta4.js","venue-reviews-user-beta4.js","review-eligibility-private-beta4.js",
-    "event-stability-final-beta4.js","remove-contest-final-beta4.js","user-production-features.js","user-profile-final-cleanup.js"
+    "event-stability-final-beta4.js","remove-contest-final-beta4.js","user-production-features.js","user-profile-final-cleanup.js",
+    "user-ui-labels-stability-production.js"
   ];
   const extras = [
     "bali-people-status-sync-beta4.js","social-gifts-production.js","bali-people-open-likes-beta4.js",
@@ -114,7 +115,7 @@
     window.dispatchEvent(new CustomEvent("bali:production-ready", { detail: { version, phase: "complete" } }));
   }, 0);
 })().catch(error => {
-  console.error("[BALI production loader 12]", error);
+  console.error("[BALI production loader 13]", error);
   document.getElementById("baliBoot")?.remove();
   delete document.documentElement.dataset.baliBoot;
   if (window.BaliTelegramAuth && !window.BaliTelegramAuth.isAuthenticated()) return;
