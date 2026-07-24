@@ -20,12 +20,19 @@
     ["reviews", "✦", "Отзывы"],
     ["settings", "⚙", "Настройки"]
   ];
+  const TITLES = Object.fromEntries(NAV.map(([view, , label]) => [view, label]));
 
   let rendering = false;
   let queued = false;
 
   function capture(error, context) {
     window.BaliAdminErrorBoundary?.capture?.(error, { context });
+  }
+
+  function lockTitle() {
+    const title = byId("pageTitle");
+    const view = typeof state !== "undefined" ? state.view : "dashboard";
+    if (title) title.textContent = TITLES[view] || "BALI Control";
   }
 
   function ensureNavigation() {
@@ -50,6 +57,7 @@
         if (span && span.textContent !== NAV[index][2]) span.textContent = NAV[index][2];
       });
     }
+    lockTitle();
   }
 
   function uniqueCustomers(rows = []) {
@@ -90,6 +98,7 @@
 
   async function afterRender() {
     ensureNavigation();
+    lockTitle();
     if (typeof state === "undefined") return;
 
     if (state.view === "settings") {
@@ -103,6 +112,7 @@
     }
 
     await syncCustomerCounters();
+    lockTitle();
   }
 
   if (typeof render === "function") {
@@ -115,10 +125,12 @@
       rendering = true;
       const content = byId("content");
       try {
+        lockTitle();
         await baseRender();
         await afterRender();
       } catch (error) {
         capture(error, `render:${typeof state !== "undefined" ? state.view : "unknown"}`);
+        lockTitle();
         if (content) {
           content.innerHTML = `<section class="panel"><div class="panel-head"><h3>Раздел временно недоступен</h3></div><div class="panel-body"><div class="empty">${esc(error?.message || "Ошибка загрузки")}</div><button class="primary" type="button" data-admin-retry>Повторить</button></div></section>`;
         }
@@ -140,9 +152,12 @@
     }
     const navButton = event.target.closest("#adminNav button[data-view]");
     if (!navButton) return;
+    const view = navButton.dataset.view;
+    const title = byId("pageTitle");
+    if (title) title.textContent = TITLES[view] || "BALI Control";
     requestAnimationFrame(ensureNavigation);
   }, true);
 
   [0, 100, 400, 1000].forEach(delay => setTimeout(ensureNavigation, delay));
-  window.BaliAdminStable = { ensureNavigation, uniqueCustomers, syncCustomerCounters, afterRender };
+  window.BaliAdminStable = { ensureNavigation, lockTitle, uniqueCustomers, syncCustomerCounters, afterRender };
 })();
