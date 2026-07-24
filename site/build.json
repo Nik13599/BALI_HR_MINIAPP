@@ -1,13 +1,14 @@
 {
-  "user_app": "bali-rebuild-5",
+  "user_app": "bali-r6",
+  "user_entry": "site/bali-app-6.html",
   "admin": "bali-admin-rebuild-5",
-  "published_at": "2026-07-25T02:50:00Z",
-  "runtime": "standalone-clean-user-and-complete-admin-rebuild",
-  "ui_fix": "legacy-ui-loaders-disconnected-static-headings-and-independent-contact-actions",
+  "published_at": "2026-07-25T03:30:00Z",
+  "runtime": "cache-isolated-standalone-user-and-complete-admin-rebuild",
+  "ui_fix": "new-html-entry-visible-r6-marker-static-headings-no-legacy-runtime",
   "people_fix": "protected-telegram-directory-with-all-users-and-active-qr-presence",
   "qr_fix": "direct-telegram-qr-scanner-to-event-checkin-production",
   "admin_fix": "complete-messages-bookings-events-customers-rules-rewards-gifts-grants-menu-hall-reviews-settings-crud",
-  "validation": "clean-rebuild-syntax-all-sections-contacts-people-loyalty-booking-and-admin-crud",
-  "telegram_url": "versioned-bali-rebuild-5",
+  "validation": "r6-entry-syntax-all-sections-contacts-people-loyalty-booking-and-admin-crud",
+  "telegram_url": "https://nik13599.github.io/BALI_HR_MINIAPP/site/bali-app-6.html",
   "pages": "single-workflow-validate-and-deploy"
 }
