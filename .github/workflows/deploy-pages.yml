@@ -1,12 +1,11 @@
 name: Deploy GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "site/**"
-      - ".github/workflows/deploy-pages.yml"
+  workflow_run:
+    workflows:
+      - Validate production
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
@@ -20,18 +19,21 @@ concurrency:
 
 jobs:
   deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout validated commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload repository as Pages artifact
+      - name: Upload validated repository as Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
