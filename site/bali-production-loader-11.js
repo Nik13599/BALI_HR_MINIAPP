@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-37";
+  const version = "bali-production-38";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -91,8 +91,8 @@
   ]);
   await optional("event-qr-safety-production.js");
 
-  // Install the visual title isolation before the main DOM is mounted.
-  // Legacy modules may still write to their hidden h3 nodes, but those writes are never visible.
+  // Install visual title isolation before the main DOM is mounted.
+  // Legacy modules may write only to hidden compatibility h3 nodes.
   await load("bali-home-static-titles-production.js");
   await load("bali-app-stable-production.js");
   window.BaliHomeStaticTitles?.apply?.();
@@ -125,7 +125,7 @@
 })().catch(error => {
   window.BaliErrorBoundary?.capture?.(error, { module:"production-loader", fatal:true });
   window.BaliRuntimeSafety?.recover?.(error);
-  console.error("[BALI loader 37]", error);
+  console.error("[BALI loader 38]", error);
   document.getElementById("baliBoot")?.remove();
   const root = document.getElementById("app");
   if (root && !root.children.length) {
