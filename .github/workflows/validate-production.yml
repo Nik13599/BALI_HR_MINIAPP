@@ -1,0 +1,60 @@
+name: Validate production
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "site/**"
+      - "scripts/check-production.mjs"
+      - "scripts/smoke-production.mjs"
+      - ".github/workflows/validate-production.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-production
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate production dependencies and JavaScript syntax
+        run: node scripts/check-production.mjs
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start local production server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/bali-http.log 2>&1 &
+          echo $! > /tmp/bali-http.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/site/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/bali-http.log
+          exit 1
+
+      - name: Run Mini App Chromium smoke test
+        run: node scripts/smoke-production.mjs
+
+      - name: Show local server log on failure
+        if: failure()
+        run: cat /tmp/bali-http.log || true
