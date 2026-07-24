@@ -106,15 +106,17 @@
 
     if (store?.client) {
       const [usersRows, pointRows] = await Promise.all([
-        safeQuery(store.client.from("app_users").select("*").order("last_seen_at", { ascending:false }).limit(1000), "app_users"),
-        safeQuery(store.client.from("points_accounts").select("*").order("updated_at", { ascending:false }).limit(1000), "points_accounts")
+        safeQuery(store.client.from("app_users").select("*").limit(1000), "app_users"),
+        safeQuery(store.client.from("points_accounts").select("*").limit(1000), "points_accounts")
       ]);
       pointRows.forEach(add);
       usersRows.forEach(add);
     }
 
     const myKey = String(localProfile()?.id || localProfile()?.userKey || "");
-    return [...map.values()].filter(row => row.id && row.id !== myKey);
+    return [...map.values()]
+      .filter(row => row.id && row.id !== myKey)
+      .sort((a, b) => String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
   }
 
   social.people = () => {
