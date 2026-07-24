@@ -3,7 +3,6 @@
 
   const cfg = window.BALI_CONFIG || {};
   const store = window.BaliStore;
-  const client = store?.client || null;
   const tg = window.Telegram?.WebApp || null;
   const app = document.getElementById('app');
   if (!app || !store) return;
@@ -46,6 +45,7 @@
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const esc = (value = '') => String(value).replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
   const fmtDate = value => value ? new Date(`${String(value).slice(0, 10)}T12:00:00`).toLocaleDateString('ru-RU', { day:'2-digit', month:'long' }) : 'Дата уточняется';
+  const fmtDateTime = value => value ? new Date(value).toLocaleString('ru-RU', { day:'2-digit', month:'short', year:'numeric' }) : '';
   const initials = name => String(name || 'B').trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
   const toast = message => {
     const node = $('#toast');
@@ -55,6 +55,18 @@
     clearTimeout(toast.timer);
     toast.timer = setTimeout(() => node.classList.remove('show'), 2600);
   };
+
+  async function invokeTelegramFunction(name, payload = {}) {
+    if (!tg?.initData || !cfg.supabaseUrl || !cfg.supabaseAnonKey) return null;
+    const response = await fetch(`${String(cfg.supabaseUrl).replace(/\/$/, '')}/functions/v1/${name}`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', apikey:cfg.supabaseAnonKey, Authorization:`Bearer ${cfg.supabaseAnonKey}` },
+      body:JSON.stringify({ init_data:tg.initData, ...payload })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.error) throw new Error(result.error || `Ошибка сервиса ${name}`);
+    return result;
+  }
 
   function openExternal(url, mode = 'external') {
     if (!url) return;
@@ -87,23 +99,24 @@
   }
 
   async function registerUser() {
-    const endpoint = cfg.telegramAuthEndpoint;
-    if (endpoint && tg?.initData && cfg.supabaseAnonKey) {
-      try {
-        await fetch(endpoint, {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', apikey:cfg.supabaseAnonKey, Authorization:`Bearer ${cfg.supabaseAnonKey}` },
-          body:JSON.stringify({ action:'update_profile', init_data:tg.initData, profile:{ name:user.name } })
-        });
-        return;
-      } catch (error) {
-        console.warn('[BALI register edge]', error);
-      }
+    try {
+      const result = await invokeTelegramFunction('telegram-auth-bootstrap', { action:'bootstrap' });
+      if (result?.user) Object.assign(user, {
+        user_key:result.user.user_key || user.user_key,
+        telegram_id:result.user.telegram_id || user.telegram_id,
+        name:result.user.name || user.name,
+        username:result.user.username || user.username,
+        avatar:result.user.avatar || user.avatar
+      });
+      if (result) return result.user || user;
+    } catch (error) {
+      console.warn('[BALI register edge]', error);
     }
     const rows = store.readCache?.('app_users') || [];
     const next = rows.filter(row => String(row.user_key) !== user.user_key);
     next.unshift({ ...user, active:true, last_seen_at:new Date().toISOString() });
     store.writeCache?.('app_users', next);
+    return user;
   }
 
   function avatar(person, className = 'avatar') {
@@ -228,27 +241,54 @@
   }
 
   function renderPeople() {
-    const insideKeys = new Map(state.checkins.filter(row => row.presence_status === 'inside' && !row.left_at).map(row => [String(row.user_key || (row.telegram_id ? `tg:${row.telegram_id}` : '')), row]));
+    const activeCheckins = state.checkins.filter(row => row.presence_status === 'inside' && !row.left_at);
+    const insideKeys = new Map(activeCheckins.map(row => [String(row.user_key || (row.telegram_id ? `tg:${row.telegram_id}` : '')), row]));
     const rows = state.people.map(person => {
-      const checkin = insideKeys.get(person.user_key) || state.checkins.find(row => person.telegram_id && Number(row.telegram_id) === Number(person.telegram_id) && row.presence_status === 'inside' && !row.left_at);
+      const checkin = insideKeys.get(person.user_key) || activeCheckins.find(row => person.telegram_id && Number(row.telegram_id) === Number(person.telegram_id));
       return { ...person, inside:Boolean(checkin), event_title:checkin?.event_title || '' };
     }).filter(person => state.peopleTab === 'all' || person.inside);
 
     $('#peopleList').innerHTML = rows.map(person => `<article class="bali-person">${avatar(person)}<div><h3>${esc(person.name)}</h3><p>${esc(person.username || 'Пользователь BALI')}</p>${person.inside ? `<span>НА МЕРОПРИЯТИИ${person.event_title ? ` · ${esc(person.event_title)}` : ''}</span>` : ''}${person.user_key === user.user_key ? '<em>ЭТО ВЫ</em>' : ''}</div></article>`).join('') || `<div class="bali-empty">${state.peopleTab === 'inside' ? 'Сейчас никто не отмечен на мероприятии' : 'Пользователи ещё не загрузились'}</div>`;
   }
 
+  function catalogCard(item, type) {
+    return `<article class="bali-catalog-card"><b>${esc(item.icon || (type === 'reward' ? '🏆' : '🎁'))}</b><div><h3>${esc(item.title || (type === 'reward' ? 'Награда BALI' : 'Подарок BALI'))}</h3><p>${esc(item.description || '')}</p><strong>${Number(item.points_cost || 0)} баллов</strong></div></article>`;
+  }
+
+  function grantCard(item, type) {
+    const title = item.reward_title || item.gift_title || (type === 'reward' ? 'Награда BALI' : 'Подарок BALI');
+    const icon = type === 'reward' ? '🏆' : '🎁';
+    const status = item.status === 'reserved' ? 'Зарезервировано' : type === 'reward' ? 'Выдано' : 'Получено';
+    return `<article class="bali-catalog-card"><b>${icon}</b><div><h3>${esc(title)}</h3><p>${status}${item.created_at ? ` · ${esc(fmtDateTime(item.created_at))}` : ''}</p></div></article>`;
+  }
+
   function renderProfile() {
-    const rewardCards = state.rewards.map(item => `<article class="bali-catalog-card"><b>${esc(item.icon || '🏆')}</b><div><h3>${esc(item.title)}</h3><p>${esc(item.description || '')}</p><strong>${Number(item.points_cost || 0)} баллов</strong></div></article>`).join('');
-    const giftCards = state.gifts.map(item => `<article class="bali-catalog-card"><b>${esc(item.icon || '🎁')}</b><div><h3>${esc(item.title)}</h3><p>${esc(item.description || '')}</p><strong>${Number(item.points_cost || 0)} баллов</strong></div></article>`).join('');
+    const shopCards = [
+      ...state.rewards.map(item => catalogCard(item, 'reward')),
+      ...state.gifts.map(item => catalogCard(item, 'gift'))
+    ].join('');
+    const rewardCards = state.myRewards.map(item => grantCard(item, 'reward')).join('');
+    const giftCards = state.myGifts.map(item => grantCard(item, 'gift')).join('');
     $('#profileContent').innerHTML = `
       <section class="bali-profile-card">${avatar(user, 'avatar large')}<div><h3>${esc(user.name)}</h3><p>${esc(user.username || 'Telegram Mini App')}</p></div><button data-action="scan-qr">Сканировать QR</button></section>
-      <section class="bali-card"><div class="bali-card-head"><h2>BALI Shop</h2></div><p>Каталог наград и подарков, доступных за BALI-Баллы.</p></section>
-      <section class="bali-card"><div class="bali-card-head"><h2>Мои награды</h2></div><div class="bali-catalog">${rewardCards || '<div class="bali-empty">Награды пока не добавлены администратором</div>'}</div></section>
-      <section class="bali-card"><div class="bali-card-head"><h2>Мои подарки</h2></div><div class="bali-catalog">${giftCards || '<div class="bali-empty">Подарки пока не добавлены администратором</div>'}</div></section>
+      <section class="bali-card"><div class="bali-card-head"><h2>BALI Shop</h2></div><div class="bali-catalog">${shopCards || '<div class="bali-empty">Каталог пока не заполнен администратором</div>'}</div></section>
+      <section class="bali-card"><div class="bali-card-head"><h2>Мои награды</h2></div><div class="bali-catalog">${rewardCards || '<div class="bali-empty">У вас пока нет выданных наград</div>'}</div></section>
+      <section class="bali-card"><div class="bali-card-head"><h2>Мои подарки</h2></div><div class="bali-catalog">${giftCards || '<div class="bali-empty">У вас пока нет полученных подарков</div>'}</div></section>
     `;
   }
 
   async function refreshPeople() {
+    try {
+      const result = await invokeTelegramFunction('telegram-people-directory');
+      if (result) {
+        state.people = [...new Map([user, ...(result.people || []).map(normalizePerson)].filter(person => person.user_key).map(person => [person.user_key, person])).values()];
+        state.checkins = result.checkins || [];
+        renderPeople();
+        return;
+      }
+    } catch (error) {
+      console.warn('[BALI people edge]', error);
+    }
     const [appUsers, customers, checkins] = await Promise.all([
       safeList('app_users', { order:'last_seen_at', ascending:false }),
       safeList('customers'),
@@ -261,13 +301,24 @@
   }
 
   async function refreshProfile() {
-    const [rewards, gifts, rewardGrants, giftGrants] = await Promise.all([
-      safeList('loyalty_rewards'), safeList('loyalty_gifts'), safeList('reward_grants'), safeList('gift_grants')
-    ]);
+    try {
+      const result = await invokeTelegramFunction('telegram-loyalty-profile');
+      if (result) {
+        state.rewards = (result.rewards || []).filter(item => item.active !== false);
+        state.gifts = (result.gifts || []).filter(item => item.active !== false);
+        state.myRewards = result.reward_grants || [];
+        state.myGifts = result.gift_grants || [];
+        renderProfile();
+        return;
+      }
+    } catch (error) {
+      console.warn('[BALI loyalty edge]', error);
+    }
+    const [rewards, gifts] = await Promise.all([safeList('loyalty_rewards'), safeList('loyalty_gifts')]);
     state.rewards = rewards.filter(item => item.active !== false);
     state.gifts = gifts.filter(item => item.active !== false);
-    state.myRewards = rewardGrants.filter(item => String(item.user_key) === user.user_key);
-    state.myGifts = giftGrants.filter(item => String(item.to_user_key) === user.user_key);
+    state.myRewards = [];
+    state.myGifts = [];
     renderProfile();
   }
 
@@ -316,7 +367,8 @@
         return;
       }
     } catch {}
-    navigator.share?.({ title:text, url }).catch(() => navigator.clipboard?.writeText(url).then(() => toast('Ссылка скопирована')));
+    if (navigator.share) navigator.share({ title:text, url }).catch(() => {});
+    else navigator.clipboard?.writeText(url).then(() => toast('Ссылка скопирована')).catch(() => toast(url));
   }
 
   function parseQr(raw) {
@@ -330,17 +382,9 @@
   }
 
   async function checkin(raw) {
-    if (!tg?.initData || !cfg.supabaseUrl || !cfg.supabaseAnonKey) throw new Error('QR-вход доступен только внутри Telegram');
     const parsed = parseQr(raw);
     if (!parsed.event_id || !parsed.qr_token) throw new Error('Неверный QR-код мероприятия');
-    const response = await fetch(`${String(cfg.supabaseUrl).replace(/\/$/, '')}/functions/v1/event-checkin-production`, {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json', apikey:cfg.supabaseAnonKey, Authorization:`Bearer ${cfg.supabaseAnonKey}` },
-      body:JSON.stringify({ action:'checkin', init_data:tg.initData, event_id:parsed.event_id, qr_token:parsed.qr_token })
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || result.error) throw new Error(result.error || 'Не удалось подтвердить вход');
-    return result;
+    return await invokeTelegramFunction('event-checkin-production', { action:'checkin', event_id:parsed.event_id, qr_token:parsed.qr_token });
   }
 
   function scanQr() {
@@ -349,12 +393,12 @@
       return;
     }
     tg.showScanQrPopup({ text:'Отсканируйте QR мероприятия BALI' }, async raw => {
-      tg.closeScanQrPopup();
+      tg.closeScanQrPopup?.();
       try {
         const result = await checkin(raw);
-        toast(`Вход подтверждён${Number(result.points || 0) ? ` · +${Number(result.points)} баллов` : ''}`);
+        toast(`Вход подтверждён${Number(result?.points || 0) ? ` · +${Number(result.points)} баллов` : ''}`);
         await refreshPeople();
-      } catch (error) { toast(error.message); }
+      } catch (error) { toast(error.message || 'Не удалось подтвердить вход'); }
       return true;
     });
   }
@@ -363,6 +407,7 @@
     if (state.loading) return;
     state.loading = true;
     try {
+      await registerUser();
       const [events, menu] = await Promise.all([safeList('events', { order:'event_date' }), safeList('menu_items', { order:'sort_order' })]);
       state.events = events.filter(item => item.active !== false).sort((a, b) => `${a.event_date || ''}${a.event_time || ''}`.localeCompare(`${b.event_date || ''}${b.event_time || ''}`));
       state.menu = menu.filter(item => item.active !== false);
@@ -374,6 +419,5 @@
 
   try { tg?.ready?.(); tg?.expand?.(); tg?.setHeaderColor?.('#07100c'); tg?.setBackgroundColor?.('#07100c'); } catch {}
   mount();
-  registerUser();
   load();
 })();
