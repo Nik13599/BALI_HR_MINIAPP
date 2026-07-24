@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-17";
+  const version = "bali-production-18";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -29,6 +29,20 @@
     return task;
   }
 
+  function loadStyle(name) {
+    return new Promise(resolve => {
+      const selector = `link[data-bali-style="${name}"]`;
+      if (document.querySelector(selector)) return resolve(name);
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = url(name);
+      link.dataset.baliStyle = name;
+      link.onload = () => resolve(name);
+      link.onerror = () => resolve(name);
+      document.head.appendChild(link);
+    });
+  }
+
   const optional = (name, timeout = 5000) => load(name, timeout).catch(error => {
     console.warn("[BALI optional]", error?.message || error);
     return null;
@@ -37,6 +51,14 @@
   await load("config.js");
   await load("telegram-auth-gate.js");
   if (!(await window.BaliTelegramAuth.ready)?.ok) return;
+
+  await Promise.all([
+    loadStyle("beta4-app.css"),
+    loadStyle("beta4-layout-map.css"),
+    loadStyle("beta4-home-links.css"),
+    loadStyle("beta4-social.css"),
+    loadStyle("legacy-nav-final-beta4.css")
+  ]);
 
   await load("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2");
   await load("store.js");
@@ -77,7 +99,7 @@
     detail: { version, phase: "complete" }
   }));
 })().catch(error => {
-  console.error("[BALI loader 17]", error);
+  console.error("[BALI loader 18]", error);
   document.getElementById("baliBoot")?.remove();
   const root = document.getElementById("app");
   if (root && !root.children.length) root.innerHTML = `<main style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:#07100c;color:#fff;font-family:system-ui;text-align:center"><section><h2>Не удалось загрузить BALI</h2><p>${String(error?.message || "Ошибка загрузки")}</p><button onclick="location.reload()" style="min-height:46px;padding:0 20px;border:0;border-radius:13px;background:#c8ff3d;color:#07100c;font-weight:900">Повторить</button></section></main>`;
