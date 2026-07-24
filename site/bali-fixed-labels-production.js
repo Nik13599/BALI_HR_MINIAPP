@@ -25,31 +25,32 @@
   `;
   document.head.appendChild(style);
 
-  function lock(node, label, key) {
+  const observers = new WeakMap();
+
+  function protect(node, label, key) {
     if (!node) return;
     if (node.textContent !== label) node.textContent = label;
     if (node.getAttribute("aria-label") !== label) node.setAttribute("aria-label", label);
     if (node.dataset.fixedLabel !== key) node.dataset.fixedLabel = key;
+    if (observers.has(node)) return;
+
+    let queued = false;
+    const observer = new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      queueMicrotask(() => {
+        queued = false;
+        if (node.textContent !== label) node.textContent = label;
+      });
+    });
+    observer.observe(node, { childList:true, subtree:true, characterData:true });
+    observers.set(node, observer);
   }
 
   function apply() {
-    lock(document.querySelector("#homeEventsCard .card-head h3"), "Ближайшие события", "events");
-    lock(document.querySelector("#homeAboutCard .card-head h3"), "О клубе", "about");
+    protect(document.querySelector("#homeEventsCard .card-head h3"), "Ближайшие события", "events");
+    protect(document.querySelector("#homeAboutCard .card-head h3"), "О клубе", "about");
   }
-
-  let queued = false;
-  const schedule = () => {
-    if (queued) return;
-    queued = true;
-    queueMicrotask(() => {
-      queued = false;
-      apply();
-    });
-  };
-
-  new MutationObserver(records => {
-    if (records.some(record => record.type === "childList" || record.type === "characterData")) schedule();
-  }).observe(document.documentElement, { childList:true, subtree:true, characterData:true });
 
   [0, 30, 120, 400, 1200].forEach(delay => setTimeout(apply, delay));
   window.BaliFixedLabels = { apply };
