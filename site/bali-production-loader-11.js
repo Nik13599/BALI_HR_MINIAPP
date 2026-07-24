@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-32";
+  const version = "bali-production-33";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -59,6 +59,7 @@
   await load("config.js");
   await load("bali-error-boundary-production.js");
   await load("bali-runtime-safety-production.js");
+  await load("bali-event-coalescer-production.js");
   await load("telegram-auth-gate.js");
   if (!(await window.BaliTelegramAuth.ready)?.ok) return;
 
@@ -91,35 +92,36 @@
   await optional("event-qr-safety-production.js");
 
   await load("bali-app-stable-production.js");
+  await load("bali-fixed-labels-production.js");
 
   const modules = [
     "beta4-layout-map.js",
-    "bali-profile-runtime-production.js",
-    "beta4-social-page.js",
+    "bali-profile-lite-production.js",
+    "bali-people-page-production.js",
     "event-details-lineup-beta4.js",
     "venue-reviews-user-beta4.js",
     "review-eligibility-private-beta4.js",
-    "bali-people-public-cards-beta4.js",
     "beta4-qr-checkin.js"
   ];
 
   for (const module of modules) await optional(module, 7000);
 
   window.BaliRuntimeSafety?.ensureRequiredNodes?.();
+  window.BaliFixedLabels?.apply?.();
   window.BaliAppStable?.finalizeLayout?.();
   window.BaliCompactProfile?.mount?.();
-  await window.BaliSocialCloud?.refresh?.();
-  window.BaliAppStable?.finalizeLayout?.();
+  await window.BaliPeoplePage?.refresh?.({ useCloud:true });
+  window.BaliFixedLabels?.apply?.();
   window.BaliRuntimeSafety?.removeTechnicalOverlays?.();
 
   document.getElementById("baliBoot")?.remove();
   window.dispatchEvent(new CustomEvent("bali:production-ready", {
-    detail: { version, phase:"complete", runtime:"stable-v2" }
+    detail:{ version, phase:"complete", runtime:"stable-v3" }
   }));
 })().catch(error => {
   window.BaliErrorBoundary?.capture?.(error, { module:"production-loader", fatal:true });
   window.BaliRuntimeSafety?.recover?.(error);
-  console.error("[BALI loader 32]", error);
+  console.error("[BALI loader 33]", error);
   document.getElementById("baliBoot")?.remove();
   const root = document.getElementById("app");
   if (root && !root.children.length) {
