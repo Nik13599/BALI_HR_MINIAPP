@@ -7,10 +7,12 @@ on:
       - main
     paths:
       - "site/**"
+      - ".github/scripts/**"
       - ".github/workflows/validate-production-site.yml"
   pull_request:
     paths:
       - "site/**"
+      - ".github/scripts/**"
       - ".github/workflows/validate-production-site.yml"
 
 permissions:
@@ -46,6 +48,7 @@ jobs:
             site/bali-error-boundary-production.js
             site/bali-app-stable-production.js
             site/bali-profile-runtime-production.js
+            site/event-qr-safety-production.js
             site/admin-error-boundary-production.js
             site/admin-stable-orchestrator-production.js
             site/telegram-auth-gate.js
@@ -75,6 +78,7 @@ jobs:
             site/admin-events-history-production.js
             site/admin-production-complete-runtime.js
             site/admin-loyalty-issuance-production.js
+            .github/scripts/production-smoke.mjs
           )
           for file in "${files[@]}"; do
             test -f "$file" || { echo "Missing production file: $file"; exit 1; }
@@ -90,6 +94,7 @@ jobs:
             site/bali-error-boundary-production.js
             site/bali-app-stable-production.js
             site/bali-profile-runtime-production.js
+            site/event-qr-safety-production.js
             site/admin-error-boundary-production.js
             site/admin-stable-orchestrator-production.js
             site/telegram-auth-gate.js
@@ -119,6 +124,7 @@ jobs:
             site/admin-events-history-production.js
             site/admin-production-complete-runtime.js
             site/admin-loyalty-issuance-production.js
+            .github/scripts/production-smoke.mjs
           )
           for file in "${files[@]}"; do
             echo "Checking $file"
@@ -168,8 +174,17 @@ jobs:
           grep -Fq 'const version = "bali-production-29"' site/bali-production-loader-11.js
           grep -Fq 'bali-app-stable-production.js' site/bali-production-loader-11.js
           grep -Fq 'bali-profile-runtime-production.js' site/bali-production-loader-11.js
+          grep -Fq 'event-qr-safety-production.js' site/bali-production-loader-11.js
           grep -Fq 'production-21' site/admin.html
           grep -Fq 'data-admin-build="production-21"' site/admin-production.html
           grep -Fq 'admin-stable-orchestrator-production.js' site/admin-production.html
           grep -Fq '"user_app": "bali-production-29"' site/build.json
           grep -Fq '"admin": "production-21"' site/build.json
+
+      - name: Install smoke-test runtime
+        shell: bash
+        run: npm install --no-save --no-package-lock jsdom@24
+
+      - name: Run production DOM smoke tests
+        shell: bash
+        run: node .github/scripts/production-smoke.mjs
