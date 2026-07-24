@@ -1,90 +1,85 @@
 (() => {
-  if (window.__BALI_ADMIN_GIFTS_PRODUCTION__) return;
-  window.__BALI_ADMIN_GIFTS_PRODUCTION__ = true;
+  if (window.__BALI_ADMIN_LOYALTY_PRODUCTION__) return;
+  window.__BALI_ADMIN_LOYALTY_PRODUCTION__ = true;
   const store = window.BaliStore;
-  if (!store) return;
-  const esc = (value = "") => String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
+  if (!store?.client) return;
+  const safe = (value = "") => String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[char]);
   const notify = message => window.toast ? window.toast(message) : console.info(message);
-  let imageData = "";
+  const uid = prefix => `${prefix}-${crypto.randomUUID?.() || Date.now()}`;
+  let current = null;
 
-  function styles() {
-    if (document.getElementById("adminGiftsProductionStyle")) return;
-    const style = document.createElement("style");
-    style.id = "adminGiftsProductionStyle";
-    style.textContent = `
-      .gift-admin-grid{display:grid;grid-template-columns:minmax(280px,.75fr) minmax(0,1.25fr);gap:14px}.gift-admin-form{display:grid;gap:10px}.gift-admin-form label{display:grid;gap:6px;color:var(--muted);font-size:9px;font-weight:800}.gift-admin-form input,.gift-admin-form textarea{width:100%;min-height:45px;padding:9px 11px;border:1px solid var(--line);border-radius:12px;background:#111614;color:#fff}.gift-admin-form textarea{min-height:90px}.gift-admin-two{display:grid;grid-template-columns:1fr 1fr;gap:9px}.gift-admin-preview{min-height:110px;display:grid;place-items:center;overflow:hidden;border:1px dashed var(--line);border-radius:16px;background:#ffffff04;font-size:42px}.gift-admin-preview img{width:100%;height:160px;object-fit:contain}.gift-admin-list{display:grid;gap:8px}.gift-admin-row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:15px;background:#ffffff04}.gift-admin-icon{width:52px;height:52px;display:grid;place-items:center;overflow:hidden;border-radius:14px;background:#c8ff3d0d;font-size:27px}.gift-admin-icon img{width:100%;height:100%;object-fit:cover}.gift-admin-row h4{margin:0;font-size:11px}.gift-admin-row p{margin:4px 0 0;color:var(--muted);font-size:8px;line-height:1.45}.gift-admin-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.gift-admin-actions button{min-height:34px;padding:0 8px}.gift-admin-form .check-row{display:flex;align-items:center;justify-content:space-between}.gift-admin-form .check-row input{width:22px;min-height:22px}
-      @media(max-width:820px){.gift-admin-grid{grid-template-columns:1fr}.gift-admin-row{grid-template-columns:46px minmax(0,1fr)}.gift-admin-actions{grid-column:2;justify-content:flex-start}}
-    `;
-    document.head.appendChild(style);
+  function styles(){
+    if(document.getElementById("baliProductionLoyaltyStyle"))return;
+    const style=document.createElement("style");style.id="baliProductionLoyaltyStyle";style.textContent=`
+      .prod-loyalty{display:grid;gap:14px}.prod-loyalty-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.prod-loyalty .panel{margin:0}.prod-form{display:grid;gap:9px}.prod-form label{display:grid;gap:5px;color:var(--muted);font-size:9px;font-weight:800}.prod-form input,.prod-form textarea,.prod-form select{width:100%;min-height:43px;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:#111614;color:#fff}.prod-form textarea{min-height:78px;resize:vertical}.prod-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.prod-list{display:grid;gap:8px}.prod-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:13px;background:#ffffff04}.prod-row h4{margin:0;font-size:11px}.prod-row p{margin:4px 0 0;color:var(--muted);font-size:8px;line-height:1.45}.prod-actions{display:flex;gap:6px;flex-wrap:wrap}.prod-actions button{min-height:33px;padding:0 8px}.prod-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.prod-stat{padding:13px;border:1px solid var(--line);border-radius:15px;background:#ffffff04}.prod-stat span{display:block;color:var(--muted);font-size:8px}.prod-stat strong{display:block;margin-top:6px;color:var(--lime);font:700 20px Unbounded}.prod-schema-warning{padding:14px;border:1px solid rgba(255,190,70,.3);border-radius:14px;background:rgba(255,190,70,.07);color:#f1d493;font-size:10px;line-height:1.55}.prod-check{display:flex!important;grid-template-columns:none!important;align-items:center;justify-content:space-between}.prod-check input{width:22px;min-height:22px}.prod-section-title{margin:0 0 10px;font-size:14px}@media(max-width:850px){.prod-loyalty-grid,.prod-stats{grid-template-columns:1fr}.prod-two{grid-template-columns:1fr}.prod-row{grid-template-columns:1fr}.prod-actions{justify-content:flex-start}}
+    `;document.head.appendChild(style);
   }
 
-  function fileToData(file) {
-    if (file.size > 2 * 1024 * 1024) return Promise.reject(new Error("Изображение больше 2 МБ"));
-    if (!file.type.startsWith("image/")) return Promise.reject(new Error("Выберите изображение"));
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("Не удалось прочитать изображение"));
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.readAsDataURL(file);
-    });
+  async function select(table, order){
+    try{let q=store.client.from(table).select("*");if(order)q=q.order(order);const{data,error}=await q;if(error)throw error;return{data:data||[],error:null}}catch(error){return{data:[],error}}
+  }
+  function buildUsers(appUsers,accounts){
+    const map=new Map(accounts.map(row=>[String(row.user_key),{...row}]));
+    appUsers.forEach(user=>{const key=String(user.user_key);map.set(key,{...(map.get(key)||{}),...user,user_key:key,balance:Number(map.get(key)?.balance||0)})});
+    return [...map.values()].sort((a,b)=>String(a.name||a.user_key).localeCompare(String(b.name||b.user_key),"ru"));
+  }
+  async function loadData(){
+    const [usersR,accountsR,plansR,rewardsR,giftsR,eventsR]=await Promise.all([
+      select("app_users","name"),select("points_accounts","name"),select("vip_plans","sort_order"),select("loyalty_rewards","sort_order"),select("loyalty_gifts","sort_order"),select("events","event_date")
+    ]);
+    return{users:buildUsers(usersR.data,accountsR.data),plans:plansR.data,rewards:rewardsR.data,gifts:giftsR.data,events:eventsR.data,rewardsError:rewardsR.error,giftsError:giftsR.error};
+  }
+  const userOptions=rows=>rows.map(row=>`<option value="${safe(row.user_key)}">${safe(row.name||"Гость BALI")} · ${safe(row.username||row.phone||row.user_key)} · ${Number(row.balance||0)} баллов</option>`).join("");
+  const planOptions=rows=>rows.filter(row=>row.active!==false).map(row=>`<option value="${safe(row.id)}">${safe(row.name)} · ${Number(row.days||30)} дней</option>`).join("");
+  const eventOptions=rows=>`<option value="">Не выбрано</option>${rows.map(row=>`<option value="${safe(row.id)}" data-title="${safe(row.title)}">${safe(row.title)}</option>`).join("")}`;
+
+  function rowActions(kind,id){return `<div class="prod-actions"><button class="ghost" type="button" data-prod-edit="${kind}" data-id="${safe(id)}">Изменить</button><button class="danger" type="button" data-prod-delete="${kind}" data-id="${safe(id)}">Удалить</button></div>`}
+  function plansList(rows){return rows.length?rows.map(row=>`<article class="prod-row"><div><h4>${safe(row.name)}</h4><p>${Number(row.days||30)} дней · ${Number(row.points_price||0)} баллов · скидка ${Number(row.discount||0)}% · множитель ${Number(row.points_multiplier||1)}</p></div>${rowActions("plan",row.id)}</article>`).join(""):'<div class="empty">VIP-тарифов пока нет</div>'}
+  function rewardsList(rows){return rows.length?rows.map(row=>`<article class="prod-row"><div><h4>${safe(row.title)}</h4><p>${safe(row.description||"Без описания")}<br>+${Number(row.xp||0)} XP · ${safe(row.condition_type||"manual")} · ${row.active!==false?"активна":"скрыта"}</p></div>${rowActions("reward",row.id)}</article>`).join(""):'<div class="empty">Наград пока нет</div>'}
+  function giftsList(rows){return rows.length?rows.map(row=>`<article class="prod-row"><div><h4>${safe(row.icon||"🎁")} ${safe(row.title)}</h4><p>${safe(row.description||"Без описания")}<br>${Number(row.points_price||0)} BALI-Баллов · ${row.active!==false?"показывается":"скрыт"}</p></div>${rowActions("gift",row.id)}</article>`).join(""):'<div class="empty">Подарков пока нет</div>'}
+
+  async function mount(){
+    if(typeof state==="undefined"||state.view!=="bonuses")return;
+    styles();const root=document.getElementById("content");if(!root)return;
+    root.innerHTML='<div class="empty">Загрузка баллов, VIP, наград и подарков…</div>';
+    current=await loadData();
+    const missing=current.rewardsError||current.giftsError;
+    root.innerHTML=`<div class="prod-loyalty" id="productionLoyaltyControl">
+      ${missing?'<div class="prod-schema-warning"><strong>Не завершена структура Supabase.</strong><br>Выполните файл <b>site/bali-production-admin-complete-migration.sql</b> в SQL Editor. После этого заработают награды, подарки и отзывы.</div>':""}
+      <div class="prod-stats"><article class="prod-stat"><span>ПОЛЬЗОВАТЕЛИ</span><strong>${current.users.length}</strong></article><article class="prod-stat"><span>VIP-ТАРИФЫ</span><strong>${current.plans.length}</strong></article><article class="prod-stat"><span>НАГРАДЫ</span><strong>${current.rewards.length}</strong></article><article class="prod-stat"><span>ПОДАРКИ</span><strong>${current.gifts.length}</strong></article></div>
+      <div class="prod-loyalty-grid">
+        <section class="panel"><div class="panel-head"><h3>Начислить или списать баллы</h3></div><div class="panel-body"><form class="prod-form" id="prodPointsForm"><label><span>Пользователь</span><select name="user_key" required>${userOptions(current.users)}</select></label><div class="prod-two"><label><span>Операция</span><select name="operation"><option value="add">Начислить</option><option value="remove">Списать</option></select></label><label><span>Количество</span><input name="amount" type="number" min="1" value="100" required></label></div><label><span>Причина</span><input name="note" value="Корректировка администратора" required></label><button class="primary" ${current.users.length?"":"disabled"}>Применить</button></form></div></section>
+        <section class="panel"><div class="panel-head"><h3>Назначить VIP пользователю</h3></div><div class="panel-body"><form class="prod-form" id="prodVipAssignForm"><label><span>Пользователь</span><select name="user_key" required>${userOptions(current.users)}</select></label><label><span>VIP-статус</span><select name="plan_id" required>${planOptions(current.plans)}</select></label><label><span>Срок, дней</span><input name="days" type="number" min="1" value="30" required></label><button class="primary" ${current.users.length&&current.plans.length?"":"disabled"}>Назначить VIP</button></form></div></section>
+      </div>
+      <div class="prod-loyalty-grid">
+        <section class="panel"><div class="panel-head"><h3>Редактор VIP-статусов</h3></div><div class="panel-body"><form class="prod-form" id="prodPlanForm"><input name="id" type="hidden"><div class="prod-two"><label><span>ID тарифа</span><input name="new_id" placeholder="vip-plus" required></label><label><span>Название</span><input name="name" placeholder="BALI VIP" required></label></div><div class="prod-two"><label><span>Срок, дней</span><input name="days" type="number" min="1" value="30"></label><label><span>Цена в баллах</span><input name="points_price" type="number" min="0" value="2500"></label></div><div class="prod-two"><label><span>Скидка, %</span><input name="discount" type="number" min="0" max="100" value="10"></label><label><span>Множитель баллов</span><input name="points_multiplier" type="number" min="1" step="0.1" value="1.2"></label></div><label class="prod-check"><span>Активен</span><input name="active" type="checkbox" checked></label><button class="primary">Сохранить VIP-тариф</button><button class="ghost" type="button" data-prod-reset="plan">Очистить</button></form><div class="prod-list" style="margin-top:12px">${plansList(current.plans)}</div></div></section>
+        <section class="panel"><div class="panel-head"><h3>Создание и выдача наград</h3></div><div class="panel-body">${current.rewardsError?'<div class="empty">Таблица наград ещё не создана</div>':`<form class="prod-form" id="prodRewardForm"><input name="id" type="hidden"><label><span>Название</span><input name="title" required></label><label><span>Описание</span><textarea name="description"></textarea></label><div class="prod-two"><label><span>XP</span><input name="xp" type="number" min="0" value="100"></label><label><span>Условие</span><select name="condition_type"><option value="manual">Вручную</option><option value="event">За событие</option><option value="visits">За посещения</option><option value="anniversary">За годы с клубом</option></select></label></div><label><span>Событие</span><select name="event_id">${eventOptions(current.events)}</select></label><div class="prod-two"><label><span>Порог</span><input name="threshold" type="number" min="1" value="1"></label><label><span>Ссылка на изображение</span><input name="image_url"></label></div><label class="prod-check"><span>Активна</span><input name="active" type="checkbox" checked></label><button class="primary">Сохранить награду</button><button class="ghost" type="button" data-prod-reset="reward">Очистить</button></form><form class="prod-form" id="prodGrantRewardForm" style="margin-top:14px"><h4 class="prod-section-title">Выдать награду</h4><select name="user_key">${userOptions(current.users)}</select><select name="reward_id">${current.rewards.map(row=>`<option value="${safe(row.id)}">${safe(row.title)}</option>`).join("")}</select><button class="primary" ${current.users.length&&current.rewards.length?"":"disabled"}>Выдать</button></form><div class="prod-list" style="margin-top:12px">${rewardsList(current.rewards)}</div>`}</div></section>
+      </div>
+      <section class="panel"><div class="panel-head"><h3>Каталог подарков</h3></div><div class="panel-body">${current.giftsError?'<div class="empty">Таблица подарков ещё не создана</div>':`<div class="prod-loyalty-grid"><form class="prod-form" id="prodGiftForm"><input name="id" type="hidden"><label><span>Название</span><input name="title" required></label><label><span>Описание</span><textarea name="description"></textarea></label><div class="prod-two"><label><span>Emoji</span><input name="icon" value="🎁"></label><label><span>Стоимость в баллах</span><input name="points_price" type="number" min="0" value="50"></label></div><label><span>Ссылка на изображение</span><input name="image_url"></label><label class="prod-check"><span>Показывать пользователям</span><input name="active" type="checkbox" checked></label><button class="primary">Сохранить подарок</button><button class="ghost" type="button" data-prod-reset="gift">Очистить</button></form><div class="prod-list">${giftsList(current.gifts)}</div></div>`}</div></section>
+    </div>`;
+    bind(root);
   }
 
-  async function listGifts() {
-    if (!store.cloudEnabled || !store.client) return [];
-    const { data, error } = await store.client.from("loyalty_gifts").select("*").order("sort_order");
-    if (error) throw error;
-    return data || [];
+  function formData(form){return Object.fromEntries(new FormData(form).entries())}
+  function resetForm(kind){const form=document.getElementById(kind==="plan"?"prodPlanForm":kind==="reward"?"prodRewardForm":"prodGiftForm");form?.reset();if(form?.id)form.id.value="";if(form?.active)form.active.checked=true}
+  async function savePlan(form){const d=formData(form),id=String(d.id||d.new_id||"").trim();if(!id)return notify("Укажите ID тарифа");const payload={id,name:String(d.name||"").trim(),days:Number(d.days||30),points_price:Number(d.points_price||0),discount:Number(d.discount||0),points_multiplier:Number(d.points_multiplier||1),active:form.active.checked,sort_order:current.plans.find(row=>row.id===id)?.sort_order||current.plans.length+1};const{error}=await store.client.from("vip_plans").upsert(payload);if(error)throw error;notify("VIP-тариф сохранён")}
+  async function saveReward(form){const d=formData(form),event=form.event_id?.selectedOptions?.[0];const payload={id:d.id||uid("reward"),title:String(d.title||"").trim(),description:String(d.description||"").trim(),image_url:String(d.image_url||"").trim(),xp:Number(d.xp||0),condition_type:d.condition_type||"manual",event_id:d.event_id||null,event_title:event?.dataset?.title||"",threshold:Number(d.threshold||1),active:form.active.checked,sort_order:current.rewards.find(row=>row.id===d.id)?.sort_order||current.rewards.length+1,updated_at:new Date().toISOString()};const{error}=await store.client.from("loyalty_rewards").upsert(payload);if(error)throw error;notify("Награда сохранена")}
+  async function saveGift(form){const d=formData(form);const payload={id:d.id||uid("gift"),title:String(d.title||"").trim(),description:String(d.description||"").trim(),icon:String(d.icon||"🎁").trim()||"🎁",image_url:String(d.image_url||"").trim(),points_price:Number(d.points_price||0),active:form.active.checked,sort_order:current.gifts.find(row=>row.id===d.id)?.sort_order||current.gifts.length+1,updated_at:new Date().toISOString()};const{error}=await store.client.from("loyalty_gifts").upsert(payload);if(error)throw error;notify("Подарок сохранён")}
+
+  function bind(root){
+    root.addEventListener("submit",async event=>{event.preventDefault();const form=event.target;try{
+      if(form.id==="prodPointsForm"){const d=formData(form),delta=Math.max(1,Number(d.amount||0))*(d.operation==="remove"?-1:1);const{data,error}=await store.client.rpc("admin_adjust_points",{p_user_key:d.user_key,p_delta:delta,p_note:d.note});if(error)throw error;notify(`Баланс обновлён: ${Number(data||0)}`)}
+      if(form.id==="prodVipAssignForm"){const d=formData(form);const{error}=await store.client.rpc("admin_set_vip",{p_user_key:d.user_key,p_plan_id:d.plan_id,p_days:Number(d.days||30)});if(error)throw error;notify("VIP назначен")}
+      if(form.id==="prodPlanForm")await savePlan(form);
+      if(form.id==="prodRewardForm")await saveReward(form);
+      if(form.id==="prodGiftForm")await saveGift(form);
+      if(form.id==="prodGrantRewardForm"){const d=formData(form),reward=current.rewards.find(row=>row.id===d.reward_id),user=current.users.find(row=>row.user_key===d.user_key);const{error}=await store.client.from("loyalty_reward_grants").insert({reward_id:d.reward_id,user_key:d.user_key,user_name:user?.name||"Гость BALI",source:"admin_manual",xp:Number(reward?.xp||0)});if(error)throw error;notify("Награда выдана")}
+      await mount();
+    }catch(error){notify(error.message||"Операция не выполнена")}},true);
+    root.addEventListener("click",async event=>{const reset=event.target.closest("[data-prod-reset]");if(reset){resetForm(reset.dataset.prodReset);return}const edit=event.target.closest("[data-prod-edit]");if(edit){const kind=edit.dataset.prodEdit,id=edit.dataset.id,row=(kind==="plan"?current.plans:kind==="reward"?current.rewards:current.gifts).find(item=>String(item.id)===String(id));if(!row)return;const form=document.getElementById(kind==="plan"?"prodPlanForm":kind==="reward"?"prodRewardForm":"prodGiftForm");Object.entries(row).forEach(([key,value])=>{if(form?.elements?.[key]&&form.elements[key].type!=="checkbox")form.elements[key].value=value??""});if(kind==="plan")form.new_id.value=row.id;if(form?.active)form.active.checked=row.active!==false;form?.scrollIntoView({behavior:"smooth",block:"start"});return}const del=event.target.closest("[data-prod-delete]");if(del){const kind=del.dataset.prodDelete,id=del.dataset.id;if(!confirm("Удалить запись?"))return;const table=kind==="plan"?"vip_plans":kind==="reward"?"loyalty_rewards":"loyalty_gifts";const{error}=await store.client.from(table).delete().eq("id",id);if(error)return notify(error.message||"Не удалось удалить");notify("Удалено");await mount()}},true);
   }
 
-  function giftRow(row) {
-    return `<article class="gift-admin-row"><span class="gift-admin-icon">${row.image_url ? `<img src="${esc(row.image_url)}" alt="">` : esc(row.icon || "🎁")}</span><div><h4>${esc(row.title)}</h4><p>${esc(row.description || "Без описания")}<br><strong>${Number(row.points_price || 0)} BALI-Баллов</strong> · ${row.active !== false ? "показывается" : "скрыт"}</p></div><div class="gift-admin-actions"><button class="ghost" type="button" data-edit-production-gift="${esc(row.id)}">Изменить</button><button class="danger" type="button" data-delete-production-gift="${esc(row.id)}">Удалить</button></div></article>`;
-  }
-
-  async function mount() {
-    if (typeof state === "undefined" || state.view !== "bonuses") return;
-    const root = document.getElementById("content");
-    if (!root || root.querySelector("#adminProductionGifts")) return;
-    styles();
-    let rows = [];
-    try { rows = await listGifts(); }
-    catch (error) {
-      root.insertAdjacentHTML("beforeend", `<section class="panel" id="adminProductionGifts"><div class="panel-head"><h3>Подарки</h3></div><div class="empty">${esc(error.message || "Выполните admin complete migration")}</div></section>`);
-      return;
-    }
-    root.insertAdjacentHTML("beforeend", `<section class="panel" id="adminProductionGifts"><div class="panel-head"><div><h3>Подарки</h3><small>Каталог подарков, которые пользователи дарят друг другу за BALI-Баллы</small></div><span class="count">${rows.length}</span></div><div class="panel-body gift-admin-grid"><form class="gift-admin-form" id="productionGiftForm"><input type="hidden" name="id"><label><span>Название подарка</span><input name="title" maxlength="80" required placeholder="Коктейль, Роза, Корона"></label><label><span>Описание</span><textarea name="description" maxlength="300" placeholder="Короткое описание подарка"></textarea></label><div class="gift-admin-two"><label><span>Значок emoji</span><input name="icon" maxlength="8" value="🎁"></label><label><span>Стоимость, BALI-Баллы</span><input name="points_price" type="number" min="0" value="50" required></label></div><div class="gift-admin-two"><label><span>Порядок</span><input name="sort_order" type="number" min="0" value="${rows.length + 1}"></label><label><span>Ссылка на изображение</span><input name="image_url" type="url" placeholder="https://..."></label></div><label><span>Или загрузить изображение до 2 МБ</span><input id="productionGiftImage" type="file" accept="image/*"></label><div class="gift-admin-preview" id="productionGiftPreview">🎁</div><label class="check-row"><span>Показывать пользователям</span><input name="active" type="checkbox" checked></label><button class="primary" type="submit">Сохранить подарок</button><button class="ghost" type="button" id="productionGiftReset">Очистить форму</button></form><div><div class="gift-admin-list" id="productionGiftList">${rows.length ? rows.map(giftRow).join("") : '<div class="empty">Подарков пока нет</div>'}</div></div></div></section>`);
-
-    const form = document.getElementById("productionGiftForm");
-    const preview = document.getElementById("productionGiftPreview");
-    const reset = () => { form.reset(); form.id.value = ""; form.icon.value = "🎁"; form.points_price.value = "50"; form.sort_order.value = String(rows.length + 1); form.active.checked = true; imageData = ""; preview.innerHTML = "🎁"; };
-    document.getElementById("productionGiftReset")?.addEventListener("click", reset);
-    document.getElementById("productionGiftImage")?.addEventListener("change", async event => {
-      const file = event.target.files?.[0]; if (!file) return;
-      try { imageData = await fileToData(file); preview.innerHTML = `<img src="${imageData}" alt="">`; }
-      catch (error) { event.target.value = ""; imageData = ""; notify(error.message); }
-    });
-    form.addEventListener("submit", async event => {
-      event.preventDefault();
-      const data = Object.fromEntries(new FormData(form).entries());
-      const payload = { id:data.id || crypto.randomUUID(), title:String(data.title || "").trim(), description:String(data.description || "").trim(), icon:String(data.icon || "🎁").trim() || "🎁", image_url:imageData || String(data.image_url || "").trim(), points_price:Math.max(0,Number(data.points_price || 0)), sort_order:Number(data.sort_order || 0), active:form.active.checked, updated_at:new Date().toISOString() };
-      const { error } = await store.client.from("loyalty_gifts").upsert(payload);
-      if (error) return notify(error.message || "Не удалось сохранить подарок");
-      notify("Подарок сохранён");
-      await render();
-    });
-    root.querySelectorAll("[data-edit-production-gift]").forEach(button => button.addEventListener("click", () => {
-      const row = rows.find(item => String(item.id) === String(button.dataset.editProductionGift)); if (!row) return;
-      form.id.value = row.id; form.title.value = row.title || ""; form.description.value = row.description || ""; form.icon.value = row.icon || "🎁"; form.points_price.value = row.points_price || 0; form.sort_order.value = row.sort_order || 0; form.image_url.value = row.image_url && !String(row.image_url).startsWith("data:") ? row.image_url : ""; form.active.checked = row.active !== false; imageData = row.image_url || ""; preview.innerHTML = row.image_url ? `<img src="${esc(row.image_url)}" alt="">` : esc(row.icon || "🎁"); form.scrollIntoView({ behavior:"smooth", block:"start" });
-    }));
-    root.querySelectorAll("[data-delete-production-gift]").forEach(button => button.addEventListener("click", async () => {
-      const row = rows.find(item => String(item.id) === String(button.dataset.deleteProductionGift));
-      if (!row || !confirm(`Удалить подарок «${row.title}»?`)) return;
-      const { error } = await store.client.from("loyalty_gifts").delete().eq("id", row.id);
-      if (error) return notify(error.message || "Не удалось удалить подарок");
-      notify("Подарок удалён"); await render();
-    }));
-  }
-
-  const baseRender = window.render;
-  if (typeof baseRender === "function") window.render = async function(...args) { const result = await baseRender.apply(this,args); await mount(); return result; };
-  setTimeout(mount, 300);
+  const baseRender=window.render;
+  if(typeof baseRender==="function")window.render=async function(...args){const result=await baseRender.apply(this,args);if(typeof state!=="undefined"&&state.view==="bonuses")await mount();return result};
+  setTimeout(mount,250);
 })();
