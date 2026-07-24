@@ -1,5 +1,5 @@
 (async()=>{
-  const v='bali-production-6';
+  const v='bali-production-7';
   const loadScript=name=>new Promise((resolve,reject)=>{
     const script=document.createElement('script');
     script.src=name.startsWith('http')?name:`./${name}?v=${v}`;
@@ -37,6 +37,7 @@
     'event-qr-attendance-beta4.js',
     'event-qr-local-bridge-beta4.js',
     'beta4-social-core.js',
+    'social-cloud-sync-production.js',
     'seating-templates-core-beta4.js',
     'event-lifecycle-core-beta4.js',
     'beta4-app.js'
