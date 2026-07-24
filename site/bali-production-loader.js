@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-8";
+  const version = "bali-production-9";
 
   const urlFor = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
   const load = (name, limit = 20000) => new Promise((resolve, reject) => {
@@ -94,6 +94,8 @@
     "beta4-home-design.js",
     "profile-full-restore-beta4.js",
     "profile-controls-final-beta4.js",
+    "profile-invitations-split-beta4.js",
+    "profile-history-title-only-beta4.js",
     "event-details-lineup-beta4.js",
     "venue-reviews-user-beta4.js",
     "review-eligibility-private-beta4.js",
@@ -113,6 +115,8 @@
   }
   for (const name of visual) await optional(name);
 
+  await new Promise(resolve => setTimeout(resolve, 720));
+
   document.getElementById("baliBoot")?.remove();
   delete document.documentElement.dataset.baliBoot;
   window.dispatchEvent(new CustomEvent("bali:production-ready", { detail: { version } }));
@@ -125,7 +129,6 @@
     "beta4-reward-icon-view.js",
     "beta4-qr-checkin.js",
     "beta4-ranking-visits.js",
-    "profile-history-title-only-beta4.js",
     "bali-people-privacy-beta4.js",
     "bali-people-search-ranking-beta4.js",
     "bali-people-public-cards-beta4.js",
