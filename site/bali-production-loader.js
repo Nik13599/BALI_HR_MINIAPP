@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-10";
+  const version = "bali-production-11";
   const loaded = new Set();
   const loading = new Map();
 
