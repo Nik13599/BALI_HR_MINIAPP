@@ -10,10 +10,15 @@ create table if not exists public.venue_content (
   description text not null default '',
   formats text not null default '',
   media jsonb not null default '[]'::jsonb,
+  home_design jsonb not null default '{}'::jsonb,
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+alter table public.venue_content add column if not exists home_design jsonb not null default '{}'::jsonb;
+insert into public.venue_content(id,title,active,home_design)
+values ('venue-main','Площадка BALI',true,'{}'::jsonb)
+on conflict(id) do nothing;
 
 create table if not exists public.reviews (
   id text primary key default gen_random_uuid()::text,
