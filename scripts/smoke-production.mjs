@@ -39,9 +39,22 @@ async function installNetworkMocks(page) {
     if (functionName === 'telegram-social-profile') {
       payload = body.action === 'sync'
         ? { ok:true, profile:{ ...guest, ...ownUser, photo:'' } }
-        : { ok:true, profiles:[guest], total:1 };
+        : { ok:true, profiles:[ownUser, guest], total:2 };
     } else if (functionName === 'telegram-auth-bootstrap') {
       payload = { ok:true, authenticated:true, user:ownUser, balance:100, vip:null };
+    } else if (functionName === 'event-checkin-production') {
+      if (body.action === 'presence') {
+        payload = {
+          ok:true,
+          presence:[{
+            event_id:'event-smoke', user_key:'tg:900000002', telegram_id:900000002,
+            checked_in_at:new Date().toISOString(), left_at:null, presence_status:'inside'
+          }],
+          total:1
+        };
+      } else {
+        payload = { ok:true, rows:[], checkins:[], presence:[], events:[] };
+      }
     } else if (/checkin|attendance|presence/i.test(functionName)) {
       payload = { ok:true, rows:[], checkins:[], presence:[], events:[] };
     } else if (/loyalty|reward|gift|vip/i.test(functionName)) {
@@ -116,14 +129,25 @@ async function testUserApp() {
   await page.waitForTimeout(1500);
   const peopleText = await page.locator('#socialV2Content').innerText();
   if (!peopleText.includes('Test Guest')) throw new Error(`BALI People did not render remote user: ${peopleText}`);
+  if (!peopleText.includes('Smoke User')) throw new Error(`BALI People did not render current user: ${peopleText}`);
+
+  await page.locator('[data-social-v2-tab="inside"]').click();
+  await page.waitForTimeout(700);
+  const insideText = await page.locator('#socialV2Content').innerText();
+  if (!insideText.includes('Test Guest')) throw new Error(`QR presence tab did not render checked-in user: ${insideText}`);
+  if (!insideText.includes('НА МЕРОПРИЯТИИ')) throw new Error(`Checked-in badge is missing: ${insideText}`);
 
   await page.locator('nav [data-page="profile"]').click();
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(500);
   const profileTiles = await page.locator('#profileV2Quick > button').allInnerTexts();
   if (profileTiles.length !== 3) throw new Error(`Expected 3 profile tiles, found ${profileTiles.length}: ${profileTiles.join(' | ')}`);
   for (const label of ['BALI Shop','Мои награды','Мои подарки']) {
     if (!profileTiles.some(text => text.includes(label))) throw new Error(`Missing profile tile: ${label}`);
   }
+  const profileSnapshot = await page.locator('[data-screen="profile"] .inner').innerHTML();
+  await page.waitForTimeout(1000);
+  const profileSnapshotAfter = await page.locator('[data-screen="profile"] .inner').innerHTML();
+  if (profileSnapshotAfter !== profileSnapshot) throw new Error('Profile DOM continued changing after it became visible');
 
   await page.locator('nav [data-page="home"]').click();
   await page.waitForTimeout(500);
