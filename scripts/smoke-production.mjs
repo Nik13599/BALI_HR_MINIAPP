@@ -1,234 +1,146 @@
 import { chromium } from 'playwright';
 
 const origin = process.env.BALI_SMOKE_ORIGIN || 'http://127.0.0.1:4173';
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless:true });
 
 function collectErrors(page, label) {
   const errors = [];
   page.on('pageerror', error => errors.push(`[${label}] ${String(error?.stack || error)}`));
-  page.on('console', message => {
-    if (message.type() === 'error') console.error(`[${label} console]`, message.text());
-  });
+  page.on('console', message => { if (message.type() === 'error') errors.push(`[${label} console] ${message.text()}`); });
   return errors;
 }
 
-async function installNetworkMocks(page) {
-  await page.route('https://telegram.org/js/telegram-web-app.js**', route => route.fulfill({
-    status: 200,
-    contentType: 'application/javascript',
-    body: `window.Telegram={WebApp:{initData:'smoke-init-data',initDataUnsafe:{user:{id:900000001,first_name:'Smoke',last_name:'User',username:'bali_smoke'}},ready(){},expand(){},setHeaderColor(){},setBackgroundColor(){},openTelegramLink(){},openLink(){},HapticFeedback:{selectionChanged(){}}}};`
-  }));
-
-  await page.route('**/functions/v1/**', async route => {
-    const url = new URL(route.request().url());
-    const functionName = url.pathname.split('/').pop();
-    let body = {};
-    try { body = JSON.parse(route.request().postData() || '{}'); } catch {}
-
-    const ownUser = {
-      user_key:'tg:900000001', telegram_id:900000001, first_name:'Smoke', last_name:'User',
-      name:'Smoke User', username:'bali_smoke', avatar:'', phone:'', gender:'unspecified'
+const mockSupabase = `
+(() => {
+  const now = new Date().toISOString();
+  const db = window.__mockDb = {
+    events:[{id:'event-1',title:'BALI PARTY',description:'Тестовое событие',event_date:'2026-07-25',event_time:'23:00',active:true,image_url:''}],
+    menu_items:[{id:'menu-1',name:'Коктейль BALI',description:'Фирменный коктейль',category:'Бар',price:20,active:true,sort_order:1}],
+    hall_tables:[{id:'table-1',name:'Стол 1',seats:4,active:true}],
+    bookings:[],
+    customers:[{id:'customer-1',name:'Test Guest',phone:'+375291111111',telegram:'@test_guest',visits:1}],
+    app_users:[{id:'u1',user_key:'tg:900000001',telegram_id:900000001,name:'Smoke User',username:'@bali_smoke',active:true,last_seen_at:now},{id:'u2',user_key:'tg:900000002',telegram_id:900000002,name:'Test Guest',username:'@test_guest',active:true,last_seen_at:now}],
+    event_checkins:[{id:'c1',event_id:'event-1',event_title:'BALI PARTY',user_key:'tg:900000002',telegram_id:900000002,name:'Test Guest',presence_status:'inside',checked_in_at:now,left_at:null}],
+    loyalty_rewards:[{id:'r1',title:'VIP-статус',description:'VIP на 7 дней',icon:'👑',points_cost:500,stock:null,active:true,created_at:now}],
+    loyalty_gifts:[{id:'g1',title:'Коктейль BALI',description:'Подарочный коктейль',icon:'🍸',points_cost:300,stock:null,active:true,created_at:now}],
+    reward_grants:[], gift_grants:[],
+    app_settings:[{id:'main',club_name:'BALI',address:'Минск',phone:'+375296700300',events_title:'Ближайшие события',about_title:'О клубе',attendance_points:100}]
+  };
+  const makeQuery = table => {
+    const q = { filters:[], orderKey:null, ascending:true, mode:'select', payload:null };
+    const api = {
+      select(){ q.mode = q.mode === 'upsert' ? 'upsert' : 'select'; return api; },
+      order(key, options={}){ q.orderKey=key; q.ascending=options.ascending !== false; return api; },
+      eq(key, value){ q.filters.push([key,value]); return api; },
+      delete(){ q.mode='delete'; return api; },
+      upsert(payload){ q.mode='upsert'; q.payload=payload; return api; },
+      single(){ return execute(true); },
+      then(resolve,reject){ return execute(false).then(resolve,reject); }
     };
-    const guest = {
-      user_key:'tg:900000002', telegram_id:900000002, name:'Test Guest', username:'test_guest', photo:'',
-      crop_x:50, crop_y:40, status:'chat', bio:'Пользователь BALI', active:true, profile_active:true,
-      share_telegram:true, gender:'unspecified', updated_at:new Date().toISOString()
-    };
-
-    let payload = { ok:true };
-    if (functionName === 'telegram-social-profile') {
-      payload = body.action === 'sync'
-        ? { ok:true, profile:{ ...guest, ...ownUser, photo:'' } }
-        : { ok:true, profiles:[ownUser, guest], total:2 };
-    } else if (functionName === 'telegram-auth-bootstrap') {
-      payload = { ok:true, authenticated:true, user:ownUser, balance:100, vip:null };
-    } else if (functionName === 'event-checkin-production') {
-      if (body.action === 'presence') {
-        payload = {
-          ok:true,
-          presence:[{
-            event_id:'event-smoke', user_key:'tg:900000002', telegram_id:900000002,
-            checked_in_at:new Date().toISOString(), left_at:null, presence_status:'inside'
-          }],
-          total:1
-        };
-      } else {
-        payload = { ok:true, rows:[], checkins:[], presence:[], events:[] };
+    async function execute(single) {
+      let rows = [...(db[table] || [])];
+      if (q.mode === 'delete') {
+        db[table] = rows.filter(row => !q.filters.every(([key,value]) => String(row[key]) === String(value)));
+        return { data:null, error:null };
       }
-    } else if (/checkin|attendance|presence/i.test(functionName)) {
-      payload = { ok:true, rows:[], checkins:[], presence:[], events:[] };
-    } else if (/loyalty|reward|gift|vip/i.test(functionName)) {
-      payload = { ok:true, rows:[], rewards:[], gifts:[], grants:[], balance:100 };
+      if (q.mode === 'upsert') {
+        const payload = { ...q.payload };
+        if (!payload.id) payload.id = crypto.randomUUID();
+        const index = rows.findIndex(row => String(row.id) === String(payload.id));
+        const saved = { ...(index >= 0 ? rows[index] : {}), created_at:index >= 0 ? rows[index].created_at : now, ...payload };
+        if (index >= 0) rows[index]=saved; else rows.unshift(saved);
+        db[table]=rows;
+        return { data:single ? saved : [saved], error:null };
+      }
+      for (const [key,value] of q.filters) rows = rows.filter(row => String(row[key]) === String(value));
+      if (q.orderKey) rows.sort((a,b) => String(a[q.orderKey] || '').localeCompare(String(b[q.orderKey] || '')) * (q.ascending ? 1 : -1));
+      return { data:single ? rows[0] : rows, error:null };
     }
+    return api;
+  };
+  window.supabase = { createClient(){ return {
+    from:makeQuery,
+    rpc:async(name,args) => name === 'get_table_availability' ? {data:db.hall_tables.map(t => ({...t,available:true})),error:null} : name === 'create_public_booking' ? (db.bookings.push({id:crypto.randomUUID(),...args}),{data:{ok:true},error:null}) : {data:[],error:null},
+    auth:{ getSession:async()=>({data:{session:{user:{email:'admin@bali.local'}}}}), signInWithPassword:async()=>({data:{session:{user:{email:'admin@bali.local'}}},error:null}), signOut:async()=>({error:null}) }
+  }; }};
+})();`;
 
-    await route.fulfill({ status:200, contentType:'application/json', body:JSON.stringify(payload) });
-  });
-
-  await page.route('**/rest/v1/**', async route => {
-    const request = route.request();
-    const method = request.method();
-    let payload = [];
-    if (method !== 'GET' && method !== 'HEAD') {
-      try {
-        const body = JSON.parse(request.postData() || '{}');
-        payload = Array.isArray(body) ? body : [body];
-      } catch { payload = []; }
-    }
-    await route.fulfill({
-      status:200,
-      contentType:'application/json',
-      headers:{ 'content-range':'0-0/0', 'access-control-allow-origin':'*' },
-      body:method === 'HEAD' ? '' : JSON.stringify(payload)
-    });
-  });
+async function mocks(page) {
+  await page.route('https://telegram.org/js/telegram-web-app.js**', route => route.fulfill({ status:200, contentType:'application/javascript', body:`window.__opened=[];window.Telegram={WebApp:{initData:'smoke-init-data',initDataUnsafe:{user:{id:900000001,first_name:'Smoke',last_name:'User',username:'bali_smoke'}},ready(){},expand(){},setHeaderColor(){},setBackgroundColor(){},openTelegramLink(url){window.__opened.push(url)},openLink(url){window.__opened.push(url)},showScanQrPopup(){},HapticFeedback:{selectionChanged(){}}}};` }));
+  await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', route => route.fulfill({ status:200, contentType:'application/javascript', body:mockSupabase }));
+  await page.route('**/functions/v1/**', route => route.fulfill({ status:200, contentType:'application/json', body:JSON.stringify({ok:true,user:{user_key:'tg:900000001'},points:100}) }));
 }
 
-function assertNoRawErrorText(text, context) {
-  for (const marker of [
-    'null is not an object',
-    'undefined is not an object',
-    'Cannot read properties of null',
-    'Cannot set properties of null',
-    'Ошибка загрузки:'
-  ]) {
-    if (text.includes(marker)) throw new Error(`${context}: raw runtime error rendered in UI: ${marker}`);
+async function testUser() {
+  const page = await browser.newPage({ viewport:{width:390,height:844} });
+  const errors = collectErrors(page,'user');
+  await mocks(page);
+  await page.goto(`${origin}/site/?smoke=1`, { waitUntil:'domcontentloaded' });
+  await page.waitForSelector('.bali-app');
+  await page.waitForTimeout(300);
+  const headings = await page.locator('[data-screen="home"] h2').allInnerTexts();
+  if (!headings.includes('Ближайшие события') || !headings.includes('О клубе')) throw new Error(`Wrong home headings: ${headings.join(' | ')}`);
+  for (const section of ['home','events','menu','people','profile']) {
+    await page.locator(`.bali-nav [data-page="${section}"]`).click();
+    if (!(await page.locator(`[data-screen="${section}"]`).evaluate(node => node.classList.contains('active')))) throw new Error(`Section ${section} did not open`);
   }
-}
-
-async function assertNoDuplicateIds(page, context) {
-  const duplicates = await page.evaluate(() => {
-    const counts = new Map();
-    document.querySelectorAll('[id]').forEach(node => counts.set(node.id, (counts.get(node.id) || 0) + 1));
-    return [...counts.entries()].filter(([, count]) => count > 1);
-  });
-  if (duplicates.length) throw new Error(`${context}: duplicate ids: ${JSON.stringify(duplicates)}`);
-}
-
-async function testUserApp() {
-  const page = await browser.newPage({ viewport:{ width:390, height:844 }, deviceScaleFactor:1 });
-  const pageErrors = collectErrors(page, 'user');
-  await installNetworkMocks(page);
-
-  await page.goto(`${origin}/site/?smoke=1`, { waitUntil:'domcontentloaded', timeout:30000 });
-  await page.waitForFunction(() => document.querySelector('.shell') && document.documentElement.dataset.baliBuild, null, { timeout:30000 });
-  await page.waitForTimeout(3500);
-
-  const build = await page.evaluate(() => document.documentElement.dataset.baliBuild || '');
-  if (!/^bali-production-\d+$/.test(build)) throw new Error(`Unexpected build marker: ${build}`);
-
-  for (const section of ['home','events','menu','dating','profile']) {
-    const button = page.locator(`nav [data-page="${section}"]`);
-    await button.waitFor({ state:'visible', timeout:10000 });
-    await button.click();
-    await page.waitForTimeout(300);
-    const active = await page.locator(`[data-screen="${section}"]`).evaluate(node => node.classList.contains('active'));
-    if (!active) throw new Error(`User section ${section} did not become active`);
-  }
-
-  await page.locator('nav [data-page="dating"]').click();
-  await page.waitForTimeout(1500);
-  const peopleText = await page.locator('#socialV2Content').innerText();
-  if (!peopleText.includes('Test Guest')) throw new Error(`BALI People did not render remote user: ${peopleText}`);
-  if (!peopleText.includes('ЭТО ВЫ')) throw new Error(`BALI People did not render the current user card: ${peopleText}`);
-
-  await page.locator('[data-social-v2-tab="inside"]').click();
-  await page.waitForTimeout(700);
-  const insideText = await page.locator('#socialV2Content').innerText();
-  if (!insideText.includes('Test Guest')) throw new Error(`QR presence tab did not render checked-in user: ${insideText}`);
-  if (!insideText.includes('НА МЕРОПРИЯТИИ')) throw new Error(`Checked-in badge is missing: ${insideText}`);
-
-  await page.locator('nav [data-page="profile"]').click();
-  await page.waitForTimeout(500);
-  const profileTiles = await page.locator('#profileV2Quick > button').allInnerTexts();
-  if (profileTiles.length !== 3) throw new Error(`Expected 3 profile tiles, found ${profileTiles.length}: ${profileTiles.join(' | ')}`);
-  for (const label of ['BALI Shop','Мои награды','Мои подарки']) {
-    if (!profileTiles.some(text => text.includes(label))) throw new Error(`Missing profile tile: ${label}`);
-  }
-  const profileSnapshot = await page.locator('[data-screen="profile"] .inner').innerHTML();
-  await page.waitForTimeout(1000);
-  const profileSnapshotAfter = await page.locator('[data-screen="profile"] .inner').innerHTML();
-  if (profileSnapshotAfter !== profileSnapshot) throw new Error('Profile DOM continued changing after it became visible');
-
-  await page.locator('nav [data-page="home"]').click();
-  await page.waitForTimeout(500);
-  const homeState = await page.evaluate(() => {
-    const home = document.getElementById('homeInner');
-    return {
-      order:[...(home?.children || [])].map(node => node.id || node.className),
-      eventsTitle:document.querySelector('#homeEventsCard .card-head h3')?.textContent || '',
-      aboutTitle:document.querySelector('#homeAboutCard .card-head h3')?.textContent || ''
-    };
-  });
-  if (homeState.eventsTitle !== 'Ближайшие события') throw new Error(`Wrong events title: ${homeState.eventsTitle}`);
-  if (homeState.aboutTitle !== 'О клубе') throw new Error(`Wrong about title: ${homeState.aboutTitle}`);
-  const heroIndex = homeState.order.indexOf('homeHero');
-  const referralIndex = homeState.order.indexOf('baliReferralCard');
-  if (heroIndex < 0 || referralIndex < 0 || heroIndex > referralIndex) throw new Error(`Unstable home order: ${homeState.order.join(' > ')}`);
-
-  await assertNoDuplicateIds(page, 'User app');
-  assertNoRawErrorText(await page.evaluate(() => document.body.innerText), 'User app');
-
-  const storedErrors = await page.evaluate(() => {
-    try { return JSON.parse(localStorage.getItem('bali_runtime_errors_v1') || '[]'); }
-    catch { return []; }
-  });
-  if (storedErrors.length) throw new Error(`User error boundary captured errors: ${JSON.stringify(storedErrors.slice(0,3))}`);
-  if (pageErrors.length) throw new Error(`Unhandled user page errors: ${pageErrors.join('\n---\n')}`);
-
+  await page.locator('.bali-nav [data-page="home"]').click();
+  await page.locator('[data-link="instagram"]').click();
+  await page.locator('[data-link="manager"]').click();
+  const opened = await page.evaluate(() => window.__opened);
+  if (!opened.some(url => url.includes('instagram.com'))) throw new Error('Instagram button did not call Telegram openLink');
+  if (!opened.some(url => url.includes('t.me/BaliMinskAppBot'))) throw new Error('Manager button did not call Telegram openTelegramLink');
+  await page.locator('.bali-nav [data-page="people"]').click();
+  const allPeople = await page.locator('#peopleList').innerText();
+  if (!allPeople.includes('Smoke User') || !allPeople.includes('Test Guest')) throw new Error(`BALI People incomplete: ${allPeople}`);
+  await page.locator('[data-people-tab="inside"]').click();
+  const inside = await page.locator('#peopleList').innerText();
+  if (!inside.includes('Test Guest') || !inside.includes('НА МЕРОПРИЯТИИ')) throw new Error(`Inside tab incomplete: ${inside}`);
+  await page.locator('.bali-nav [data-page="profile"]').click();
+  const profile = await page.locator('#profileContent').innerText();
+  if (!profile.includes('VIP-статус') || !profile.includes('Коктейль BALI')) throw new Error(`Catalogs missing from profile: ${profile}`);
+  await page.locator('.bali-nav [data-page="events"]').click();
+  await page.locator('[data-event-id="event-1"]').first().click();
+  await page.locator('[data-action="book"]').click();
+  await page.locator('#bookingForm input[name="phone"]').fill('+375291234567');
+  await page.locator('#bookingForm select[name="table_id"]').selectOption('table-1');
+  await page.locator('#bookingForm').evaluate(form => form.requestSubmit());
+  await page.waitForTimeout(150);
+  if (errors.length) throw new Error(errors.join('\n'));
   await page.close();
-  return build;
 }
 
 async function testAdmin() {
-  const page = await browser.newPage({ viewport:{ width:1366, height:900 }, deviceScaleFactor:1 });
-  const pageErrors = collectErrors(page, 'admin');
-  await installNetworkMocks(page);
-
-  await page.goto(`${origin}/site/admin-production.html?smoke=1`, { waitUntil:'domcontentloaded', timeout:30000 });
-  await page.waitForSelector('#demoLogin', { state:'attached', timeout:20000 });
-  await page.evaluate(() => {
-    localStorage.removeItem('bali_admin_runtime_errors_v1');
-    document.getElementById('demoLogin')?.click();
-  });
-  await page.waitForFunction(() => !document.getElementById('appView')?.classList.contains('hidden'), null, { timeout:15000 });
-  await page.waitForTimeout(1800);
-
-  const expectedTitles = {
-    dashboard:'Обзор', messages:'Сообщения', bookings:'Брони', events:'События', customers:'Клиенты',
-    bonuses:'Баллы + VIP', menu:'Меню', hall:'Схемы', reviews:'Отзывы', settings:'Настройки'
-  };
-
-  for (const [view, expectedTitle] of Object.entries(expectedTitles)) {
-    const button = page.locator(`#adminNav button[data-view="${view}"]`);
-    await button.waitFor({ state:'visible', timeout:10000 });
-    await button.click();
-    await page.waitForTimeout(1200);
-
-    const title = (await page.locator('#pageTitle').innerText()).trim();
-    const content = (await page.locator('#content').innerText()).trim();
-    if (!title || title === 'undefined') throw new Error(`Admin view ${view} has invalid title: ${title}`);
-    if (!title.includes(expectedTitle)) throw new Error(`Admin view ${view}: expected title ${expectedTitle}, got ${title}`);
-    if (!content || content === 'Загрузка…') throw new Error(`Admin view ${view} did not render content`);
-    assertNoRawErrorText(content, `Admin view ${view}`);
+  const page = await browser.newPage({ viewport:{width:1366,height:900} });
+  const errors = collectErrors(page,'admin');
+  await mocks(page);
+  await page.goto(`${origin}/site/admin-production.html?smoke=1`, { waitUntil:'domcontentloaded' });
+  await page.waitForSelector('.admin-shell');
+  for (const view of ['overview','rewards','gifts','grants','customers','events','settings']) {
+    await page.locator(`#adminNav [data-view="${view}"]`).click();
+    await page.waitForTimeout(50);
+    if (!(await page.locator('#adminContent').innerText()).trim()) throw new Error(`Admin view ${view} is empty`);
   }
-
-  await assertNoDuplicateIds(page, 'Admin');
-  const adminStoredErrors = await page.evaluate(() => {
-    try { return JSON.parse(localStorage.getItem('bali_admin_runtime_errors_v1') || '[]'); }
-    catch { return []; }
-  });
-  if (adminStoredErrors.length) throw new Error(`Admin error boundary captured errors: ${JSON.stringify(adminStoredErrors.slice(0,5))}`);
-  if (pageErrors.length) throw new Error(`Unhandled admin page errors: ${pageErrors.join('\n---\n')}`);
-
-  const build = await page.evaluate(() => document.body.dataset.adminBuild || '');
+  await page.locator('#adminNav [data-view="rewards"]').click();
+  await page.locator('#adminPrimary').click();
+  await page.locator('#adminEditorForm input[name="title"]').fill('Новая награда');
+  await page.locator('#adminEditorForm input[name="points_cost"]').fill('150');
+  await page.locator('#adminEditorForm').evaluate(form => form.requestSubmit());
+  await page.waitForTimeout(100);
+  if (!(await page.locator('#adminContent').innerText()).includes('Новая награда')) throw new Error('Reward creation failed');
+  await page.locator('[data-action="issue"][data-kind="reward"]').first().click();
+  await page.locator('#adminIssueForm select[name="user_key"]').selectOption('tg:900000001');
+  await page.locator('#adminIssueForm').evaluate(form => form.requestSubmit());
+  await page.waitForTimeout(100);
+  if (!(await page.locator('#adminContent').innerText()).includes('Награда')) throw new Error('Reward issuance failed');
+  if (errors.length) throw new Error(errors.join('\n'));
   await page.close();
-  return build;
 }
 
 try {
-  const userBuild = await testUserApp();
-  const adminBuild = await testAdmin();
-  console.log(`Production smoke tests passed: user ${userBuild}; admin ${adminBuild}.`);
+  await testUser();
+  await testAdmin();
+  console.log('Clean BALI rebuild smoke tests passed.');
 } finally {
   await browser.close();
 }
