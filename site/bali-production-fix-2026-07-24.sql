@@ -42,6 +42,42 @@ create trigger events_ensure_qr
 before insert or update of qr_token on public.events
 for each row execute function public.ensure_event_qr();
 
+-- The QR Edge Function and browser client use these fields.
+alter table public.event_checkins add column if not exists event_date date;
+alter table public.event_checkins add column if not exists event_time time;
+alter table public.event_checkins add column if not exists telegram text not null default '';
+alter table public.event_checkins add column if not exists phone text not null default '';
+alter table public.event_checkins add column if not exists source text not null default 'event_qr';
+alter table public.event_checkins add column if not exists visits integer not null default 0;
+alter table public.event_checkins add column if not exists level text not null default '';
+alter table public.event_checkins add column if not exists reentered_at timestamptz;
+
+create index if not exists event_checkins_event_user_lookup_idx
+  on public.event_checkins(event_id, user_key)
+  where event_id is not null and user_key is not null;
+create index if not exists event_checkins_active_event_idx
+  on public.event_checkins(event_id, presence_status, checked_in_at desc);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from public.event_checkins
+    where event_id is not null and user_key is not null
+    group by event_id, user_key
+    having count(*) > 1
+  ) then
+    begin
+      create unique index event_checkins_event_user_unique
+        on public.event_checkins(event_id, user_key)
+        where event_id is not null and user_key is not null;
+    exception when duplicate_table then null;
+    end;
+  else
+    raise notice 'BALI: duplicate historical event_checkins found; unique QR index was not created.';
+  end if;
+end $$;
+
 -- VIP status presentation and privileges.
 alter table public.vip_plans add column if not exists description text not null default '';
 alter table public.vip_plans add column if not exists color text not null default '#c8ff3d';
@@ -147,10 +183,8 @@ begin
   end loop;
 end $$;
 
--- Keep one canonical app user per Telegram account and speed up directory refresh.
-create unique index if not exists app_users_telegram_unique_not_null
-  on public.app_users(telegram_id)
-  where telegram_id is not null;
+-- Fast lookup. Existing user records are not deleted or rewritten.
+create index if not exists app_users_telegram_lookup_idx on public.app_users(telegram_id) where telegram_id is not null;
 create index if not exists app_users_last_seen_idx on public.app_users(last_seen_at desc);
 create index if not exists social_profiles_user_key_idx on public.social_profiles(user_key);
 create index if not exists social_profiles_updated_idx on public.social_profiles(updated_at desc);
@@ -159,7 +193,7 @@ create index if not exists social_profiles_updated_idx on public.social_profiles
 grant execute on function public.ensure_event_qr() to authenticated;
 grant execute on function public.admin_set_vip(text,text,integer) to authenticated;
 grant execute on function public.admin_revoke_vip(uuid) to authenticated;
-grant select,insert,update,delete on public.events,public.reviews,public.vip_plans,public.vip_memberships,
+grant select,insert,update,delete on public.events,public.event_checkins,public.reviews,public.vip_plans,public.vip_memberships,
   public.loyalty_rewards,public.loyalty_reward_grants,public.loyalty_gifts,public.loyalty_gift_grants to authenticated;
 
 notify pgrst, 'reload schema';
