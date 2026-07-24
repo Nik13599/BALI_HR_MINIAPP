@@ -1,7 +1,8 @@
 {
-  "user_app": "bali-production-23",
-  "admin": "production-17",
-  "published_at": "2026-07-24T13:55:00Z",
-  "ui_fix": "single-source-labels-no-pseudo-text",
-  "people_fix": "app-users-plus-points-accounts"
+  "user_app": "bali-production-24",
+  "admin": "production-18",
+  "published_at": "2026-07-24T14:10:00Z",
+  "ui_fix": "single-source-labels-no-pseudo-text-no-duplicate-cards",
+  "people_fix": "edge-and-client-app-users-plus-points-accounts",
+  "telegram_url": "versioned-production-24"
 }
