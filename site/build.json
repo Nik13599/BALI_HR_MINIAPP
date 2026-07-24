@@ -1,13 +1,13 @@
 {
-  "user_app": "bali-production-32",
+  "user_app": "bali-production-33",
   "admin": "production-23",
-  "published_at": "2026-07-24T17:45:00Z",
-  "runtime": "single-stable-user-runtime-with-error-boundary-and-dom-recovery",
-  "ui_fix": "canonical-dom-source-fixed-labels-idempotent-layout-no-observer-reordering",
-  "people_fix": "telegram-edge-directory-plus-privacy-safe-supabase-view-fallback",
-  "qr_fix": "cloud-wrapper-plus-non-throwing-safety-layer",
+  "published_at": "2026-07-24T18:30:00Z",
+  "runtime": "stable-user-runtime-with-coalesced-events-and-lite-profile",
+  "ui_fix": "css-locked-home-labels-no-visible-flicker",
+  "people_fix": "all-customers-app-users-points-social-profiles-plus-current-user-and-qr-presence",
+  "qr_fix": "global-presence-tab-from-active-event-checkins",
   "admin_fix": "stable-orchestrator-canonical-titles-error-boundary-real-customer-dedup-and-all-section-smoke-test",
-  "validation": "syntax-dependency-user-chromium-admin-chromium-before-pages-deploy",
-  "telegram_url": "versioned-production-32",
-  "pages": "deploy-only-after-validate-production-success"
+  "validation": "production-loader-new-modules-and-supabase-function-deploy",
+  "telegram_url": "versioned-production-33",
+  "pages": "deploy-after-main-update"
 }
