@@ -67,7 +67,7 @@ alter table public.points_accounts add column if not exists updated_at timestamp
 create unique index if not exists points_accounts_user_key_uidx on public.points_accounts(user_key);
 create index if not exists points_accounts_telegram_id_idx on public.points_accounts(telegram_id);
 
--- Idempotent points operations. action_key prevents a repeated reward.
+-- Idempotent points operations. Application code checks action_key before crediting.
 create table if not exists public.points_ledger (
   id uuid primary key default gen_random_uuid(),
   user_key text not null,
@@ -84,7 +84,7 @@ alter table public.points_ledger add column if not exists amount integer not nul
 alter table public.points_ledger add column if not exists action_key text;
 alter table public.points_ledger add column if not exists created_at timestamptz not null default now();
 create index if not exists points_ledger_user_created_idx on public.points_ledger(user_key, created_at desc);
-create unique index if not exists points_ledger_action_key_uidx on public.points_ledger(action_key) where action_key is not null and action_key <> '';
+create index if not exists points_ledger_action_key_idx on public.points_ledger(action_key) where action_key is not null and action_key <> '';
 
 -- Public-facing social settings are read only through a Telegram-validated Edge Function.
 create table if not exists public.social_profiles (
@@ -191,12 +191,40 @@ begin
   end loop;
 end $$;
 
--- The public application may read only the non-sensitive app-user directory.
+-- Remove old anonymous access to the private app_users table.
+drop policy if exists app_users_public_read on public.app_users;
 drop policy if exists app_users_public_directory on public.app_users;
-create policy app_users_public_directory on public.app_users for select to anon using (active = true);
+drop policy if exists app_users_public_insert on public.app_users;
+drop policy if exists app_users_public_update on public.app_users;
+revoke all on public.app_users from anon;
+revoke all on public.points_accounts from anon;
+revoke all on public.points_ledger from anon;
+revoke all on public.social_profiles from anon;
+revoke all on public.vip_memberships from anon;
+
+-- Safe fallback directory: contains no phone, birthday, balance or private profile fields.
+create or replace view public.bali_people_directory
+with (security_barrier = true)
+as
+select
+  user_key,
+  telegram_id,
+  name,
+  username,
+  avatar,
+  gender,
+  active,
+  first_seen_at,
+  last_seen_at,
+  created_at,
+  updated_at
+from public.app_users
+where active = true;
+
+revoke all on public.bali_people_directory from public;
+grant select on public.bali_people_directory to anon, authenticated;
 
 grant usage on schema public to anon, authenticated;
-grant select on public.app_users to anon;
 grant select, insert, update, delete on public.app_users, public.points_accounts, public.points_ledger, public.social_profiles, public.vip_plans, public.vip_memberships to authenticated;
 
 notify pgrst, 'reload schema';
