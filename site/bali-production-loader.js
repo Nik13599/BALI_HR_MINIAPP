@@ -83,6 +83,11 @@
     "event-qr-local-bridge-beta4.js",
   ]);
 
+  await Promise.all([
+    optional("cloud-loyalty-production.js", 9000),
+    optional("event-checkin-cloud-production.js", 9000),
+  ]);
+
   await load("beta4-social-core.js");
   await optional("social-cloud-sync-production.js", 9000);
   await load("beta4-app.js");
@@ -119,6 +124,7 @@
   ];
 
   const extras = [
+    "user-vip-card-production.js",
     "bali-people-status-sync-beta4.js",
     "social-gifts-production.js",
     "bali-people-open-likes-beta4.js",
