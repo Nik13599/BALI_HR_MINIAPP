@@ -38,9 +38,16 @@ jobs:
           set -euo pipefail
           files=(
             site/index.html
+            site/admin.html
+            site/admin-production.html
+            site/build.json
             site/bali-production-loader-11.js
             site/config.js
             site/bali-error-boundary-production.js
+            site/bali-app-stable-production.js
+            site/bali-profile-runtime-production.js
+            site/admin-error-boundary-production.js
+            site/admin-stable-orchestrator-production.js
             site/telegram-auth-gate.js
             site/store.js
             site/reviews-public-save-beta4.js
@@ -55,15 +62,19 @@ jobs:
             site/cloud-loyalty-production.js
             site/event-checkin-cloud-production.js
             site/loyalty-catalog-cloud-production.js
-            site/bali-app-stable-production.js
             site/beta4-layout-map.js
-            site/bali-profile-runtime-production.js
             site/beta4-social-page.js
             site/event-details-lineup-beta4.js
             site/venue-reviews-user-beta4.js
             site/review-eligibility-private-beta4.js
             site/bali-people-public-cards-beta4.js
             site/beta4-qr-checkin.js
+            site/admin.js
+            site/admin-venue-reviews-beta4.js
+            site/admin-review-reward-beta4.js
+            site/admin-events-history-production.js
+            site/admin-production-complete-runtime.js
+            site/admin-loyalty-issuance-production.js
           )
           for file in "${files[@]}"; do
             test -f "$file" || { echo "Missing production file: $file"; exit 1; }
@@ -77,6 +88,10 @@ jobs:
             site/bali-production-loader-11.js
             site/config.js
             site/bali-error-boundary-production.js
+            site/bali-app-stable-production.js
+            site/bali-profile-runtime-production.js
+            site/admin-error-boundary-production.js
+            site/admin-stable-orchestrator-production.js
             site/telegram-auth-gate.js
             site/store.js
             site/reviews-public-save-beta4.js
@@ -91,22 +106,26 @@ jobs:
             site/cloud-loyalty-production.js
             site/event-checkin-cloud-production.js
             site/loyalty-catalog-cloud-production.js
-            site/bali-app-stable-production.js
             site/beta4-layout-map.js
-            site/bali-profile-runtime-production.js
             site/beta4-social-page.js
             site/event-details-lineup-beta4.js
             site/venue-reviews-user-beta4.js
             site/review-eligibility-private-beta4.js
             site/bali-people-public-cards-beta4.js
             site/beta4-qr-checkin.js
+            site/admin.js
+            site/admin-venue-reviews-beta4.js
+            site/admin-review-reward-beta4.js
+            site/admin-events-history-production.js
+            site/admin-production-complete-runtime.js
+            site/admin-loyalty-issuance-production.js
           )
           for file in "${files[@]}"; do
             echo "Checking $file"
             node --check "$file"
           done
 
-      - name: Reject conflicting legacy modules
+      - name: Reject conflicting user modules
         shell: bash
         run: |
           set -euo pipefail
@@ -126,7 +145,22 @@ jobs:
             fi
           done
 
-      - name: Verify production version
+      - name: Reject conflicting admin modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden=(
+            'admin-restoration-runtime.js'
+            'admin-production-final-hooks.js'
+          )
+          for module in "${forbidden[@]}"; do
+            if grep -Fq "$module" site/admin-production.html; then
+              echo "Conflicting module returned to admin production: $module"
+              exit 1
+            fi
+          done
+
+      - name: Verify production versions
         shell: bash
         run: |
           set -euo pipefail
@@ -134,3 +168,8 @@ jobs:
           grep -Fq 'const version = "bali-production-29"' site/bali-production-loader-11.js
           grep -Fq 'bali-app-stable-production.js' site/bali-production-loader-11.js
           grep -Fq 'bali-profile-runtime-production.js' site/bali-production-loader-11.js
+          grep -Fq 'production-21' site/admin.html
+          grep -Fq 'data-admin-build="production-21"' site/admin-production.html
+          grep -Fq 'admin-stable-orchestrator-production.js' site/admin-production.html
+          grep -Fq '"user_app": "bali-production-29"' site/build.json
+          grep -Fq '"admin": "production-21"' site/build.json
