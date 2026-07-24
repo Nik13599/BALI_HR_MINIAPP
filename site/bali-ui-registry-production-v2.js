@@ -26,11 +26,6 @@
       #profileV2Quick .profile-v2-tile.rewards{order:2!important}
       #profileV2Quick .profile-v2-tile.gifts{order:3!important;grid-column:1/-1!important}
       #profileV2Quick .profile-v2-tile.invites,[data-open-profile-invitations]{display:none!important}
-      [data-screen="home"] .inner>[data-bali-home-order="1"]{order:1!important}
-      [data-screen="home"] .inner>[data-bali-home-order="2"]{order:2!important}
-      [data-screen="home"] .inner>[data-bali-home-order="3"]{order:3!important}
-      [data-screen="home"] .inner>[data-bali-home-order="4"]{order:4!important}
-      [data-screen="home"] .inner>[data-bali-home-order="5"]{order:5!important}
       [data-screen="home"] .inner{display:flex!important;flex-direction:column!important}
       @media(max-width:400px){
         #profileV2Quick [data-open-profile-points] strong::after,
@@ -55,18 +50,32 @@
     }) || cards.find(card => card !== eventCard() && card.id !== "clubLinks" && card.id !== "eventQrHomeCard" && !card.classList.contains("hero")) || null;
   }
 
+  function setOrder(node, order) {
+    if (!node) return;
+    node.dataset.baliHomeOrder = String(order);
+    node.style.setProperty("order", String(order), "important");
+  }
+
   function assignHomeRoles() {
     const home = document.querySelector('[data-screen="home"] .inner');
     if (!home) return;
+
+    [...home.children].forEach((node, index) => setOrder(node, 50 + index));
+
     const hero = home.querySelector(":scope > .hero");
+    const actions = home.querySelector(":scope > .actions");
     const qr = document.getElementById("eventQrHomeCard");
     const events = eventCard();
-    const contacts = document.getElementById("clubLinks");
     const about = aboutCard(home);
+    const contacts = document.getElementById("clubLinks");
 
-    [hero, qr, events, contacts, about].forEach((node, index) => {
-      if (node) node.dataset.baliHomeOrder = String(index + 1);
-    });
+    setOrder(hero, 1);
+    setOrder(actions, 2);
+    setOrder(qr, 3);
+    setOrder(events, 4);
+    setOrder(about, 5);
+    setOrder(contacts, 6);
+
     if (events) events.dataset.baliUiRole = "nearest-events";
     if (about) about.dataset.baliUiRole = "about-club";
   }
