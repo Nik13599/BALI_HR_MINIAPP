@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-27";
+  const version = "bali-production-28";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -116,7 +116,7 @@
     detail: { version, phase: "complete" }
   }));
 })().catch(error => {
-  console.error("[BALI loader 27]", error);
+  console.error("[BALI loader 28]", error);
   document.getElementById("baliBoot")?.remove();
   const root = document.getElementById("app");
   if (root && !root.children.length) root.innerHTML = `<main style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:#07100c;color:#fff;font-family:system-ui;text-align:center"><section><h2>Не удалось загрузить BALI</h2><p>${String(error?.message || "Ошибка загрузки")}</p><button onclick="location.reload()" style="min-height:46px;padding:0 20px;border:0;border-radius:13px;background:#c8ff3d;color:#07100c;font-weight:900">Повторить</button></section></main>`;
