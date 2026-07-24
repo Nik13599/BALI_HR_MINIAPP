@@ -16,6 +16,7 @@ Deno.serve(async (req) => {
 
     const update = await req.json();
     const message = update.message || update.edited_message;
+    const isEdited = Boolean(update.edited_message);
     if (!message?.chat || message.chat.type !== "private" || !message.from) return new Response("ok");
 
     const admin = createClient(supabaseUrl, serviceRoleKey);
@@ -23,34 +24,37 @@ Deno.serve(async (req) => {
     const chatId = Number(message.chat.id);
     const userId = Number(user.id);
     const now = new Date().toISOString();
+    const createdAt = message.date ? new Date(Number(message.date) * 1000).toISOString() : now;
     const messageType = detectMessageType(message);
     const text = extractText(message);
 
-    const { data: existing } = await admin.from("telegram_conversations").select("id,unread_admin").eq("telegram_user_id", userId).maybeSingle();
-    const conversationPayload = {
-      telegram_user_id: userId,
-      telegram_chat_id: chatId,
-      username: user.username || "",
-      first_name: user.first_name || "",
-      last_name: user.last_name || "",
-      status: "open",
-      last_message_text: text,
-      last_message_at: now,
-      unread_admin: Number(existing?.unread_admin || 0) + 1,
-      updated_at: now,
-    };
+    const { data: existing, error: existingError } = await admin
+      .from("telegram_conversations")
+      .select("id,unread_admin")
+      .eq("telegram_user_id", userId)
+      .maybeSingle();
+    if (existingError) throw existingError;
 
     let conversationId = existing?.id;
-    if (conversationId) {
-      const { error } = await admin.from("telegram_conversations").update(conversationPayload).eq("id", conversationId);
-      if (error) throw error;
-    } else {
-      const { data, error } = await admin.from("telegram_conversations").insert({ ...conversationPayload, created_at: now }).select("id").single();
+    if (!conversationId) {
+      const { data, error } = await admin.from("telegram_conversations").insert({
+        telegram_user_id: userId,
+        telegram_chat_id: chatId,
+        username: user.username || "",
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
+        status: "open",
+        last_message_text: "",
+        last_message_at: null,
+        unread_admin: 0,
+        created_at: now,
+        updated_at: now,
+      }).select("id").single();
       if (error) throw error;
       conversationId = data.id;
     }
 
-    const { error: messageError } = await admin.from("telegram_messages").upsert({
+    const messagePayload = {
       conversation_id: conversationId,
       direction: "user",
       telegram_message_id: Number(message.message_id),
@@ -58,11 +62,47 @@ Deno.serve(async (req) => {
       text,
       payload: message,
       delivery_status: "received",
-      created_at: message.date ? new Date(Number(message.date) * 1000).toISOString() : now,
-    }, { onConflict: "conversation_id,telegram_message_id", ignoreDuplicates: true });
-    if (messageError) throw messageError;
+      created_at: createdAt,
+    };
 
-    if (String(message.text || "").startsWith("/start")) {
+    let inserted = false;
+    if (isEdited) {
+      const { data: updated, error } = await admin.from("telegram_messages")
+        .update({ text, message_type: messageType, payload: message })
+        .eq("conversation_id", conversationId)
+        .eq("telegram_message_id", Number(message.message_id))
+        .eq("direction", "user")
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!updated) {
+        const { error: insertError } = await admin.from("telegram_messages").insert(messagePayload);
+        if (insertError && insertError.code !== "23505") throw insertError;
+        inserted = !insertError;
+      }
+    } else {
+      const { error: insertError } = await admin.from("telegram_messages").insert(messagePayload);
+      if (insertError && insertError.code !== "23505") throw insertError;
+      inserted = !insertError;
+    }
+
+    if (inserted || isEdited) {
+      const conversationUpdate: Record<string, unknown> = {
+        telegram_chat_id: chatId,
+        username: user.username || "",
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
+        status: "open",
+        last_message_text: text,
+        last_message_at: createdAt,
+        updated_at: now,
+      };
+      if (inserted && !isEdited) conversationUpdate.unread_admin = Number(existing?.unread_admin || 0) + 1;
+      const { error } = await admin.from("telegram_conversations").update(conversationUpdate).eq("id", conversationId);
+      if (error) throw error;
+    }
+
+    if (inserted && String(message.text || "").startsWith("/start")) {
       await sendTelegram(botToken, "sendMessage", {
         chat_id: chatId,
         text: "Добро пожаловать в BALI Minsk 🌴\n\nЗдесь можно написать администрации, уточнить бронь и открыть приложение BALI.",
