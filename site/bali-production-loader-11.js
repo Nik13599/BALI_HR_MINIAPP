@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-16";
+  const version = "bali-production-17";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -37,11 +37,13 @@
   await load("config.js");
   await load("telegram-auth-gate.js");
   if (!(await window.BaliTelegramAuth.ready)?.ok) return;
+
   await load("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2");
   await load("store.js");
+  await load("points-core.js");
+  await load("beta4-game.js");
 
   await Promise.all([
-    load("points-core.js"),
     load("app-users-core-beta4.js"),
     optional("event-lifecycle-core-beta4.js"),
     optional("beta4-loyalty-core.js"),
@@ -75,6 +77,8 @@
     detail: { version, phase: "complete" }
   }));
 })().catch(error => {
-  console.error("[BALI loader 16]", error);
+  console.error("[BALI loader 17]", error);
   document.getElementById("baliBoot")?.remove();
+  const root = document.getElementById("app");
+  if (root && !root.children.length) root.innerHTML = `<main style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:#07100c;color:#fff;font-family:system-ui;text-align:center"><section><h2>Не удалось загрузить BALI</h2><p>${String(error?.message || "Ошибка загрузки")}</p><button onclick="location.reload()" style="min-height:46px;padding:0 20px;border:0;border-radius:13px;background:#c8ff3d;color:#07100c;font-weight:900">Повторить</button></section></main>`;
 });
