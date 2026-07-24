@@ -1,28 +1,31 @@
 (async () => {
-  const version = "bali-production-28";
+  const version = "bali-production-29";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
 
-  function load(name, timeout = 9000) {
+  function load(name, timeout = 12000) {
     if (loaded.has(name)) return Promise.resolve(name);
     if (pending.has(name)) return pending.get(name);
     const task = new Promise((resolve, reject) => {
       const script = document.createElement("script");
       let finished = false;
-      const done = error => {
+      const finish = error => {
         if (finished) return;
         finished = true;
         clearTimeout(timer);
         pending.delete(name);
         if (error) reject(error);
-        else { loaded.add(name); resolve(name); }
+        else {
+          loaded.add(name);
+          resolve(name);
+        }
       };
-      const timer = setTimeout(() => done(new Error(`Модуль ${name} не ответил`)), timeout);
+      const timer = setTimeout(() => finish(new Error(`Модуль ${name} не ответил`)), timeout);
       script.src = url(name);
       script.async = false;
-      script.onload = () => done();
-      script.onerror = () => done(new Error(`Не удалось загрузить ${name}`));
+      script.onload = () => finish();
+      script.onerror = () => finish(new Error(`Не удалось загрузить ${name}`));
       document.body.appendChild(script);
     });
     pending.set(name, task);
@@ -42,23 +45,26 @@
     });
   }
 
-  const optional = (name, timeout = 5000) => load(name, timeout).catch(error => {
-    console.warn("[BALI optional]", error?.message || error);
-    return null;
-  });
+  const optional = async (name, timeout = 7000) => {
+    try { return await load(name, timeout); }
+    catch (error) {
+      window.BaliErrorBoundary?.capture?.(error, { module:name, optional:true });
+      console.warn("[BALI optional]", name, error?.message || error);
+      return null;
+    }
+  };
 
   document.documentElement.dataset.baliBuild = version;
 
   await load("config.js");
+  await load("bali-error-boundary-production.js");
   await load("telegram-auth-gate.js");
   if (!(await window.BaliTelegramAuth.ready)?.ok) return;
 
   await Promise.all([
     loadStyle("beta4-app.css"),
     loadStyle("beta4-layout-map.css"),
-    loadStyle("beta4-home-links.css"),
-    loadStyle("beta4-social.css"),
-    loadStyle("legacy-nav-final-beta4.css")
+    loadStyle("beta4-social.css")
   ]);
 
   await load("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2");
@@ -76,48 +82,42 @@
   ]);
 
   await Promise.all([
-    optional("social-cloud-sync-production.js", 9000),
-    optional("cloud-loyalty-production.js", 9000),
-    optional("event-checkin-cloud-production.js", 9000),
-    optional("loyalty-catalog-cloud-production.js", 9000)
+    optional("social-cloud-sync-production.js", 10000),
+    optional("cloud-loyalty-production.js", 10000),
+    optional("event-checkin-cloud-production.js", 10000),
+    optional("loyalty-catalog-cloud-production.js", 10000)
   ]);
 
-  await optional("bali-dom-stability-production.js");
-  await optional("bali-ui-registry-production-v2.js");
-  await optional("bali-people-presence-visibility-production.js");
-  await load("beta4-app.js");
+  await load("bali-app-stable-production.js");
 
   const modules = [
-    "legacy-nav-final-beta4.js",
     "beta4-layout-map.js",
-    "beta4-home-links.js",
-    "beta4-menu-categories.js",
-    "beta4-menu-media.js",
-    "beta4-profile-stable-production.js",
+    "bali-profile-runtime-production.js",
     "beta4-social-page.js",
     "event-details-lineup-beta4.js",
     "venue-reviews-user-beta4.js",
     "review-eligibility-private-beta4.js",
-    "event-stability-final-beta4.js",
     "bali-people-public-cards-beta4.js",
-    "bali-people-vip-frame-beta4.js",
     "beta4-qr-checkin.js"
   ];
 
-  for (const module of modules) await optional(module, 5000);
+  for (const module of modules) await optional(module, 7000);
 
-  window.BaliDomStability?.apply?.();
-  window.BaliUiRegistry?.apply?.();
+  window.BaliAppStable?.finalizeLayout?.();
   window.BaliCompactProfile?.mount?.();
-  window.BaliSocialCloud?.refresh?.();
-  window.BaliPeoplePresenceVisibility?.refresh?.();
+  await window.BaliSocialCloud?.refresh?.();
+  window.BaliAppStable?.finalizeLayout?.();
+
   document.getElementById("baliBoot")?.remove();
   window.dispatchEvent(new CustomEvent("bali:production-ready", {
-    detail: { version, phase: "complete" }
+    detail: { version, phase:"complete", runtime:"stable-v1" }
   }));
 })().catch(error => {
-  console.error("[BALI loader 28]", error);
+  window.BaliErrorBoundary?.capture?.(error, { module:"production-loader", fatal:true });
+  console.error("[BALI loader 29]", error);
   document.getElementById("baliBoot")?.remove();
   const root = document.getElementById("app");
-  if (root && !root.children.length) root.innerHTML = `<main style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:#07100c;color:#fff;font-family:system-ui;text-align:center"><section><h2>Не удалось загрузить BALI</h2><p>${String(error?.message || "Ошибка загрузки")}</p><button onclick="location.reload()" style="min-height:46px;padding:0 20px;border:0;border-radius:13px;background:#c8ff3d;color:#07100c;font-weight:900">Повторить</button></section></main>`;
+  if (root && !root.children.length) {
+    root.innerHTML = `<main style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:#07100c;color:#fff;font-family:system-ui;text-align:center"><section><h2>Не удалось загрузить BALI</h2><p>Проверьте интернет-соединение и откройте приложение повторно.</p><button onclick="location.reload()" style="min-height:46px;padding:0 20px;border:0;border-radius:13px;background:#c8ff3d;color:#07100c;font-weight:900">Повторить</button></section></main>`;
+  }
 });
