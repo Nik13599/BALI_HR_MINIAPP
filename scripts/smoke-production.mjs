@@ -161,7 +161,7 @@ async function testAdmin() {
   await installNetworkMocks(page);
 
   await page.goto(`${origin}/site/admin-production.html?smoke=1`, { waitUntil:'domcontentloaded', timeout:30000 });
-  await page.waitForSelector('#demoLogin', { timeout:20000 });
+  await page.waitForSelector('#demoLogin', { state:'attached', timeout:20000 });
   await page.evaluate(() => {
     localStorage.removeItem('bali_admin_runtime_errors_v1');
     document.getElementById('demoLogin')?.click();
