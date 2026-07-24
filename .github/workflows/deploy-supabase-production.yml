@@ -7,17 +7,23 @@ on:
       - main
     paths:
       - "supabase/functions/**"
+      - "supabase/migrations/**"
       - "supabase/config.toml"
       - ".github/workflows/deploy-supabase-production.yml"
 
 permissions:
   contents: read
 
+concurrency:
+  group: supabase-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_PROJECT_REF: zusoprnxqohoeonaqwiv
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_WEBAPP_URL: https://nik13599.github.io/BALI_HR_MINIAPP/site/
@@ -27,7 +33,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate required secrets
+      - name: Validate required deployment secrets
         shell: bash
         run: |
           set -euo pipefail
@@ -38,17 +44,31 @@ jobs:
             fi
           done
 
-      - name: Generate Telegram webhook secret
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "TELEGRAM_WEBHOOK_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
-
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v2
         with:
           version: latest
           github-token: ${{ github.token }}
+
+      - name: Apply database migrations
+        if: ${{ env.SUPABASE_DB_PASSWORD != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+          supabase db push --include-all --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Report missing database password
+        if: ${{ env.SUPABASE_DB_PASSWORD == '' }}
+        shell: bash
+        run: |
+          echo "::warning::SUPABASE_DB_PASSWORD is not configured. Edge Functions will deploy, but database migrations cannot be applied automatically."
+
+      - name: Generate Telegram webhook secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "TELEGRAM_WEBHOOK_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
 
       - name: Store Telegram secrets in Supabase
         shell: bash
