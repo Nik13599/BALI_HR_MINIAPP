@@ -1,6 +1,6 @@
 (() => {
-  if (window.__BALI_UI_REGISTRY_PRODUCTION_V4__) return;
-  window.__BALI_UI_REGISTRY_PRODUCTION_V4__ = true;
+  if (window.__BALI_UI_REGISTRY_PRODUCTION_V5__) return;
+  window.__BALI_UI_REGISTRY_PRODUCTION_V5__ = true;
 
   let applying = false;
   let scheduled = false;
@@ -34,6 +34,10 @@
     return current.length === nodes.length && current.every((node, index) => node === nodes[index]);
   }
 
+  function setText(node, text) {
+    if (node && node.textContent !== text) node.textContent = text;
+  }
+
   function stabilizeHome() {
     const home = document.querySelector('[data-screen="home"] .inner');
     if (!home) return;
@@ -53,11 +57,8 @@
     const order = [hero, actions, events, about, referral, qr, ...extras, contacts].filter(Boolean);
 
     if (!sameOrder(home, order)) order.forEach(node => home.appendChild(node));
-
-    const eventsTitle = events?.querySelector(".card-head h3");
-    if (eventsTitle) eventsTitle.textContent = "Ближайшие события";
-    const aboutTitle = about?.querySelector(".card-head h3");
-    if (aboutTitle) aboutTitle.textContent = "О клубе";
+    setText(events?.querySelector(".card-head h3"), "Ближайшие события");
+    setText(about?.querySelector(".card-head h3"), "О клубе");
   }
 
   function stabilizeProfile() {
@@ -71,26 +72,21 @@
 
     const setTile = (tile, smallText, strongText) => {
       if (!tile) return;
-      const small = tile.querySelector("small");
-      const strong = tile.querySelector("strong");
-      if (small) small.textContent = smallText;
-      if (strong) strong.textContent = strongText;
+      setText(tile.querySelector("small"), smallText);
+      setText(tile.querySelector("strong"), strongText);
     };
     setTile(shop, "МАГАЗИН", "BALI Shop");
     setTile(rewards, "МОИ НАГРАДЫ", "Мои награды");
     setTile(gifts, "МОИ ПОДАРКИ", "Мои подарки");
 
-    [shop, rewards, gifts].filter(Boolean).forEach(node => quick.appendChild(node));
+    const order = [shop, rewards, gifts].filter(Boolean);
+    if (!sameOrder(quick, order)) order.forEach(node => quick.appendChild(node));
   }
 
   function stabilizePeople() {
-    const pageTitle = document.querySelector('[data-screen="dating"] .head h2');
-    if (pageTitle) pageTitle.textContent = "Люди BALI";
+    setText(document.querySelector('[data-screen="dating"] .head h2'), "Люди BALI");
     const labels = { all:"Все", inside:"Пришёл на мероприятие", thumbs:"👍 Лайки" };
-    Object.entries(labels).forEach(([key, text]) => {
-      const node = document.querySelector(`[data-social-v2-tab="${key}"]`);
-      if (node) node.textContent = text;
-    });
+    Object.entries(labels).forEach(([key, text]) => setText(document.querySelector(`[data-social-v2-tab="${key}"]`), text));
   }
 
   function apply() {
