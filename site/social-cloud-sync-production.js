@@ -4,6 +4,7 @@
 
   const social = window.BaliBeta4Social;
   const game = window.BaliBeta4Game;
+  const store = window.BaliStore;
   const cfg = window.BALI_CONFIG || {};
   const tg = window.Telegram?.WebApp;
   if (!social || !game || !tg) return;
@@ -54,14 +55,14 @@
       name: row.name || "Гость BALI",
       username: row.username ? `@${String(row.username).replace(/^@/, "")}` : "",
       telegram: row.username ? `@${String(row.username).replace(/^@/, "")}` : "",
-      photo: row.photo || "",
-      avatar: row.photo || "",
+      photo: row.photo || row.avatar || "",
+      avatar: row.photo || row.avatar || "",
       cropX: Number(row.crop_x ?? 50),
       cropY: Number(row.crop_y ?? 40),
-      status: row.status || "chat",
+      status: row.status && row.status !== "closed" ? row.status : "chat",
       bio: row.bio || "Пользователь BALI",
       active: true,
-      profileActive: Boolean(row.profile_active),
+      profileActive: Boolean(row.profile_active ?? row.active),
       shareTelegram: Boolean(row.share_telegram),
       phone: "",
       gender: row.gender || "unspecified",
@@ -76,9 +77,28 @@
       vipExpiresAt: row.vip_expires_at || "",
       vip_expires_at: row.vip_expires_at || "",
       vipStartsAt: row.vip_starts_at || "",
-      updatedAt: row.updated_at || "",
-      createdAt: row.created_at || ""
+      updatedAt: row.updated_at || row.last_seen_at || "",
+      createdAt: row.created_at || row.first_seen_at || ""
     };
+  }
+
+  async function directDirectory() {
+    if (!store?.client) return [];
+    try {
+      const { data, error } = await store.client
+        .from("app_users")
+        .select("user_key,telegram_id,name,username,avatar,gender,first_seen_at,last_seen_at")
+        .order("last_seen_at", { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      const myKey = String(localProfile()?.id || localProfile()?.userKey || "");
+      return (data || [])
+        .filter(row => String(row.user_key || "") !== myKey)
+        .map(row => normalize({ ...row, photo: row.avatar, active: true, status: "chat" }));
+    } catch (error) {
+      console.warn("[BALI PEOPLE direct]", error.message);
+      return [];
+    }
   }
 
   social.people = () => {
@@ -98,19 +118,22 @@
     clearTimeout(refreshTimer);
     refreshing = (async () => {
       try {
-        const data = await invoke("list");
-        const next = (data.profiles || []).map(normalize).filter(row => row.id);
-        const nextSignature = JSON.stringify(next.map(row => [row.id, row.updatedAt, row.vipPlanId, row.vipExpiresAt, row.photo, row.name]));
-        remote = next;
+        let rows = [];
+        try {
+          const data = await invoke("list");
+          rows = (data.profiles || []).map(normalize).filter(row => row.id);
+        } catch (error) {
+          console.warn("[BALI PEOPLE cloud]", error.message);
+        }
+        if (!rows.length) rows = await directDirectory();
+        const nextSignature = JSON.stringify(rows.map(row => [row.id, row.updatedAt, row.vipPlanId, row.vipExpiresAt, row.photo, row.name]));
+        remote = rows;
         if (force || nextSignature !== signature) {
           signature = nextSignature;
           window.dispatchEvent(new CustomEvent("bali:social-changed", {
-            detail: { source: "cloud", total: remote.length, refreshedAt: data.refreshed_at || new Date().toISOString() }
+            detail: { source: "cloud", total: remote.length, refreshedAt: new Date().toISOString() }
           }));
         }
-        return remote;
-      } catch (error) {
-        console.warn("[BALI PEOPLE cloud]", error.message);
         return remote;
       } finally {
         refreshing = null;
@@ -124,14 +147,15 @@
     if (saving) return;
     saving = true;
     try {
+      const visibleStatus = profile.status && profile.status !== "closed" ? profile.status : "chat";
       const data = await invoke("sync", { profile: {
         name: profile.name || game.profile().name || "Гость BALI",
         photo: profile.photo || game.profile().avatar || "",
         crop_x: Number(profile.cropX ?? 50),
         crop_y: Number(profile.cropY ?? 40),
-        status: profile.status || "closed",
+        status: visibleStatus,
         bio: profile.bio || "",
-        active: Boolean(profile.active),
+        active: true,
         share_telegram: Boolean(profile.shareTelegram),
         gender: profile.gender || game.profile().gender || "unspecified",
         birth_date: profile.birthDate || game.profile().birthDate || null
@@ -139,6 +163,8 @@
       const normalized = normalize(data.profile || {});
       localSave({
         ...profile,
+        active: true,
+        status: visibleStatus,
         username: normalized.username,
         telegram: normalized.telegram,
         shareTelegram: normalized.shareTelegram
@@ -146,6 +172,9 @@
       await refresh({ force: true });
     } catch (error) {
       console.warn("[BALI PEOPLE sync]", error.message);
+      const visibleStatus = profile.status && profile.status !== "closed" ? profile.status : "chat";
+      localSave({ ...profile, active: true, status: visibleStatus });
+      await refresh({ force: true });
     } finally {
       saving = false;
     }
@@ -171,7 +200,7 @@
   setTimeout(() => {
     syncProfile();
     refresh({ force: true });
-  }, 150);
+  }, 100);
 
   window.BaliSocialCloud = {
     refresh: () => refresh({ force: true }),
