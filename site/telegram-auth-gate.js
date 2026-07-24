@@ -7,6 +7,8 @@
   const endpoint = cfg.telegramAuthEndpoint || (cfg.supabaseUrl
     ? `${String(cfg.supabaseUrl).replace(/\/$/, "")}/functions/v1/telegram-auth-bootstrap`
     : "");
+  const params = new URLSearchParams(location.search);
+  const smokeMode = ["localhost", "127.0.0.1"].includes(location.hostname) && params.get("smoke") === "1";
   let authenticated = false;
   let verifiedUser = null;
   let resolveReady;
@@ -66,7 +68,34 @@
     });
   }
 
+  function authenticateSmoke() {
+    const user = {
+      user_key:"tg:900000001",
+      telegram_id:900000001,
+      first_name:"Smoke",
+      last_name:"User",
+      name:"Smoke User",
+      username:"bali_smoke",
+      avatar:"",
+      phone:"",
+      gender:"unspecified"
+    };
+    authenticated = true;
+    verifiedUser = user;
+    window.BALI_TELEGRAM_USER = user;
+    window.BALI_TELEGRAM_AUTH_DATA = { authenticated:true, user, balance:100, smoke:true };
+    document.documentElement.dataset.telegramAuthenticated = "true";
+    document.documentElement.dataset.smokeMode = "true";
+    root().innerHTML = "";
+    resolveReady({ ok:true, user, balance:100, vip:null, smoke:true });
+    queueMicrotask(() => window.dispatchEvent(new CustomEvent("bali:telegram-authenticated", { detail:{ authenticated:true, user, smoke:true } })));
+  }
+
   async function authenticate() {
+    if (smokeMode) {
+      authenticateSmoke();
+      return;
+    }
     if (!tg || !String(tg.initData || "").trim() || !tg.initDataUnsafe?.user?.id) {
       renderOutsideTelegram();
       resolveReady({ ok:false, reason:"telegram_required" });
@@ -113,7 +142,8 @@
     authenticate,
     isAuthenticated:() => authenticated,
     user:() => verifiedUser,
-    initData:() => tg?.initData || ""
+    initData:() => tg?.initData || "",
+    smokeMode:() => smokeMode
   };
 
   authenticate();
