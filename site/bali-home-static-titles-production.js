@@ -24,7 +24,10 @@
       display:block;
       margin:0;
       color:inherit;
-      font:700 16px/1.25 inherit;
+      font-family:inherit;
+      font-size:16px;
+      font-weight:700;
+      line-height:1.25;
       letter-spacing:normal;
       white-space:normal;
     }
