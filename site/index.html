@@ -3,22 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07100c">
-  <meta name="description" content="BALI Minsk — Telegram Mini App">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
+  <meta name="theme-color" content="#07100c">
   <title>BALI Minsk</title>
-  <link rel="stylesheet" href="./bali-rebuild-user-v1.css?v=bali-rebuild-5">
-  <script src="https://telegram.org/js/telegram-web-app.js?63"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./config.js?v=bali-rebuild-5"></script>
-  <script src="./store.js?v=bali-rebuild-5"></script>
-  <script src="./bali-rebuild-contact-actions-v1.js?v=bali-rebuild-5"></script>
+  <script>
+    const target = new URL('./bali-app-6.html', location.href);
+    target.searchParams.set('entry', 'legacy-redirect');
+    location.replace(target.href);
+  </script>
 </head>
-<body>
-  <div id="app"></div>
-  <div id="toast" class="toast"></div>
-  <script src="./bali-rebuild-user-v1.js?v=bali-rebuild-5"></script>
+<body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#07100c;color:#fff;font-family:system-ui">
+  <a href="./bali-app-6.html" style="color:#c8ff3d">Открыть BALI R6</a>
 </body>
 </html>
