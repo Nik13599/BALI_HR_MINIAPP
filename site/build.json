@@ -1,13 +1,13 @@
 {
-  "user_app": "bali-production-35",
+  "user_app": "bali-production-36",
   "admin": "production-23",
-  "published_at": "2026-07-24T19:30:00Z",
+  "published_at": "2026-07-24T20:00:00Z",
   "runtime": "stable-user-runtime-with-coalesced-events-and-lite-profile",
   "ui_fix": "immutable-home-labels-with-scoped-observers",
   "people_fix": "all-customers-app-users-points-social-profiles-plus-current-user-and-qr-presence",
-  "qr_fix": "global-presence-tab-from-active-event-checkins",
+  "qr_fix": "conditional-global-presence-tab-from-active-event-checkins",
   "admin_fix": "stable-orchestrator-canonical-titles-error-boundary-real-customer-dedup-and-all-section-smoke-test",
   "validation": "syntax-browser-all-users-qr-presence-and-profile-stability",
-  "telegram_url": "versioned-production-35",
-  "pages": "deploy-only-after-latest-validation-success"
+  "telegram_url": "versioned-production-36",
+  "pages": "single-workflow-validate-and-deploy"
 }
