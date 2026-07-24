@@ -27,7 +27,7 @@ jobs:
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_PROJECT_REF: zusoprnxqohoeonaqwiv
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_WEBAPP_URL: https://nik13599.github.io/BALI_HR_MINIAPP/site/?v=bali-rebuild-5
+      TELEGRAM_WEBAPP_URL: https://nik13599.github.io/BALI_HR_MINIAPP/site/bali-app-6.html
       TELEGRAM_BOT_USERNAME: BaliMinskAppBot
 
     steps:
@@ -89,7 +89,7 @@ jobs:
           supabase functions deploy --use-api --project-ref "$SUPABASE_PROJECT_REF"
           supabase functions list --project-ref "$SUPABASE_PROJECT_REF"
 
-      - name: Configure Telegram webhook and Mini App button
+      - name: Configure and verify Telegram Mini App URL
         shell: bash
         run: |
           set -euo pipefail
@@ -116,7 +116,11 @@ jobs:
             --header "Content-Type: application/json" \
             --data "$(jq -n --arg url "$TELEGRAM_WEBAPP_URL" '{menu_button:{type:"web_app",text:"Открыть BALI",web_app:{url:$url}}}')"
 
-          echo
+          MENU_JSON="$(curl --fail-with-body --silent --show-error "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getChatMenuButton")"
+          MENU_URL="$(printf '%s' "$MENU_JSON" | jq -r '.result.web_app.url // ""')"
+          echo "Telegram menu URL: $MENU_URL"
+          test "$MENU_URL" = "$TELEGRAM_WEBAPP_URL"
+
           echo "Webhook info:"
           curl --fail-with-body --silent --show-error \
             "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo" | jq '{ok,result:{url,pending_update_count,last_error_date,last_error_message}}'
