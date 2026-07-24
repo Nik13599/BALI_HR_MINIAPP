@@ -24,18 +24,35 @@ create policy loyalty_rules_public_read on public.loyalty_rules for select to an
 drop policy if exists loyalty_rules_admin_all on public.loyalty_rules;
 create policy loyalty_rules_admin_all on public.loyalty_rules for all to authenticated using (true) with check (true);
 
+with defaults(action, title, description, points, active) as (
+  values
+    ('event_checkin'::text, 'Посещение мероприятия'::text, 'Начисление после подтверждённого входа по QR-коду.'::text, 100::integer, true),
+    ('review', 'Отзыв после посещения', 'Начисление после публикации доступного отзыва.', 50, true),
+    ('event_share', 'Поделиться событием', 'Начисление за подтверждённую публикацию события.', 10, true),
+    ('referral', 'Приглашение друга', 'Начисление после первого входа приглашённого пользователя.', 10, true)
+)
+update public.loyalty_rules rule
+set title = defaults.title,
+    description = defaults.description,
+    points = defaults.points,
+    active = defaults.active,
+    updated_at = now()
+from defaults
+where rule.action = defaults.action;
+
+with defaults(action, title, description, points, active) as (
+  values
+    ('event_checkin'::text, 'Посещение мероприятия'::text, 'Начисление после подтверждённого входа по QR-коду.'::text, 100::integer, true),
+    ('review', 'Отзыв после посещения', 'Начисление после публикации доступного отзыва.', 50, true),
+    ('event_share', 'Поделиться событием', 'Начисление за подтверждённую публикацию события.', 10, true),
+    ('referral', 'Приглашение друга', 'Начисление после первого входа приглашённого пользователя.', 10, true)
+)
 insert into public.loyalty_rules (action, title, description, points, active)
-values
-  ('event_checkin', 'Посещение мероприятия', 'Начисление после подтверждённого входа по QR-коду.', 100, true),
-  ('review', 'Отзыв после посещения', 'Начисление после публикации доступного отзыва.', 50, true),
-  ('event_share', 'Поделиться событием', 'Начисление за подтверждённую публикацию события.', 10, true),
-  ('referral', 'Приглашение друга', 'Начисление после первого входа приглашённого пользователя.', 10, true)
-on conflict (action) do update set
-  title = excluded.title,
-  description = excluded.description,
-  points = excluded.points,
-  active = excluded.active,
-  updated_at = now();
+select defaults.action, defaults.title, defaults.description, defaults.points, defaults.active
+from defaults
+where not exists (
+  select 1 from public.loyalty_rules rule where rule.action = defaults.action
+);
 
 -- Пользовательский каталог теперь выдаётся только Telegram-проверенной Edge Function.
 -- Публичный SELECT всей app_users раскрывал бы телефоны и другие закрытые поля.
