@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-19";
+  const version = "bali-production-20";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -62,6 +62,7 @@
 
   await load("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2");
   await load("store.js");
+  await optional("reviews-public-save-beta4.js");
   await load("points-core.js");
   await load("beta4-game.js");
 
@@ -80,27 +81,43 @@
     optional("loyalty-catalog-cloud-production.js", 9000)
   ]);
 
+  await optional("bali-ui-registry-production-v2.js");
+  await optional("bali-people-presence-visibility-production.js");
   await load("beta4-app.js");
 
   const modules = [
     "legacy-nav-final-beta4.js",
+    "beta4-layout-map.js",
+    "beta4-home-links.js",
+    "beta4-menu-categories.js",
+    "beta4-menu-media.js",
+    "beta4-profile-booking.js",
+    "beta4-loyalty-ui-stable.js",
     "beta4-profile-v2.js",
+    "profile-demographics-beta4.js",
+    "profile-ranking-full-beta4.js",
+    "profile-recent-rewards-beta4.js",
+    "profile-history-title-only-beta4.js",
     "beta4-social-page.js",
+    "event-details-lineup-beta4.js",
+    "venue-reviews-user-beta4.js",
+    "review-eligibility-private-beta4.js",
     "event-stability-final-beta4.js",
     "bali-people-public-cards-beta4.js",
     "bali-people-vip-frame-beta4.js",
-    "beta4-qr-checkin.js",
-    "bali-ui-registry-production-v2.js"
+    "beta4-qr-checkin.js"
   ];
 
   for (const module of modules) await optional(module, 5000);
 
+  window.BaliUiRegistry?.apply?.();
+  window.BaliPeoplePresenceVisibility?.refresh?.();
   document.getElementById("baliBoot")?.remove();
   window.dispatchEvent(new CustomEvent("bali:production-ready", {
     detail: { version, phase: "complete" }
   }));
 })().catch(error => {
-  console.error("[BALI loader 19]", error);
+  console.error("[BALI loader 20]", error);
   document.getElementById("baliBoot")?.remove();
   const root = document.getElementById("app");
   if (root && !root.children.length) root.innerHTML = `<main style="min-height:100dvh;display:grid;place-items:center;padding:24px;background:#07100c;color:#fff;font-family:system-ui;text-align:center"><section><h2>Не удалось загрузить BALI</h2><p>${String(error?.message || "Ошибка загрузки")}</p><button onclick="location.reload()" style="min-height:46px;padding:0 20px;border:0;border-radius:13px;background:#c8ff3d;color:#07100c;font-weight:900">Повторить</button></section></main>`;
