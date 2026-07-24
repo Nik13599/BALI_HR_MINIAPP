@@ -25,9 +25,12 @@
   }
 
   async function buildRows() {
+    const appUsersPromise = window.BaliAppUsers?.listAdmin
+      ? window.BaliAppUsers.listAdmin().catch(() => [])
+      : Promise.resolve([]);
     const [manual, appUsers, accounts, checkins, bookings] = await Promise.all([
       store.list("customers").catch(() => []),
-      window.BaliAppUsers?.listAdmin?.().catch?.(() => []) || Promise.resolve([]),
+      appUsersPromise,
       cloudList("points_accounts"),
       cloudList("event_checkins"),
       store.list("bookings").catch(() => [])
@@ -82,7 +85,8 @@
   function table(rows) {
     if (!rows.length) return '<div class="empty">Пользователи пока не зарегистрированы. После подтверждённого входа через Telegram запись появится здесь автоматически.</div>';
     return `<table class="data-table"><thead><tr><th>Пользователь</th><th>Telegram</th><th>Телефон</th><th>Посещения</th><th>Баллы</th><th>Входы</th><th>Последний вход</th><th></th></tr></thead><tbody>${rows.map(row => {
-      const actions = row.id ? `<div class="row-actions"><button class="icon-btn" data-edit="customers" data-id="${safe(row.id)}">✎</button><button class="icon-btn" data-delete="customers" data-id="${safe(row.id)}">×</button></div>` : '<span class="status available">Telegram</span>';
+      const dossierKey = row.user_key || row.id || (row.telegram_id ? `tg:${row.telegram_id}` : "");
+      const actions = `<div class="row-actions"><button class="icon-btn" data-open-customer-dossier="${safe(dossierKey)}" title="Открыть полную карточку">◎</button>${row.id ? `<button class="icon-btn" data-edit="customers" data-id="${safe(row.id)}">✎</button><button class="icon-btn" data-delete="customers" data-id="${safe(row.id)}">×</button>` : ""}</div>`;
       return `<tr><td><strong>${safe(row.name || "Гость BALI")}</strong><br><small>${safe(row.user_key || (row.telegram_id ? `tg:${row.telegram_id}` : row.id || "—"))}</small></td><td>${safe(row.telegram_username || row.telegram || "—")}</td><td>${row.phone ? safe(row.phone) : '<span class="status pending">Не указан</span>'}</td><td>${Number(row.visits_calculated || 0)}</td><td><strong>${Number(row.balance || 0)}</strong></td><td>${Number(row.opens || 0)}</td><td>${safe(fmt(row.last_seen))}</td><td>${actions}</td></tr>`;
     }).join("")}</tbody></table>`;
   }
