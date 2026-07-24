@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-35";
+  const version = "bali-production-36";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -98,6 +98,7 @@
     "beta4-layout-map.js",
     "bali-profile-lite-production.js",
     "bali-people-page-production.js",
+    "bali-people-tab-visibility-production.js",
     "event-details-lineup-beta4.js",
     "venue-reviews-user-beta4.js",
     "review-eligibility-private-beta4.js",
@@ -111,6 +112,7 @@
   window.BaliAppStable?.finalizeLayout?.();
   window.BaliCompactProfile?.mount?.();
   await window.BaliPeoplePage?.refresh?.({ useCloud:true });
+  window.BaliPeopleTabVisibility?.apply?.();
   window.BaliFixedLabels?.apply?.();
   window.BaliRuntimeSafety?.removeTechnicalOverlays?.();
 
@@ -121,7 +123,7 @@
 })().catch(error => {
   window.BaliErrorBoundary?.capture?.(error, { module:"production-loader", fatal:true });
   window.BaliRuntimeSafety?.recover?.(error);
-  console.error("[BALI loader 35]", error);
+  console.error("[BALI loader 36]", error);
   document.getElementById("baliBoot")?.remove();
   const root = document.getElementById("app");
   if (root && !root.children.length) {
