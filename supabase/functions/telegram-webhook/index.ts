@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
     const webhookSecret = Deno.env.get("TELEGRAM_WEBHOOK_SECRET") || "";
-    const webAppUrl = Deno.env.get("TELEGRAM_WEBAPP_URL") || "https://nik13599.github.io/BALI_HR_MINIAPP/site/?v=bali-production-28";
+    const webAppUrl = Deno.env.get("TELEGRAM_WEBAPP_URL") || "https://nik13599.github.io/BALI_HR_MINIAPP/site/?v=bali-production-29";
     if (!supabaseUrl || !serviceRoleKey || !botToken) throw new Error("Не настроены серверные секреты Telegram/Supabase");
     if (webhookSecret) {
       const received = req.headers.get("X-Telegram-Bot-Api-Secret-Token") || "";
