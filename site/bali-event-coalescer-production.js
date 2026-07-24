@@ -24,6 +24,8 @@
     }
     if (typeMap.has(type)) return originalAdd(type, typeMap.get(type), options);
 
+    const source = Function.prototype.toString.call(listener);
+    const legacyHeavyProfileHandler = source.includes("points-profile") || source.includes("game-profile") || source.includes("points-ranking") || source.includes("game-ranking");
     let timer = 0;
     let latestEvent = null;
     const wrapped = function(event) {
@@ -31,6 +33,7 @@
       clearTimeout(timer);
       timer = setTimeout(() => {
         timer = 0;
+        if (legacyHeavyProfileHandler && window.__BALI_PROFILE_LITE_PRODUCTION__) return;
         try { listener.call(window, latestEvent); }
         catch (error) { window.BaliErrorBoundary?.capture?.(error, { module:"event-coalescer", event:type }); }
       }, 100);
