@@ -41,6 +41,6 @@ if (index.includes('bali-production-loader-11.js')) throw new Error('Legacy user
 if (!index.includes('bali-rebuild-user-v1.js') || !index.includes('bali-rebuild-contact-actions-v1.js')) throw new Error('Clean user rebuild is incomplete');
 if (admin.includes('admin.js?v=') || admin.includes('bali-rebuild-admin-v1.js')) throw new Error('Legacy admin runtime is still connected');
 if (!admin.includes('bali-rebuild-admin-v2.js') || !admin.includes('bali-rebuild-admin-bootstrap-v1.js') || !admin.includes('bali-rebuild-admin-v2.css')) throw new Error('Complete admin rebuild is incomplete');
-if (!index.includes('bali-rebuild-4') || !admin.includes('bali-rebuild-4')) throw new Error('Production entry points are not synchronized to rebuild v4');
+if (!index.includes('bali-rebuild-5') || !admin.includes('bali-rebuild-5')) throw new Error('Production entry points are not synchronized to rebuild v5');
 
-console.log(`Validated complete clean rebuild: ${required.length} files; all legacy UI runtimes disconnected.`);
+console.log(`Validated final clean rebuild: ${required.length} files; all legacy UI runtimes disconnected.`);
