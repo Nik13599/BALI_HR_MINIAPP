@@ -55,7 +55,8 @@ Deno.serve(async req => {
       if (error || !row) return json({ error: "Репост не найден" }, 404);
       if (new Date(row.expires_at) < new Date()) return json({ error: "Срок репоста истёк" }, 409);
       if (!row.base_reward_granted_at) {
-        await credit(db, userKey, user, 5, "Репост события", `event-share:${row.token}:${userKey}`);
+        const amount = await rulePoints(db, "event_share", 5);
+        if (amount > 0) await credit(db, userKey, user, amount, "Репост события", `event-share:${row.token}:${userKey}`);
         const now = new Date().toISOString();
         await db.from("loyalty_share_tokens").update({ share_confirmed_at:now, base_reward_granted_at:now }).eq("token", token);
       }
@@ -82,9 +83,9 @@ Deno.serve(async req => {
         const firstSeen = invited?.first_seen_at ? new Date(invited.first_seen_at).getTime() : 0;
         const tokenCreated = new Date(row.created_at).getTime();
         const genuinelyNew = !previousConversion && firstSeen >= tokenCreated - 120000;
-        if (genuinelyNew) { reward = 10; title = "Приглашённый друг впервые открыл BALI"; }
+        if (genuinelyNew) { reward = await rulePoints(db, "referral", 10); title = "Приглашённый друг впервые открыл BALI"; }
       }
-      if (row.kind === "event") { reward = 5; title = "Друг перешёл по репосту события"; }
+      if (row.kind === "event") { reward = await rulePoints(db, "event_share", 5); title = "Друг перешёл по репосту события"; }
       await db.from("loyalty_conversions").insert({ token:row.token, invited_user_key:userKey, invited_telegram_id:user.id, reward_amount:reward });
       if (reward > 0) await creditByKey(db, row.inviter_user_key, row.inviter_telegram_id, reward, title, `conversion:${row.token}:${userKey}`);
       return json({ ok:true, inviter_reward:reward, ...(await profilePayload(db,userKey)) });
@@ -131,6 +132,11 @@ async function profilePayload(db:any,userKey:string){
     reward_grants:rewardsResult.data||[],
     gift_grants:giftsResult.data||[]
   };
+}
+
+async function rulePoints(db:any, action:string, fallback:number){
+  const {data}=await db.from("loyalty_rules").select("points").eq("action",action).eq("active",true).order("updated_at",{ascending:false}).limit(1);
+  return Math.max(0,Number(data?.[0]?.points??fallback));
 }
 
 async function debit(db:any,userKey:string,amount:number,title:string,actionKey:string){
