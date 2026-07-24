@@ -1,13 +1,13 @@
 {
-  "user_app": "bali-production-38",
-  "admin": "production-23",
-  "published_at": "2026-07-24T20:45:00Z",
-  "runtime": "stable-user-runtime-with-coalesced-events-and-lite-profile",
-  "ui_fix": "visible-home-titles-isolated-from-hidden-legacy-h3-without-observers-or-pseudo-text",
-  "people_fix": "all-customers-app-users-points-social-profiles-plus-current-user-and-qr-presence",
-  "qr_fix": "conditional-global-presence-tab-from-active-event-checkins",
-  "admin_fix": "stable-orchestrator-canonical-titles-error-boundary-real-customer-dedup-and-all-section-smoke-test",
-  "validation": "syntax-browser-all-users-qr-presence-and-profile-stability",
-  "telegram_url": "versioned-production-38",
+  "user_app": "bali-rebuild-1",
+  "admin": "bali-admin-rebuild-1",
+  "published_at": "2026-07-25T00:30:00Z",
+  "runtime": "standalone-clean-user-and-admin-rebuild",
+  "ui_fix": "legacy-ui-loaders-disconnected-fixed-static-headings-and-direct-button-handlers",
+  "people_fix": "merged-app-users-customers-and-active-event-checkins",
+  "qr_fix": "direct-telegram-qr-scanner-to-event-checkin-production",
+  "admin_fix": "standalone-rewards-gifts-grants-customers-events-settings-crud",
+  "validation": "clean-rebuild-syntax-and-browser-smoke-tests",
+  "telegram_url": "versioned-bali-rebuild-1",
   "pages": "single-workflow-validate-and-deploy"
 }
