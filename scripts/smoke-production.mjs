@@ -129,7 +129,7 @@ async function testUserApp() {
   await page.waitForTimeout(1500);
   const peopleText = await page.locator('#socialV2Content').innerText();
   if (!peopleText.includes('Test Guest')) throw new Error(`BALI People did not render remote user: ${peopleText}`);
-  if (!peopleText.includes('Smoke User')) throw new Error(`BALI People did not render current user: ${peopleText}`);
+  if (!peopleText.includes('ЭТО ВЫ')) throw new Error(`BALI People did not render the current user card: ${peopleText}`);
 
   await page.locator('[data-social-v2-tab="inside"]').click();
   await page.waitForTimeout(700);
