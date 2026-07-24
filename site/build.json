@@ -1,8 +1,9 @@
 {
-  "user_app": "bali-production-24",
-  "admin": "production-18",
-  "published_at": "2026-07-24T14:10:00Z",
+  "user_app": "bali-production-25",
+  "admin": "production-19",
+  "published_at": "2026-07-24T14:20:00Z",
   "ui_fix": "single-source-labels-no-pseudo-text-no-duplicate-cards",
-  "people_fix": "edge-and-client-app-users-plus-points-accounts",
-  "telegram_url": "versioned-production-24"
+  "people_fix": "edge-and-client-app-users-plus-points-accounts-safe-query",
+  "telegram_url": "versioned-production-25",
+  "pages": "workflow-plus-nojekyll"
 }
