@@ -27,7 +27,7 @@
 
   function lock(node, label, key) {
     if (!node) return;
-    if (node.textContent) node.textContent = "";
+    if (node.textContent !== label) node.textContent = label;
     if (node.getAttribute("aria-label") !== label) node.setAttribute("aria-label", label);
     if (node.dataset.fixedLabel !== key) node.dataset.fixedLabel = key;
   }
