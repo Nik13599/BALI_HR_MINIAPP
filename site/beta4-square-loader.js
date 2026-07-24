@@ -1,5 +1,5 @@
 (async()=>{
-  const v='bali-production-5';
+  const v='bali-production-6';
   const loadScript=name=>new Promise((resolve,reject)=>{
     const script=document.createElement('script');
     script.src=name.startsWith('http')?name:`./${name}?v=${v}`;
@@ -54,6 +54,7 @@
     'beta4-profile-booking.js',
     'beta4-loyalty-ui-stable.js',
     'beta4-social-page.js',
+    'social-gifts-production.js',
     'bali-people-open-likes-beta4.js',
     'bali-people-live-event-beta4.js',
     'beta4-reward-icon-view.js',
