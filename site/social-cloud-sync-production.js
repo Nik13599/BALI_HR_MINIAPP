@@ -1,49 +1,83 @@
 (() => {
   if (window.__BALI_SOCIAL_CLOUD_SYNC_PRODUCTION__) return;
   window.__BALI_SOCIAL_CLOUD_SYNC_PRODUCTION__ = true;
+
   const social = window.BaliBeta4Social;
   const game = window.BaliBeta4Game;
   const cfg = window.BALI_CONFIG || {};
   const tg = window.Telegram?.WebApp;
   if (!social || !game || !tg) return;
+
   const endpoint = cfg.supabaseUrl ? `${String(cfg.supabaseUrl).replace(/\/$/, "")}/functions/v1/telegram-social-profile` : "";
   const localSave = social.saveProfile.bind(social);
   const localProfile = social.profile.bind(social);
   let remote = [];
   let saving = false;
+  let refreshing = null;
   let refreshTimer = 0;
+  let signature = "";
 
-  async function invoke(action, body = {}) {
+  async function invoke(action, body = {}, timeout = 9000) {
     if (!endpoint || !cfg.supabaseAnonKey || !tg.initData) throw new Error("BALI PEOPLE не подключён к серверу");
-    const response = await fetch(endpoint, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json", apikey:cfg.supabaseAnonKey, Authorization:`Bearer ${cfg.supabaseAnonKey}` },
-      body:JSON.stringify({ action, init_data:tg.initData, ...body })
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || data.error) throw new Error(data.error || "Ошибка BALI PEOPLE");
-    return data;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          apikey: cfg.supabaseAnonKey,
+          Authorization: `Bearer ${cfg.supabaseAnonKey}`,
+        },
+        body: JSON.stringify({ action, init_data: tg.initData, ...body }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.error) throw new Error(data.error || "Ошибка BALI PEOPLE");
+      return data;
+    } catch (error) {
+      if (error?.name === "AbortError") throw new Error("Сервер BALI PEOPLE отвечает слишком долго");
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
-  function normalize(row) {
+  function normalize(row = {}) {
+    const planId = String(row.vip_plan_id || "");
     return {
-      id:String(row.user_key || ""),
-      userKey:String(row.user_key || ""),
-      telegramId:row.telegram_id || null,
-      name:row.name || "Гость BALI",
-      username:row.username ? `@${String(row.username).replace(/^@/, "")}` : "",
-      telegram:row.username ? `@${String(row.username).replace(/^@/, "")}` : "",
-      photo:row.photo || "",
-      cropX:Number(row.crop_x ?? 50),
-      cropY:Number(row.crop_y ?? 40),
-      status:row.status || "closed",
-      bio:row.bio || "",
-      active:Boolean(row.active),
-      shareTelegram:Boolean(row.share_telegram),
-      phone:"",
-      gender:row.gender || "unspecified",
-      updatedAt:row.updated_at || "",
-      createdAt:row.created_at || ""
+      id: String(row.user_key || ""),
+      userKey: String(row.user_key || ""),
+      user_key: String(row.user_key || ""),
+      telegramId: row.telegram_id || null,
+      telegram_id: row.telegram_id || null,
+      name: row.name || "Гость BALI",
+      username: row.username ? `@${String(row.username).replace(/^@/, "")}` : "",
+      telegram: row.username ? `@${String(row.username).replace(/^@/, "")}` : "",
+      photo: row.photo || "",
+      avatar: row.photo || "",
+      cropX: Number(row.crop_x ?? 50),
+      cropY: Number(row.crop_y ?? 40),
+      status: row.status || "chat",
+      bio: row.bio || "Пользователь BALI",
+      active: true,
+      profileActive: Boolean(row.profile_active),
+      shareTelegram: Boolean(row.share_telegram),
+      phone: "",
+      gender: row.gender || "unspecified",
+      vipPlanId: planId,
+      vip_plan_id: planId,
+      vipPlanName: row.vip_plan_name || "",
+      vip_plan_name: row.vip_plan_name || "",
+      vipColor: row.vip_color || "",
+      vip_color: row.vip_color || "",
+      vipDescription: row.vip_description || "",
+      vipPrivileges: Array.isArray(row.vip_privileges) ? row.vip_privileges : [],
+      vipExpiresAt: row.vip_expires_at || "",
+      vip_expires_at: row.vip_expires_at || "",
+      vipStartsAt: row.vip_starts_at || "",
+      updatedAt: row.updated_at || "",
+      createdAt: row.created_at || "",
     };
   }
 
@@ -53,40 +87,70 @@
   }
 
   social.people = combinedPeople;
-  social.visiblePeople = () => remote.filter(row => row.active === true && row.status !== "closed");
+  social.visiblePeople = () => [...remote];
   social.incomingThumbs = () => social.visiblePeople().filter(person => social.hasThumb(person.id, social.myId()));
 
-  async function refresh() {
+  function scheduleRefresh(delay = 20000) {
     clearTimeout(refreshTimer);
-    try {
-      const data = await invoke("list");
-      remote = (data.profiles || []).map(normalize).filter(row => row.id);
-      window.dispatchEvent(new CustomEvent("bali:social-changed", { detail:{ source:"cloud" } }));
-    } catch (error) { console.warn("[BALI PEOPLE cloud]", error.message); }
-    refreshTimer = setTimeout(refresh, 60000);
+    refreshTimer = setTimeout(() => refresh(), delay);
+  }
+
+  async function refresh({ force = false } = {}) {
+    if (refreshing && !force) return refreshing;
+    clearTimeout(refreshTimer);
+    refreshing = (async () => {
+      try {
+        const data = await invoke("list");
+        const next = (data.profiles || []).map(normalize).filter(row => row.id);
+        const nextSignature = JSON.stringify(next.map(row => [row.id, row.updatedAt, row.vipPlanId, row.vipExpiresAt, row.photo, row.name]));
+        remote = next;
+        if (force || nextSignature !== signature) {
+          signature = nextSignature;
+          window.dispatchEvent(new CustomEvent("bali:social-changed", {
+            detail: { source: "cloud", total: remote.length, refreshedAt: data.refreshed_at || new Date().toISOString() },
+          }));
+        }
+        return remote;
+      } catch (error) {
+        console.warn("[BALI PEOPLE cloud]", error.message);
+        return remote;
+      } finally {
+        refreshing = null;
+        scheduleRefresh(document.visibilityState === "visible" ? 20000 : 60000);
+      }
+    })();
+    return refreshing;
   }
 
   async function syncProfile(profile = social.profile()) {
     if (saving) return;
     saving = true;
     try {
-      const data = await invoke("sync", { profile:{
-        name:profile.name || game.profile().name || "Гость BALI",
-        photo:profile.photo || game.profile().avatar || "",
-        crop_x:Number(profile.cropX ?? 50),
-        crop_y:Number(profile.cropY ?? 40),
-        status:profile.status || "closed",
-        bio:profile.bio || "",
-        active:Boolean(profile.active),
-        share_telegram:Boolean(profile.shareTelegram),
-        gender:profile.gender || game.profile().gender || "unspecified",
-        birth_date:profile.birthDate || game.profile().birthDate || null
+      const data = await invoke("sync", { profile: {
+        name: profile.name || game.profile().name || "Гость BALI",
+        photo: profile.photo || game.profile().avatar || "",
+        crop_x: Number(profile.cropX ?? 50),
+        crop_y: Number(profile.cropY ?? 40),
+        status: profile.status || "closed",
+        bio: profile.bio || "",
+        active: Boolean(profile.active),
+        share_telegram: Boolean(profile.shareTelegram),
+        gender: profile.gender || game.profile().gender || "unspecified",
+        birth_date: profile.birthDate || game.profile().birthDate || null,
       }});
       const normalized = normalize(data.profile || {});
-      localSave({ ...profile, username:normalized.username, telegram:normalized.telegram, shareTelegram:normalized.shareTelegram });
-      await refresh();
-    } catch (error) { console.warn("[BALI PEOPLE sync]", error.message); }
-    finally { saving = false; }
+      localSave({
+        ...profile,
+        username: normalized.username,
+        telegram: normalized.telegram,
+        shareTelegram: normalized.shareTelegram,
+      });
+      await refresh({ force: true });
+    } catch (error) {
+      console.warn("[BALI PEOPLE sync]", error.message);
+    } finally {
+      saving = false;
+    }
   }
 
   social.saveProfile = function(patch = {}) {
@@ -95,8 +159,25 @@
     return next;
   };
 
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
-  window.addEventListener("bali:telegram-authenticated", () => { syncProfile(); refresh(); }, { once:true });
-  setTimeout(() => { syncProfile(); refresh(); }, 800);
-  window.BaliSocialCloud = { refresh, syncProfile, profiles:() => [...remote] };
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") refresh({ force: true });
+    else scheduleRefresh(60000);
+  });
+  window.addEventListener("focus", () => refresh({ force: true }));
+  window.addEventListener("bali:telegram-authenticated", () => {
+    syncProfile();
+    refresh({ force: true });
+  }, { once: true });
+  window.addEventListener("online", () => refresh({ force: true }));
+
+  setTimeout(() => {
+    syncProfile();
+    refresh({ force: true });
+  }, 250);
+
+  window.BaliSocialCloud = {
+    refresh: () => refresh({ force: true }),
+    syncProfile,
+    profiles: () => [...remote],
+  };
 })();
