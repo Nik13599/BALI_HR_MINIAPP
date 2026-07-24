@@ -1,13 +1,13 @@
 {
-  "user_app": "bali-rebuild-4",
-  "admin": "bali-admin-rebuild-4",
-  "published_at": "2026-07-25T02:20:00Z",
+  "user_app": "bali-rebuild-5",
+  "admin": "bali-admin-rebuild-5",
+  "published_at": "2026-07-25T02:50:00Z",
   "runtime": "standalone-clean-user-and-complete-admin-rebuild",
   "ui_fix": "legacy-ui-loaders-disconnected-static-headings-and-independent-contact-actions",
   "people_fix": "protected-telegram-directory-with-all-users-and-active-qr-presence",
   "qr_fix": "direct-telegram-qr-scanner-to-event-checkin-production",
   "admin_fix": "complete-messages-bookings-events-customers-rules-rewards-gifts-grants-menu-hall-reviews-settings-crud",
-  "validation": "clean-rebuild-syntax-browser-contacts-people-loyalty-booking-and-admin-crud",
-  "telegram_url": "versioned-bali-rebuild-4",
+  "validation": "clean-rebuild-syntax-all-sections-contacts-people-loyalty-booking-and-admin-crud",
+  "telegram_url": "versioned-bali-rebuild-5",
   "pages": "single-workflow-validate-and-deploy"
 }
