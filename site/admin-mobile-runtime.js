@@ -2,7 +2,7 @@
   if (window.__BALI_ADMIN_MOBILE_RUNTIME__) return;
   window.__BALI_ADMIN_MOBILE_RUNTIME__ = true;
 
-  const VERSION = "bali-admin-production-8";
+  const VERSION = "bali-admin-production-9";
   const moduleSets = {
     dashboard: ["points-core.js","beta4-game.js","beta4-loyalty-core.js","event-qr-attendance-beta4.js","app-users-core-beta4.js","admin-dashboard-beta4.js","admin-birthdays-beta4.js","chip-requests-core-beta4.js","admin-chip-requests-beta4.js"],
     menu: ["admin-menu-categories-dialog-beta4.js","admin-menu-media-beta4.js"],
