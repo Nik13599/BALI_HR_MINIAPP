@@ -156,6 +156,11 @@ create table if not exists public.telegram_broadcast_deliveries (
 );
 create index if not exists telegram_broadcast_delivery_status_idx on public.telegram_broadcast_deliveries(broadcast_id,status);
 
+-- Telegram nickname privacy for BALI PEOPLE.
+alter table public.social_profiles add column if not exists share_telegram boolean not null default false;
+drop policy if exists "public active social profiles" on public.social_profiles;
+revoke select on public.social_profiles from anon;
+
 insert into public.loyalty_settings(id) values ('main') on conflict(id) do nothing;
 insert into public.venue_content(id,title,description,formats,active)
 values ('venue-main','Площадка BALI','','',true)
@@ -197,5 +202,6 @@ grant insert on public.reviews to anon;
 grant select,insert,update,delete on public.venue_content,public.reviews,public.loyalty_settings,
   public.loyalty_rewards,public.loyalty_reward_grants,public.loyalty_gifts,public.loyalty_gift_grants,
   public.vip_gifts,public.telegram_broadcasts,public.telegram_broadcast_deliveries to authenticated;
+grant select,insert,update,delete on public.social_profiles,public.social_likes to authenticated;
 
 notify pgrst, 'reload schema';
