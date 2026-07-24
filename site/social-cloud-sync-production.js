@@ -18,6 +18,11 @@
   let refreshTimer = 0;
   let signature = "";
 
+  const bootProfile = localProfile();
+  if (!bootProfile.active || bootProfile.status === "closed") {
+    localSave({ ...bootProfile, active: true, status: "chat" });
+  }
+
   async function invoke(action, body = {}, timeout = 9000) {
     if (!endpoint || !cfg.supabaseAnonKey || !tg.initData) throw new Error("BALI PEOPLE не подключён к серверу");
     const controller = new AbortController();
@@ -146,8 +151,9 @@
   async function syncProfile(profile = social.profile()) {
     if (saving) return;
     saving = true;
+    const visibleStatus = profile.status && profile.status !== "closed" ? profile.status : "chat";
+    localSave({ ...profile, active: true, status: visibleStatus });
     try {
-      const visibleStatus = profile.status && profile.status !== "closed" ? profile.status : "chat";
       const data = await invoke("sync", { profile: {
         name: profile.name || game.profile().name || "Гость BALI",
         photo: profile.photo || game.profile().avatar || "",
@@ -172,8 +178,6 @@
       await refresh({ force: true });
     } catch (error) {
       console.warn("[BALI PEOPLE sync]", error.message);
-      const visibleStatus = profile.status && profile.status !== "closed" ? profile.status : "chat";
-      localSave({ ...profile, active: true, status: visibleStatus });
       await refresh({ force: true });
     } finally {
       saving = false;
@@ -181,7 +185,9 @@
   }
 
   social.saveProfile = function(patch = {}) {
-    const next = localSave(patch);
+    const current = localProfile();
+    const nextStatus = patch.status && patch.status !== "closed" ? patch.status : (current.status && current.status !== "closed" ? current.status : "chat");
+    const next = localSave({ ...patch, active: true, status: nextStatus });
     setTimeout(() => syncProfile(next), 0);
     return next;
   };
@@ -200,7 +206,7 @@
   setTimeout(() => {
     syncProfile();
     refresh({ force: true });
-  }, 100);
+  }, 50);
 
   window.BaliSocialCloud = {
     refresh: () => refresh({ force: true }),
