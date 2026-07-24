@@ -16,15 +16,18 @@ const mockSupabase = `
   const db = window.__mockDb = {
     events:[{id:'event-1',title:'BALI PARTY',description:'Тестовое событие',event_date:'2026-07-25',event_time:'23:00',active:true,image_url:''}],
     menu_items:[{id:'menu-1',name:'Коктейль BALI',description:'Фирменный коктейль',category:'Бар',price:20,active:true,sort_order:1}],
-    hall_tables:[{id:'table-1',name:'Стол 1',seats:4,active:true}],
-    bookings:[],
+    hall_tables:[{id:'table-1',name:'Стол 1',seats:4,shape:'round',x:50,y:50,active:true}],
+    bookings:[{id:'booking-1',booking_date:'2026-07-25',booking_time:'23:00',customer_name:'Smoke User',phone:'+375291234567',table_id:'table-1',table_name:'Стол 1',guests:4,status:'pending'}],
     customers:[{id:'customer-1',name:'Test Guest',phone:'+375291111111',telegram:'@test_guest',visits:1}],
     app_users:[{id:'u1',user_key:'tg:900000001',telegram_id:900000001,name:'Smoke User',username:'@bali_smoke',active:true,last_seen_at:now},{id:'u2',user_key:'tg:900000002',telegram_id:900000002,name:'Test Guest',username:'@test_guest',active:true,last_seen_at:now}],
     event_checkins:[{id:'c1',event_id:'event-1',event_title:'BALI PARTY',user_key:'tg:900000002',telegram_id:900000002,name:'Test Guest',presence_status:'inside',checked_in_at:now,left_at:null}],
+    loyalty_rules:[{id:'lr1',action:'event_checkin',title:'Посещение мероприятия',description:'QR-вход',points:100,active:true,created_at:now}],
     loyalty_rewards:[{id:'r1',title:'VIP-статус',description:'VIP на 7 дней',icon:'👑',points_cost:500,stock:null,active:true,created_at:now}],
     loyalty_gifts:[{id:'g1',title:'Коктейль BALI',description:'Подарочный коктейль',icon:'🍸',points_cost:300,stock:null,active:true,created_at:now}],
     reward_grants:[{id:'rg1',user_key:'tg:900000001',reward_id:'r1',reward_title:'VIP-статус',status:'issued',created_at:now}],
     gift_grants:[{id:'gg1',to_user_key:'tg:900000001',gift_id:'g1',gift_title:'Коктейль BALI',status:'sent',created_at:now}],
+    reviews:[{id:'review-1',user_name:'Test Guest',rating:5,message:'Отличный клуб',status:'new',created_at:now}],
+    telegram_conversations:[], telegram_messages:[],
     app_settings:[{id:'main',club_name:'BALI',address:'Минск',phone:'+375296700300',events_title:'Ближайшие события',about_title:'О клубе',attendance_points:100}]
   };
   const makeQuery = table => {
@@ -62,6 +65,7 @@ const mockSupabase = `
   window.supabase = { createClient(){ return {
     from:makeQuery,
     rpc:async(name,args) => name === 'get_table_availability' ? {data:db.hall_tables.map(t => ({...t,available:true})),error:null} : name === 'create_public_booking' ? (db.bookings.push({id:crypto.randomUUID(),...args}),{data:{ok:true},error:null}) : {data:[],error:null},
+    functions:{invoke:async()=>({data:{ok:true},error:null})},
     auth:{ getSession:async()=>({data:{session:{user:{email:'admin@bali.local'}}}}), signInWithPassword:async()=>({data:{session:{user:{email:'admin@bali.local'}}},error:null}), signOut:async()=>({error:null}) }
   }; }};
 })();`;
@@ -128,11 +132,20 @@ async function testAdmin() {
   await mocks(page);
   await page.goto(`${origin}/site/admin-production.html?smoke=1`, { waitUntil:'domcontentloaded' });
   await page.waitForSelector('.admin-shell');
-  for (const view of ['overview','rewards','gifts','grants','customers','events','settings']) {
+  const views = ['overview','messages','bookings','events','customers','rules','rewards','gifts','grants','menu','hall','reviews','settings'];
+  for (const view of views) {
     await page.locator(`#adminNav [data-view="${view}"]`).click();
     await page.waitForTimeout(50);
     if (!(await page.locator('#adminContent').innerText()).trim()) throw new Error(`Admin view ${view} is empty`);
   }
+  await page.locator('#adminNav [data-view="rules"]').click();
+  await page.locator('#adminPrimary').click();
+  await page.locator('#adminEditorForm input[name="title"]').fill('Тестовое правило');
+  await page.locator('#adminEditorForm input[name="action"]').fill('smoke_action');
+  await page.locator('#adminEditorForm input[name="points"]').fill('25');
+  await page.locator('#adminEditorForm').evaluate(form => form.requestSubmit());
+  await page.waitForTimeout(100);
+  if (!(await page.locator('#adminContent').innerText()).includes('Тестовое правило')) throw new Error('Loyalty rule creation failed');
   await page.locator('#adminNav [data-view="rewards"]').click();
   await page.locator('#adminPrimary').click();
   await page.locator('#adminEditorForm input[name="title"]').fill('Новая награда');
@@ -152,6 +165,14 @@ async function testAdmin() {
   await page.locator('#adminEditorForm').evaluate(form => form.requestSubmit());
   await page.waitForTimeout(100);
   if (!(await page.locator('#adminContent').innerText()).includes('Новый подарок')) throw new Error('Gift creation failed');
+  await page.locator('#adminNav [data-view="menu"]').click();
+  await page.locator('#adminPrimary').click();
+  await page.locator('#adminEditorForm input[name="name"]').fill('Новая позиция');
+  await page.locator('#adminEditorForm input[name="category"]').fill('Бар');
+  await page.locator('#adminEditorForm input[name="price"]').fill('12');
+  await page.locator('#adminEditorForm').evaluate(form => form.requestSubmit());
+  await page.waitForTimeout(100);
+  if (!(await page.locator('#adminContent').innerText()).includes('Новая позиция')) throw new Error('Menu creation failed');
   if (errors.length) throw new Error(errors.join('\n'));
   await page.close();
 }
@@ -159,7 +180,7 @@ async function testAdmin() {
 try {
   await testUser();
   await testAdmin();
-  console.log('Clean BALI rebuild smoke tests passed.');
+  console.log('Complete clean BALI rebuild smoke tests passed.');
 } finally {
   await browser.close();
 }
