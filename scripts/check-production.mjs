@@ -12,6 +12,8 @@ const required = [
   'store.js',
   'bali-rebuild-user-v1.js',
   'bali-rebuild-user-v1.css',
+  'bali-rebuild-contact-actions-v1.js',
+  'bali-rebuild-admin-bootstrap-v1.js',
   'bali-rebuild-admin-v1.js',
   'bali-rebuild-admin-v1.css'
 ];
@@ -35,8 +37,8 @@ if (syntaxErrors.length) {
 const index = fs.readFileSync(path.join(site, 'index.html'), 'utf8');
 const admin = fs.readFileSync(path.join(site, 'admin-production.html'), 'utf8');
 if (index.includes('bali-production-loader-11.js')) throw new Error('Legacy user loader is still connected');
-if (!index.includes('bali-rebuild-user-v1.js')) throw new Error('Clean user rebuild is not connected');
+if (!index.includes('bali-rebuild-user-v1.js') || !index.includes('bali-rebuild-contact-actions-v1.js')) throw new Error('Clean user rebuild is incomplete');
 if (admin.includes('admin.js?v=')) throw new Error('Legacy admin runtime is still connected');
-if (!admin.includes('bali-rebuild-admin-v1.js')) throw new Error('Clean admin rebuild is not connected');
+if (!admin.includes('bali-rebuild-admin-v1.js') || !admin.includes('bali-rebuild-admin-bootstrap-v1.js')) throw new Error('Clean admin rebuild is incomplete');
 
 console.log(`Validated clean rebuild: ${required.length} files; legacy UI loaders disconnected.`);
