@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-production-36";
+  const version = "bali-production-37";
   const loaded = new Set();
   const pending = new Map();
   const url = name => name.startsWith("http") ? name : `./${name}?v=${version}`;
@@ -91,8 +91,11 @@
   ]);
   await optional("event-qr-safety-production.js");
 
+  // Install the visual title isolation before the main DOM is mounted.
+  // Legacy modules may still write to their hidden h3 nodes, but those writes are never visible.
+  await load("bali-home-static-titles-production.js");
   await load("bali-app-stable-production.js");
-  await load("bali-fixed-labels-production.js");
+  window.BaliHomeStaticTitles?.apply?.();
 
   const modules = [
     "beta4-layout-map.js",
@@ -108,22 +111,21 @@
   for (const module of modules) await optional(module, 7000);
 
   window.BaliRuntimeSafety?.ensureRequiredNodes?.();
-  window.BaliFixedLabels?.apply?.();
   window.BaliAppStable?.finalizeLayout?.();
+  window.BaliHomeStaticTitles?.apply?.();
   window.BaliCompactProfile?.mount?.();
   await window.BaliPeoplePage?.refresh?.({ useCloud:true });
   window.BaliPeopleTabVisibility?.apply?.();
-  window.BaliFixedLabels?.apply?.();
   window.BaliRuntimeSafety?.removeTechnicalOverlays?.();
 
   document.getElementById("baliBoot")?.remove();
   window.dispatchEvent(new CustomEvent("bali:production-ready", {
-    detail:{ version, phase:"complete", runtime:"stable-v3" }
+    detail:{ version, phase:"complete", runtime:"stable-v4-static-home-titles" }
   }));
 })().catch(error => {
   window.BaliErrorBoundary?.capture?.(error, { module:"production-loader", fatal:true });
   window.BaliRuntimeSafety?.recover?.(error);
-  console.error("[BALI loader 36]", error);
+  console.error("[BALI loader 37]", error);
   document.getElementById("baliBoot")?.remove();
   const root = document.getElementById("app");
   if (root && !root.children.length) {
