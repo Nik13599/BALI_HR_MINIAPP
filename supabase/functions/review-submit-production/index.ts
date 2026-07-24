@@ -70,7 +70,7 @@ Deno.serve(async req => {
     }
 
     const review = {
-      id:`review-${crypto.randomUUID()}`,
+      id:crypto.randomUUID(),
       user_key:userKey,
       telegram_id:user.id,
       telegram:user.username ? `@${user.username}` : "",
