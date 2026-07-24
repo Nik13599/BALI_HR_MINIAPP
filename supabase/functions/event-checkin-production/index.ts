@@ -22,6 +22,18 @@ Deno.serve(async req=>{
       return json({ok:true,checkins:data||[]});
     }
 
+    if(action==="presence"){
+      const [{data:rows,error:rowsError},{data:events,error:eventsError}]=await Promise.all([
+        db.from("event_checkins").select("event_id,user_key,telegram_id,checked_in_at,left_at,presence_status").is("left_at",null).neq("presence_status","left").order("checked_in_at",{ascending:false}).limit(5000),
+        db.from("events").select("id,event_date,event_time,event_end_date,event_end_time,active").eq("active",true)
+      ]);
+      if(rowsError)throw rowsError;
+      if(eventsError)throw eventsError;
+      const activeIds=new Set((events||[]).filter(event=>!eventEnded(event)).map(event=>String(event.id)));
+      const presence=(rows||[]).filter(row=>activeIds.has(String(row.event_id)));
+      return json({ok:true,presence,total:presence.length,refreshed_at:new Date().toISOString()});
+    }
+
     if(action==="leave"){
       const eventId=String(body.event_id||"");
       let query=db.from("event_checkins").select("*").eq("user_key",userKey).is("left_at",null).order("checked_in_at",{ascending:false}).limit(1);
