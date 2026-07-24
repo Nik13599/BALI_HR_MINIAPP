@@ -80,7 +80,6 @@
     optional("event-qr-attendance-beta4.js"),
     load("beta4-social-core.js")
   ]);
-  await optional("event-qr-safety-production.js");
 
   await Promise.all([
     optional("social-cloud-sync-production.js", 10000),
@@ -88,6 +87,7 @@
     optional("event-checkin-cloud-production.js", 10000),
     optional("loyalty-catalog-cloud-production.js", 10000)
   ]);
+  await optional("event-qr-safety-production.js");
 
   await load("bali-app-stable-production.js");
 
