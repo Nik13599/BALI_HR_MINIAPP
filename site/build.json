@@ -1,11 +1,12 @@
 {
-  "user_app": "bali-production-29",
+  "user_app": "bali-production-30",
   "admin": "production-21",
-  "published_at": "2026-07-24T16:05:00Z",
-  "runtime": "single-stable-user-runtime-with-error-boundary",
+  "published_at": "2026-07-24T16:30:00Z",
+  "runtime": "single-stable-user-runtime-with-error-boundary-and-smoke-tests",
   "ui_fix": "fixed-dom-source-no-legacy-app-no-observer-reordering",
-  "people_fix": "server-and-client-directory-with-app-users-and-points-accounts",
+  "people_fix": "telegram-validated-directory-plus-privacy-safe-fallback-view",
+  "qr_fix": "cloud-wrapper-plus-final-non-throwing-safety-layer",
   "admin_fix": "stable-orchestrator-with-error-boundary-and-real-customer-deduplication",
-  "telegram_url": "versioned-production-29",
+  "telegram_url": "versioned-production-30",
   "pages": "workflow-plus-nojekyll"
 }
