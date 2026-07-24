@@ -25,19 +25,16 @@
   `;
   document.head.appendChild(style);
 
+  function lock(node, label, key) {
+    if (!node) return;
+    if (node.textContent) node.textContent = "";
+    if (node.getAttribute("aria-label") !== label) node.setAttribute("aria-label", label);
+    if (node.dataset.fixedLabel !== key) node.dataset.fixedLabel = key;
+  }
+
   function apply() {
-    const events = document.querySelector("#homeEventsCard .card-head h3");
-    const about = document.querySelector("#homeAboutCard .card-head h3");
-    if (events) {
-      events.textContent = "";
-      events.setAttribute("aria-label", "Ближайшие события");
-      events.dataset.fixedLabel = "events";
-    }
-    if (about) {
-      about.textContent = "";
-      about.setAttribute("aria-label", "О клубе");
-      about.dataset.fixedLabel = "about";
-    }
+    lock(document.querySelector("#homeEventsCard .card-head h3"), "Ближайшие события", "events");
+    lock(document.querySelector("#homeAboutCard .card-head h3"), "О клубе", "about");
   }
 
   let queued = false;
