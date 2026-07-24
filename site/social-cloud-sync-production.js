@@ -81,6 +81,20 @@
     };
   }
 
+  async function safeQuery(query, label) {
+    try {
+      const { data, error } = await query;
+      if (error) {
+        console.warn(`[BALI PEOPLE ${label}]`, error.message);
+        return [];
+      }
+      return data || [];
+    } catch (error) {
+      console.warn(`[BALI PEOPLE ${label}]`, error?.message || error);
+      return [];
+    }
+  }
+
   async function directDirectory() {
     const map = new Map();
     const add = row => {
@@ -91,14 +105,12 @@
     Object.values(points?.accounts?.() || {}).forEach(add);
 
     if (store?.client) {
-      const [usersResult, pointsResult] = await Promise.all([
-        store.client.from("app_users").select("*").order("last_seen_at", { ascending:false }).limit(1000).catch(error => ({ data:[], error })),
-        store.client.from("points_accounts").select("*").order("updated_at", { ascending:false }).limit(1000).catch(error => ({ data:[], error }))
+      const [usersRows, pointRows] = await Promise.all([
+        safeQuery(store.client.from("app_users").select("*").order("last_seen_at", { ascending:false }).limit(1000), "app_users"),
+        safeQuery(store.client.from("points_accounts").select("*").order("updated_at", { ascending:false }).limit(1000), "points_accounts")
       ]);
-      if (usersResult.error) console.warn("[BALI PEOPLE app_users]", usersResult.error.message);
-      if (pointsResult.error) console.warn("[BALI PEOPLE points_accounts]", pointsResult.error.message);
-      (pointsResult.data || []).forEach(add);
-      (usersResult.data || []).forEach(add);
+      pointRows.forEach(add);
+      usersRows.forEach(add);
     }
 
     const myKey = String(localProfile()?.id || localProfile()?.userKey || "");
