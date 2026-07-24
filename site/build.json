@@ -1,10 +1,10 @@
 {
-  "user_app": "bali-production-27",
+  "user_app": "bali-production-28",
   "admin": "production-20",
-  "published_at": "2026-07-24T15:10:00Z",
+  "published_at": "2026-07-24T15:25:00Z",
   "runtime_fix": "ranking-null-guard-and-stable-profile-runtime",
-  "ui_fix": "dom-order-without-css-order-or-timer-driven-profile",
+  "ui_fix": "idempotent-dom-order-without-css-order-or-timer-driven-profile",
   "people_fix": "edge-and-client-app-users-plus-points-accounts-schema-independent",
-  "telegram_url": "versioned-production-27",
+  "telegram_url": "versioned-production-28",
   "pages": "workflow-plus-nojekyll"
 }
