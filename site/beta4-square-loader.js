@@ -1,5 +1,5 @@
 (async()=>{
-  const v='bali-telegram-auth-2';
+  const v='bali-production-5';
   const loadScript=name=>new Promise((resolve,reject)=>{
     const script=document.createElement('script');
     script.src=name.startsWith('http')?name:`./${name}?v=${v}`;
@@ -78,10 +78,10 @@
     'event-details-lineup-beta4.js',
     'venue-reviews-user-beta4.js',
     'review-eligibility-private-beta4.js',
-    'profile-invitations-split-beta4.js',
     'event-stability-final-beta4.js',
     'remove-contest-final-beta4.js',
-    'user-production-features.js'
+    'user-production-features.js',
+    'user-profile-final-cleanup.js'
   ];
   for(const name of optional){
     try{await loadScript(name)}catch(error){console.warn('[BALI optional module]',error.message)}
