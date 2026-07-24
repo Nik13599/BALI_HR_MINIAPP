@@ -23,7 +23,8 @@ const mockSupabase = `
     event_checkins:[{id:'c1',event_id:'event-1',event_title:'BALI PARTY',user_key:'tg:900000002',telegram_id:900000002,name:'Test Guest',presence_status:'inside',checked_in_at:now,left_at:null}],
     loyalty_rewards:[{id:'r1',title:'VIP-статус',description:'VIP на 7 дней',icon:'👑',points_cost:500,stock:null,active:true,created_at:now}],
     loyalty_gifts:[{id:'g1',title:'Коктейль BALI',description:'Подарочный коктейль',icon:'🍸',points_cost:300,stock:null,active:true,created_at:now}],
-    reward_grants:[], gift_grants:[],
+    reward_grants:[{id:'rg1',user_key:'tg:900000001',reward_id:'r1',reward_title:'VIP-статус',status:'issued',created_at:now}],
+    gift_grants:[{id:'gg1',to_user_key:'tg:900000001',gift_id:'g1',gift_title:'Коктейль BALI',status:'sent',created_at:now}],
     app_settings:[{id:'main',club_name:'BALI',address:'Минск',phone:'+375296700300',events_title:'Ближайшие события',about_title:'О клубе',attendance_points:100}]
   };
   const makeQuery = table => {
@@ -66,9 +67,18 @@ const mockSupabase = `
 })();`;
 
 async function mocks(page) {
-  await page.route('https://telegram.org/js/telegram-web-app.js**', route => route.fulfill({ status:200, contentType:'application/javascript', body:`window.__opened=[];window.Telegram={WebApp:{initData:'smoke-init-data',initDataUnsafe:{user:{id:900000001,first_name:'Smoke',last_name:'User',username:'bali_smoke'}},ready(){},expand(){},setHeaderColor(){},setBackgroundColor(){},openTelegramLink(url){window.__opened.push(url)},openLink(url){window.__opened.push(url)},showScanQrPopup(){},HapticFeedback:{selectionChanged(){}}}};` }));
+  await page.route('https://telegram.org/js/telegram-web-app.js**', route => route.fulfill({ status:200, contentType:'application/javascript', body:`window.__opened=[];window.__tel=[];const nativeAnchorClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(String(this.href).startsWith('tel:')){window.__tel.push(this.href);return;}return nativeAnchorClick.call(this);};window.Telegram={WebApp:{initData:'smoke-init-data',initDataUnsafe:{user:{id:900000001,first_name:'Smoke',last_name:'User',username:'bali_smoke'}},ready(){},expand(){},setHeaderColor(){},setBackgroundColor(){},openTelegramLink(url){window.__opened.push(url)},openLink(url){window.__opened.push(url)},showScanQrPopup(){},closeScanQrPopup(){},HapticFeedback:{selectionChanged(){}}}};` }));
   await page.route('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', route => route.fulfill({ status:200, contentType:'application/javascript', body:mockSupabase }));
-  await page.route('**/functions/v1/**', route => route.fulfill({ status:200, contentType:'application/json', body:JSON.stringify({ok:true,user:{user_key:'tg:900000001'},points:100}) }));
+  await page.route('**/functions/v1/**', async route => {
+    const functionName = new URL(route.request().url()).pathname.split('/').pop();
+    const now = new Date().toISOString();
+    let payload = { ok:true };
+    if (functionName === 'telegram-auth-bootstrap') payload = { ok:true, user:{ user_key:'tg:900000001', telegram_id:900000001, name:'Smoke User', username:'@bali_smoke', avatar:'' }, balance:100 };
+    if (functionName === 'telegram-people-directory') payload = { ok:true, user_key:'tg:900000001', people:[{user_key:'tg:900000001',telegram_id:900000001,name:'Smoke User',username:'@bali_smoke',avatar:''},{user_key:'tg:900000002',telegram_id:900000002,name:'Test Guest',username:'@test_guest',avatar:''}], checkins:[{event_id:'event-1',event_title:'BALI PARTY',user_key:'tg:900000002',telegram_id:900000002,presence_status:'inside',checked_in_at:now,left_at:null}] };
+    if (functionName === 'telegram-loyalty-profile') payload = { ok:true, user_key:'tg:900000001', rewards:[{id:'r1',title:'VIP-статус',description:'VIP на 7 дней',icon:'👑',points_cost:500,active:true}], gifts:[{id:'g1',title:'Коктейль BALI',description:'Подарочный коктейль',icon:'🍸',points_cost:300,active:true}], reward_grants:[{id:'rg1',user_key:'tg:900000001',reward_title:'VIP-статус',status:'issued',created_at:now}], gift_grants:[{id:'gg1',to_user_key:'tg:900000001',gift_title:'Коктейль BALI',status:'sent',created_at:now}] };
+    if (functionName === 'event-checkin-production') payload = { ok:true, points:100 };
+    await route.fulfill({ status:200, contentType:'application/json', body:JSON.stringify(payload) });
+  });
 }
 
 async function testUser() {
@@ -87,9 +97,11 @@ async function testUser() {
   await page.locator('.bali-nav [data-page="home"]').click();
   await page.locator('[data-link="instagram"]').click();
   await page.locator('[data-link="manager"]').click();
-  const opened = await page.evaluate(() => window.__opened);
-  if (!opened.some(url => url.includes('instagram.com'))) throw new Error('Instagram button did not call Telegram openLink');
-  if (!opened.some(url => url.includes('t.me/BaliMinskAppBot'))) throw new Error('Manager button did not call Telegram openTelegramLink');
+  await page.locator('[data-link="phone"]').click();
+  const contacts = await page.evaluate(() => ({ opened:window.__opened, tel:window.__tel }));
+  if (!contacts.opened.some(url => url.includes('instagram.com'))) throw new Error('Instagram button did not call Telegram openLink');
+  if (!contacts.opened.some(url => url.includes('t.me/BaliMinskAppBot'))) throw new Error('Manager button did not call Telegram openTelegramLink');
+  if (!contacts.tel.some(url => url.includes('+375296700300'))) throw new Error(`Phone button did not open tel link: ${contacts.tel.join(', ')}`);
   await page.locator('.bali-nav [data-page="people"]').click();
   const allPeople = await page.locator('#peopleList').innerText();
   if (!allPeople.includes('Smoke User') || !allPeople.includes('Test Guest')) throw new Error(`BALI People incomplete: ${allPeople}`);
@@ -98,7 +110,7 @@ async function testUser() {
   if (!inside.includes('Test Guest') || !inside.includes('НА МЕРОПРИЯТИИ')) throw new Error(`Inside tab incomplete: ${inside}`);
   await page.locator('.bali-nav [data-page="profile"]').click();
   const profile = await page.locator('#profileContent').innerText();
-  if (!profile.includes('VIP-статус') || !profile.includes('Коктейль BALI')) throw new Error(`Catalogs missing from profile: ${profile}`);
+  if (!profile.includes('BALI Shop') || !profile.includes('VIP-статус') || !profile.includes('Коктейль BALI') || !profile.includes('Мои награды') || !profile.includes('Мои подарки')) throw new Error(`Catalogs or grants missing from profile: ${profile}`);
   await page.locator('.bali-nav [data-page="events"]').click();
   await page.locator('[data-event-id="event-1"]').first().click();
   await page.locator('[data-action="book"]').click();
@@ -133,6 +145,13 @@ async function testAdmin() {
   await page.locator('#adminIssueForm').evaluate(form => form.requestSubmit());
   await page.waitForTimeout(100);
   if (!(await page.locator('#adminContent').innerText()).includes('Награда')) throw new Error('Reward issuance failed');
+  await page.locator('#adminNav [data-view="gifts"]').click();
+  await page.locator('#adminPrimary').click();
+  await page.locator('#adminEditorForm input[name="title"]').fill('Новый подарок');
+  await page.locator('#adminEditorForm input[name="points_cost"]').fill('200');
+  await page.locator('#adminEditorForm').evaluate(form => form.requestSubmit());
+  await page.waitForTimeout(100);
+  if (!(await page.locator('#adminContent').innerText()).includes('Новый подарок')) throw new Error('Gift creation failed');
   if (errors.length) throw new Error(errors.join('\n'));
   await page.close();
 }
