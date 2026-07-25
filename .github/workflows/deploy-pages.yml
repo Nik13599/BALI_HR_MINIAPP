@@ -29,7 +29,7 @@ jobs:
       - name: Checkout deployment branch
         uses: actions/checkout@v4
 
-      - name: Validate browser DEMO
+      - name: Validate fast browser DEMO
         shell: bash
         run: |
           set -euo pipefail
@@ -40,16 +40,20 @@ jobs:
             site/admin.html
             site/browser-demo.html
             site/browser-admin.html
-            site/beta4-square-loader.js
+            site/demo-seed.js
             site/bali-browser-demo-data.js
+            site/bali-fast-demo-v1.css
+            site/bali-fast-demo-v1.js
             site/store.js
           )
           for file in "${required[@]}"; do
             test -f "$file" || { echo "Missing required file: $file"; exit 1; }
           done
 
-          if grep -Eqi 'telegram-web-app\.js|telegram\.org/js|supabase-js|cdn\.jsdelivr\.net/npm/@supabase' site/index.html site/browser-demo.html; then
-            echo "External Telegram or Supabase SDK found in browser DEMO entry point"
+          node --check site/bali-fast-demo-v1.js
+
+          if grep -Eqi 'telegram-web-app\.js|telegram\.org/js|supabase-js|cdn\.jsdelivr\.net/npm/@supabase|beta4-square-loader' site/index.html; then
+            echo "Legacy Telegram, Supabase or slow loader found in fast DEMO entry point"
             exit 1
           fi
 
@@ -65,7 +69,8 @@ jobs:
 
           test -f _site/index.html
           test -f _site/site/index.html
-          test -f _site/site/browser-demo.html
+          test -f _site/site/bali-fast-demo-v1.js
+          test -f _site/site/bali-fast-demo-v1.css
           test -f _site/site/admin.html
 
           if find _site -type l -print -quit | grep -q .; then
