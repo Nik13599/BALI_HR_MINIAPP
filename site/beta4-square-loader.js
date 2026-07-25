@@ -1,22 +1,7 @@
 (async () => {
-  const version = "bali-local-demo-1";
-
+  const version = "bali-web-demo-2";
   window.BALI_DEMO_ONLY = true;
-  window.BALI_CONFIG = {
-    demoOnly: true,
-    telegramAuthRequired: false,
-    supabaseUrl: "",
-    supabaseAnonKey: "",
-    telegramAuthEndpoint: "",
-    venueName: "BALI Minsk",
-    venuePhone: "+375296700300",
-    venueAddress: "г. Минск, ул. Кирова, д. 13",
-    telegramChannelUrl: "https://t.me/baliclubminsk",
-    managerTelegramUrl: "https://t.me/BALI_MINSK",
-    instagramUrl: "https://www.instagram.com/baliminsk/",
-    tiktokUrl: "https://www.tiktok.com/@baliminsk",
-    yandexMapUrl: "https://yandex.by/maps/org/bali_night_club/104137822369/"
-  };
+  window.BALI_WEB_DEMO = true;
 
   const css = [
     "beta4-app.css",
@@ -27,6 +12,7 @@
   ];
 
   const js = [
+    "config.js",
     "store.js",
     "reviews-public-save-beta4.js",
     "demo-event-content-seed-beta4.js",
@@ -83,7 +69,8 @@
     "profile-controls-final-beta4.js",
     "legacy-event-attendance-beta4.js",
     "event-details-lineup-beta4.js",
-    "venue-reviews-user-beta4.js"
+    "venue-reviews-user-beta4.js",
+    "bali-web-demo-sanitize.js"
   ];
 
   css.forEach(name => {
@@ -103,7 +90,9 @@
     });
   }
 
-  document.documentElement.dataset.baliMode = "local-demo";
+  document.documentElement.dataset.baliMode = "web-demo";
+  document.documentElement.dataset.database = "disabled";
+  document.documentElement.dataset.externalAuth = "disabled";
 
   const reset = () => document.querySelector(".booking-data-overlay")?.classList.remove("open");
   document.getElementById("eventDialog")?.addEventListener("close", reset);
@@ -112,5 +101,5 @@
   }, true);
 })().catch(error => {
   console.error(error);
-  document.body.innerHTML = '<div style="padding:24px;color:white;background:#080a0a;min-height:100vh;font-family:system-ui"><h2>Не удалось загрузить локальную DEMO-версию</h2><p>Обновите страницу и попробуйте ещё раз.</p></div>';
+  document.body.innerHTML = '<div style="padding:24px;color:white;background:#080a0a;min-height:100vh;font-family:system-ui"><h2>Не удалось загрузить автономную WEB DEMO</h2><p>Обновите страницу и попробуйте ещё раз.</p></div>';
 });
