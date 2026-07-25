@@ -73,6 +73,7 @@
     "bali-people-vip-frame-beta4.js",
     "crown-win-cards-beta4.js",
     "bali-people-crown-frame-beta4.js",
+    "full-demo-people-finalizer-beta4.js",
     "profile-ranking-full-beta4.js",
     "profile-recent-rewards-beta4.js",
     "vip-duration-options-beta4.js",
@@ -120,6 +121,7 @@
   window.BaliWebDemoSanitize?.apply?.();
   window.BaliFullDemoEvents?.decorateEvents?.();
   window.BaliFullDemoPeople?.mountCurrentEvent?.();
+  window.BaliFullDemoPeopleFinalizer?.forceFullRender?.();
   window.BaliFullDemoNavigation?.sync?.();
   window.dispatchEvent(new CustomEvent("bali:full-demo-enhancements-ready"));
 })().catch(error => {
