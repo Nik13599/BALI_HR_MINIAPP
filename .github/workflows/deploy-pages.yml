@@ -1,4 +1,4 @@
-name: Deploy BALI Browser Demo
+name: Deploy BALI Full Browser Demo
 
 on:
   workflow_dispatch:
@@ -22,14 +22,14 @@ concurrency:
 
 jobs:
   build:
-    name: Build static Pages artifact
+    name: Validate and build full Beta4
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout deployment branch
         uses: actions/checkout@v4
 
-      - name: Validate fast browser DEMO
+      - name: Validate full browser DEMO
         shell: bash
         run: |
           set -euo pipefail
@@ -38,22 +38,60 @@ jobs:
             404.html
             site/index.html
             site/admin.html
+            site/admin-beta4.html
             site/browser-demo.html
             site/browser-admin.html
             site/demo-seed.js
             site/bali-browser-demo-data.js
-            site/bali-fast-demo-v1.css
-            site/bali-fast-demo-v1.js
             site/store.js
+            site/beta4-square-loader.js
+            site/beta4-app.js
+            site/beta4-qr-checkin.js
+            site/event-qr-attendance-beta4.js
+            site/night-crown-beta4.js
+            site/beta4-social-page.js
+            site/beta4-profile-v2.js
+            site/full-demo-runtime-fixes-beta4.js
+            site/full-demo-social-economy-beta4.js
+            site/full-demo-people-upgrade-beta4.js
+            site/full-demo-event-presence-beta4.js
+            site/full-demo-review-window-beta4.js
+            site/auto-event-qr-beta4.js
+            site/admin-event-qr-auto-beta4.js
+            site/admin-full-users-beta4.js
+            site/full-demo-fixes-beta4.css
           )
           for file in "${required[@]}"; do
             test -f "$file" || { echo "Missing required file: $file"; exit 1; }
           done
 
-          node --check site/bali-fast-demo-v1.js
+          scripts=(
+            site/beta4-square-loader.js
+            site/full-demo-runtime-fixes-beta4.js
+            site/full-demo-social-economy-beta4.js
+            site/full-demo-people-upgrade-beta4.js
+            site/full-demo-event-presence-beta4.js
+            site/full-demo-review-window-beta4.js
+            site/auto-event-qr-beta4.js
+            site/admin-event-qr-auto-beta4.js
+            site/admin-full-users-beta4.js
+            site/bali-people-privacy-beta4.js
+          )
+          for file in "${scripts[@]}"; do
+            echo "Checking $file"
+            node --check "$file"
+          done
 
-          if grep -Eqi 'telegram-web-app\.js|telegram\.org/js|supabase-js|cdn\.jsdelivr\.net/npm/@supabase|beta4-square-loader' site/index.html; then
-            echo "Legacy Telegram, Supabase or slow loader found in fast DEMO entry point"
+          grep -q 'beta4-square-loader.js?v=bali-full-demo-5' site/index.html
+          grep -q 'full-demo-runtime-fixes-beta4.js' site/beta4-square-loader.js
+          grep -q 'event-qr-attendance-beta4.js' site/beta4-square-loader.js
+          grep -q 'night-crown-beta4.js' site/beta4-square-loader.js
+          grep -q 'full-demo-people-upgrade-beta4.js' site/beta4-square-loader.js
+          grep -q 'admin-event-qr-auto-beta4.js' site/admin-beta4.html
+          grep -q 'admin-full-users-beta4.js' site/admin-beta4.html
+
+          if grep -Eqi 'telegram-web-app\.js|telegram\.org/js|supabase-js|cdn\.jsdelivr\.net/npm/@supabase' site/index.html site/admin-beta4.html; then
+            echo "Telegram or Supabase SDK found in full browser DEMO entry point"
             exit 1
           fi
 
@@ -69,8 +107,9 @@ jobs:
 
           test -f _site/index.html
           test -f _site/site/index.html
-          test -f _site/site/bali-fast-demo-v1.js
-          test -f _site/site/bali-fast-demo-v1.css
+          test -f _site/site/beta4-square-loader.js
+          test -f _site/site/full-demo-people-upgrade-beta4.js
+          test -f _site/site/admin-event-qr-auto-beta4.js
           test -f _site/site/admin.html
 
           if find _site -type l -print -quit | grep -q .; then
