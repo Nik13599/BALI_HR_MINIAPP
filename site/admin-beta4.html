@@ -5,50 +5,35 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#080a0a">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>BALI — Local DEMO Admin</title>
-  <link rel="stylesheet" href="./admin.css?v=bali-local-demo-1">
-  <link rel="stylesheet" href="./hall-layout.css?v=bali-local-demo-1">
-  <link rel="stylesheet" href="./admin-beta3.css?v=bali-local-demo-1">
-  <link rel="stylesheet" href="./admin-mobile-stable.css?v=bali-local-demo-1">
-  <link rel="stylesheet" href="./admin-loyalty-rewards-beta4.css?v=bali-local-demo-1">
-  <link rel="stylesheet" href="./beta4-admin-layout-overrides.css?v=bali-local-demo-1">
-  <script>
-    window.BALI_DEMO_ONLY = true;
-    window.BALI_CONFIG = {
-      demoOnly:true,
-      telegramAuthRequired:false,
-      supabaseUrl:"",
-      supabaseAnonKey:"",
-      telegramAuthEndpoint:"",
-      venueName:"BALI Minsk",
-      venuePhone:"+375296700300",
-      venueAddress:"г. Минск, ул. Кирова, д. 13"
-    };
-  </script>
-  <script src="./demo-seed.js?v=bali-local-demo-1"></script>
-  <script src="./demo-live-sync.js?v=bali-local-demo-1"></script>
-  <script src="./store.js?v=bali-local-demo-1"></script>
-  <script src="./demo-event-content-seed-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./hall-layout-data.js?v=bali-local-demo-1"></script>
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>BALI — WEB DEMO Admin</title>
+  <link rel="stylesheet" href="./admin.css?v=bali-web-demo-2">
+  <link rel="stylesheet" href="./hall-layout.css?v=bali-web-demo-2">
+  <link rel="stylesheet" href="./admin-beta3.css?v=bali-web-demo-2">
+  <link rel="stylesheet" href="./admin-mobile-stable.css?v=bali-web-demo-2">
+  <link rel="stylesheet" href="./admin-loyalty-rewards-beta4.css?v=bali-web-demo-2">
+  <link rel="stylesheet" href="./beta4-admin-layout-overrides.css?v=bali-web-demo-2">
+  <style>#loginView{display:none!important}</style>
+  <script src="./config.js?v=bali-web-demo-2"></script>
+  <script src="./demo-seed.js?v=bali-web-demo-2"></script>
+  <script src="./demo-live-sync.js?v=bali-web-demo-2"></script>
+  <script src="./store.js?v=bali-web-demo-2"></script>
+  <script src="./demo-event-content-seed-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./hall-layout-data.js?v=bali-web-demo-2"></script>
 </head>
-<body data-bali-mode="local-demo">
+<body data-bali-mode="web-demo">
   <div id="loginView" class="login-view">
     <form id="loginForm" class="login-card">
-      <div class="admin-logo">B</div>
-      <span class="eyebrow">BALI CONTROL · LOCAL DEMO</span>
-      <h1>Панель управления</h1>
-      <p id="loginHint">Автономная тестовая версия без Telegram и базы данных.</p>
-      <label><span>Логин</span><input name="email" type="email" value="demo@bali.local"></label>
-      <label><span>Пароль</span><input name="password" type="password" value="demo"></label>
-      <button class="primary" type="submit">Открыть DEMO</button>
-      <button class="ghost" id="demoLogin" type="button">Войти без авторизации</button>
-      <small>Все изменения сохраняются только в этом браузере.</small>
+      <input name="email" type="hidden" value="demo@bali.local">
+      <input name="password" type="hidden" value="demo">
+      <button id="demoLogin" type="button">Открыть WEB DEMO</button>
     </form>
   </div>
 
   <div id="appView" class="app hidden">
     <aside class="sidebar">
-      <div class="brand"><div class="admin-logo small">B</div><div><strong>BALI</strong><small>LOCAL DEMO</small></div></div>
+      <div class="brand"><div class="admin-logo small">B</div><div><strong>BALI</strong><small>WEB DEMO</small></div></div>
       <nav id="adminNav">
         <button class="active" data-view="dashboard">▦ <span>Обзор</span></button>
         <button data-view="events">◫ <span>События</span></button>
@@ -60,12 +45,13 @@
         <button data-view="hall">⌗ <span>Схемы</span></button>
         <button data-view="settings">⚙ <span>Настройки</span></button>
       </nav>
-      <div class="sidebar-foot"><span id="modeBadge" class="mode-badge">LOCAL</span><button id="logoutButton">Выйти</button></div>
+      <div class="sidebar-foot"><span id="modeBadge" class="mode-badge">LOCAL</span><button id="logoutButton">Сбросить</button></div>
     </aside>
+
     <main class="workspace">
       <header class="workspace-head">
-        <div><span class="eyebrow">АДМИНИСТРИРОВАНИЕ · LOCAL DEMO</span><h2 id="pageTitle">Обзор</h2></div>
-        <div class="head-actions"><a href="./index.html?v=bali-local-demo-1" target="_blank">Открыть приложение ↗</a><button class="primary compact" id="primaryAction">Добавить</button></div>
+        <div><span class="eyebrow">АДМИНИСТРИРОВАНИЕ · WEB DEMO</span><h2 id="pageTitle">Обзор</h2></div>
+        <div class="head-actions"><a href="./index.html?v=bali-web-demo-2" target="_blank">Открыть приложение ↗</a><button class="primary compact" id="primaryAction">Добавить</button></div>
       </header>
       <section id="content" class="content"></section>
     </main>
@@ -79,28 +65,31 @@
       <div class="modal-actions"><button type="button" class="ghost" data-close>Отмена</button><button type="submit" class="primary">Сохранить</button></div>
     </form>
   </dialog>
-  <div id="toast" class="toast"></div>
-  <div style="position:fixed;right:8px;bottom:8px;z-index:99999;padding:4px 7px;border-radius:999px;background:rgba(8,10,10,.86);border:1px solid rgba(200,255,61,.45);color:#c8ff3d;font:800 9px/1 system-ui;letter-spacing:.08em;pointer-events:none">LOCAL DEMO</div>
 
-  <script src="./admin.js?v=bali-local-demo-1"></script>
-  <script src="./admin-hall-patch.js?v=bali-local-demo-1"></script>
-  <script src="./admin-posters.js?v=bali-local-demo-1"></script>
-  <script src="./admin-hall-beta3.js?v=bali-local-demo-1"></script>
-  <script src="./points-core.js?v=bali-local-demo-1"></script>
-  <script src="./beta4-game.js?v=bali-local-demo-1"></script>
-  <script src="./beta4-loyalty-core.js?v=bali-local-demo-1"></script>
-  <script src="./app-users-core-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./event-qr-attendance-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./chip-requests-core-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./admin-chip-requests-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./night-crown-core-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./admin-mobile-runtime.js?v=bali-local-demo-1"></script>
-  <script src="./admin-night-crown-bootstrap-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./admin-booking-manager-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./admin-customer-dossier-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./admin-user-card-links-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./crown-win-cards-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./admin-venue-reviews-beta4.js?v=bali-local-demo-1"></script>
-  <script src="./demo-admin-toolbar.js?v=bali-local-demo-1"></script>
+  <div id="toast" class="toast"></div>
+  <div style="position:fixed;right:8px;bottom:8px;z-index:99999;padding:4px 7px;border-radius:999px;background:rgba(8,10,10,.86);border:1px solid rgba(200,255,61,.45);color:#c8ff3d;font:800 9px/1 system-ui;letter-spacing:.08em;pointer-events:none">WEB DEMO</div>
+
+  <script src="./admin.js?v=bali-web-demo-2"></script>
+  <script src="./admin-hall-patch.js?v=bali-web-demo-2"></script>
+  <script src="./admin-posters.js?v=bali-web-demo-2"></script>
+  <script src="./admin-hall-beta3.js?v=bali-web-demo-2"></script>
+  <script src="./points-core.js?v=bali-web-demo-2"></script>
+  <script src="./beta4-game.js?v=bali-web-demo-2"></script>
+  <script src="./beta4-loyalty-core.js?v=bali-web-demo-2"></script>
+  <script src="./app-users-core-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./event-qr-attendance-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./chip-requests-core-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./admin-chip-requests-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./night-crown-core-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./admin-mobile-runtime.js?v=bali-web-demo-2"></script>
+  <script src="./admin-night-crown-bootstrap-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./admin-booking-manager-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./admin-customer-dossier-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./admin-user-card-links-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./crown-win-cards-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./admin-venue-reviews-beta4.js?v=bali-web-demo-2"></script>
+  <script src="./demo-admin-toolbar.js?v=bali-web-demo-2"></script>
+  <script src="./bali-web-demo-sanitize.js?v=bali-web-demo-2"></script>
+  <script>document.getElementById("demoLogin")?.click();</script>
 </body>
 </html>
