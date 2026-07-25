@@ -55,6 +55,7 @@ jobs:
             site/full-demo-nav-unlock-beta4.js
             site/full-demo-social-economy-beta4.js
             site/full-demo-people-upgrade-beta4.js
+            site/full-demo-people-finalizer-beta4.js
             site/full-demo-event-presence-beta4.js
             site/full-demo-review-window-beta4.js
             site/auto-event-qr-beta4.js
@@ -73,6 +74,7 @@ jobs:
             site/full-demo-nav-unlock-beta4.js
             site/full-demo-social-economy-beta4.js
             site/full-demo-people-upgrade-beta4.js
+            site/full-demo-people-finalizer-beta4.js
             site/full-demo-event-presence-beta4.js
             site/full-demo-review-window-beta4.js
             site/auto-event-qr-beta4.js
@@ -89,6 +91,7 @@ jobs:
           grep -q 'beta4-square-loader.js?v=bali-full-demo-5' site/index.html
           grep -q 'full-demo-runtime-fixes-beta4.js' site/beta4-square-loader.js
           grep -q 'full-demo-nav-unlock-beta4.js' site/beta4-square-loader.js
+          grep -q 'full-demo-people-finalizer-beta4.js' site/beta4-square-loader.js
           grep -q 'event-qr-attendance-beta4.js' site/beta4-square-loader.js
           grep -q 'night-crown-beta4.js' site/beta4-square-loader.js
           grep -q 'full-demo-people-upgrade-beta4.js' site/beta4-square-loader.js
@@ -116,6 +119,7 @@ jobs:
           test -f _site/site/beta4-square-loader.js
           test -f _site/site/full-demo-nav-unlock-beta4.js
           test -f _site/site/full-demo-people-upgrade-beta4.js
+          test -f _site/site/full-demo-people-finalizer-beta4.js
           test -f _site/site/admin-event-qr-auto-beta4.js
           test -f _site/site/admin.html
 
