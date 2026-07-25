@@ -1,7 +1,8 @@
 (async () => {
-  const version = "bali-web-demo-3";
+  const version = "bali-browser-demo-2";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
+  window.BALI_BROWSER_DEMO = true;
 
   const css = [
     "beta4-app.css",
@@ -15,6 +16,7 @@
     "config.js",
     "bali-web-demo-sanitize.js",
     "store.js",
+    "bali-browser-demo-data.js",
     "reviews-public-save-beta4.js",
     "demo-event-content-seed-beta4.js",
     "points-core.js",
@@ -91,9 +93,10 @@
   }
 
   window.BaliWebDemoSanitize?.apply?.();
-  document.documentElement.dataset.baliMode = "web-demo";
+  document.documentElement.dataset.baliMode = "browser-demo";
   document.documentElement.dataset.database = "disabled";
   document.documentElement.dataset.externalAuth = "disabled";
+  document.documentElement.dataset.people = String(window.BaliBrowserDemoData ? 8 : 0);
 
   const reset = () => document.querySelector(".booking-data-overlay")?.classList.remove("open");
   document.getElementById("eventDialog")?.addEventListener("close", reset);
@@ -102,5 +105,5 @@
   }, true);
 })().catch(error => {
   console.error(error);
-  document.body.innerHTML = '<div style="padding:24px;color:white;background:#080a0a;min-height:100vh;font-family:system-ui"><h2>Не удалось загрузить автономную WEB DEMO</h2><p>Обновите страницу и попробуйте ещё раз.</p></div>';
+  document.body.innerHTML = '<div style="padding:24px;color:white;background:#080a0a;min-height:100vh;font-family:system-ui"><h2>Не удалось загрузить браузерную DEMO</h2><p>Обновите страницу и попробуйте ещё раз.</p></div>';
 });
