@@ -76,8 +76,11 @@
           all[event.id][key] = {
             user_key:key,
             name:person.name || `Гость ${index + 1}`,
-            status:index % 4 === 0 ? "going" : "interested",
-            attendance_mode:index % 4 === 0 ? "general_admission" : "interest",
+            interested:true,
+            party_size:1,
+            companions:0,
+            status:"interested",
+            attendance_mode:"interest",
             updated_at:new Date().toISOString()
           };
           changed = true;
@@ -178,7 +181,7 @@
   document.addEventListener("toggle", event => {
     if (!(event.target instanceof HTMLDialogElement)) return;
     document.body.classList.toggle("bali-dialog-open", Boolean(document.querySelector("dialog[open]")));
-    requestAnimationFrame(decorateEvents);
+    if (event.target.id === "eventDialog" && event.target.open) requestAnimationFrame(decorateEvents);
   }, true);
 
   let scheduled = false;
@@ -187,10 +190,7 @@
     scheduled = true;
     requestAnimationFrame(() => { scheduled = false; decorateEvents(); });
   };
-  new MutationObserver(records => {
-    if (records.some(record => record.addedNodes.length || record.removedNodes.length)) scheduleDecorate();
-  }).observe(document.documentElement, { childList:true, subtree:true });
-  ["bali:data-changed","bali:beta4-local","bali:checkin-complete","bali:checkin-left"].forEach(name => window.addEventListener(name, scheduleDecorate));
+  ["bali:full-demo-ready","bali:data-changed","bali:beta4-local"].forEach(name => window.addEventListener(name, scheduleDecorate));
   scheduleDecorate();
 
   window.BaliFullDemoEvents = { eventStart, eventEnd, isUpcoming, isToday, activeEvents, normalizeDemoEvents, ensureDemoAttendees, showPage, decorateEvents };
