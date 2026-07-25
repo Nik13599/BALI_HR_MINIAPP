@@ -8,4 +8,7 @@ body.bali-dialog-open{overflow:hidden!important}
 .shell>nav.nav[data-navigation-ready="true"]>button[data-page]{pointer-events:auto!important;opacity:1!important;filter:none!important}
 .shell>nav.nav[data-navigation-ready="true"]>button[data-page]:disabled{pointer-events:auto!important;opacity:.7!important}
 .legacy-attendance-person img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.home-about-actions [data-open-venue-review].review-window-active{border-color:rgba(255,213,74,.45)!important;background:rgba(255,213,74,.1)!important;color:#ffd54a!important}
+.home-about-actions [data-open-venue-review][hidden]{display:none!important}
+html[data-full-demo-ready="true"] .shell{opacity:1}
 @media(max-width:520px){.bali-today-label{left:7px;top:7px;font-size:7px;padding:5px 7px}}
