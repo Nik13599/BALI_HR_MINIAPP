@@ -7,14 +7,16 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>BALI Minsk — Fast Browser DEMO</title>
-  <link rel="stylesheet" href="./bali-fast-demo-v1.css?v=bali-fast-demo-1">
-  <script>try{delete window.Telegram}catch{window.Telegram=undefined}window.BALI_BROWSER_DEMO=true;window.BALI_DEMO_ONLY=true;</script>
+  <title>BALI Minsk — Full Browser DEMO</title>
+  <script>try{delete window.Telegram}catch{window.Telegram=undefined}window.BALI_BROWSER_DEMO=true;window.BALI_DEMO_ONLY=true;window.BALI_FULL_DEMO=true;</script>
 </head>
-<body data-bali-mode="fast-browser-demo">
+<body data-bali-mode="full-browser-demo">
   <div id="app"></div>
-  <script src="./demo-seed.js?v=bali-fast-demo-1"></script>
-  <script src="./bali-browser-demo-data.js?v=bali-fast-demo-1"></script>
-  <script src="./bali-fast-demo-v1.js?v=bali-fast-demo-1"></script>
+  <div id="toast" class="toast"></div>
+  <div style="position:fixed;right:8px;bottom:82px;z-index:99999;padding:4px 7px;border-radius:999px;background:rgba(8,10,10,.86);border:1px solid rgba(200,255,61,.45);color:#c8ff3d;font:800 9px/1 system-ui;letter-spacing:.08em;pointer-events:none">FULL DEMO</div>
+  <script src="./demo-seed.js?v=bali-full-demo-5"></script>
+  <script src="./demo-live-sync.js?v=bali-full-demo-5"></script>
+  <script src="./beta4-square-loader.js?v=bali-full-demo-5"></script>
+  <script src="./demo-user-toolbar.js?v=bali-full-demo-5"></script>
 </body>
 </html>
