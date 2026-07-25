@@ -22,7 +22,7 @@
     return { ...defaults, ...value, attendance: Number(value.attendance ?? value.story ?? defaults.attendance) };
   };
   const accounts = () => read(keys.accounts, {});
-  const accountKey = (data = {}) => data.userKey || data.ownerKey || (data.phone ? `phone:${normalizePhone(data.phone)}` : "") || (data.telegramId ? `tg:${data.telegramId}` : "") || data.code || "";
+  const accountKey = (data = {}) => data.userKey || data.ownerKey || data.code || (data.phone ? `phone:${normalizePhone(data.phone)}` : "") || "";
 
   function saveAccount(account) {
     const key = accountKey(account);
@@ -41,25 +41,33 @@
     return candidate;
   }
 
+  function browserIdentity() {
+    const key = "bali_browser_identity_v1";
+    let value = localStorage.getItem(key);
+    if (!value) {
+      value = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      localStorage.setItem(key, value);
+    }
+    return value;
+  }
+
   const profile = () => {
     const saved = read(keys.profile, null);
     if (saved?.code) {
       if (!saved.userKey) {
-        const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-        saved.userKey = telegramId ? `tg:${telegramId}` : saved.code;
+        saved.userKey = saved.ownerKey || saved.code;
         write(keys.profile, saved);
       }
       const registry = accounts();
       if (!registry[saved.userKey]) saveAccount(saved);
       return saved;
     }
-    const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-    const source = user?.id ? String(user.id) : String(Date.now()).slice(-7);
+    const source = browserIdentity().replace(/\W/g, "").slice(-7).toUpperCase();
     const created = {
-      code: `BALI-${source.slice(-7).toUpperCase()}`,
-      userKey: user?.id ? `tg:${user.id}` : `BALI-${source.slice(-7).toUpperCase()}`,
-      telegramId: user?.id || null,
-      name: user?.first_name || "Гость BALI",
+      code: `BALI-${source}`,
+      userKey: `web:${source}`,
+      ownerKey: `web:${source}`,
+      name: "Гость BALI",
       balance: 0,
       createdAt: new Date().toISOString()
     };
@@ -79,7 +87,6 @@
       userKey: key,
       name: data.name || current.name,
       phone: normalizePhone(data.phone) || current.phone || "",
-      telegram: data.telegram || current.telegram || "",
       ownerKey: data.ownerKey || current.ownerKey || key
     };
     write(keys.profile, linked);
@@ -113,7 +120,6 @@
       code: target.code || "",
       name: target.name || "Пользователь BALI",
       phone: normalizePhone(target.phone),
-      telegram: target.telegram || "",
       balance: 0,
       createdAt: new Date().toISOString()
     };
