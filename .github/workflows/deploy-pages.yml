@@ -88,16 +88,17 @@ jobs:
             node --check "$file"
           done
 
-          grep -q 'beta4-square-loader.js?v=bali-full-demo-5' site/index.html
+          grep -q 'beta4-square-loader.js?v=bali-full-demo-6' site/index.html
+          grep -q 'const version = "bali-full-demo-6"' site/beta4-square-loader.js
           grep -q 'full-demo-runtime-fixes-beta4.js' site/beta4-square-loader.js
           grep -q 'full-demo-nav-unlock-beta4.js' site/beta4-square-loader.js
           grep -q 'full-demo-people-finalizer-beta4.js' site/beta4-square-loader.js
           grep -q 'event-qr-attendance-beta4.js' site/beta4-square-loader.js
           grep -q 'night-crown-beta4.js' site/beta4-square-loader.js
           grep -q 'full-demo-people-upgrade-beta4.js' site/beta4-square-loader.js
-          grep -q 'admin-event-time-fields-beta4.js' site/admin-beta4.html
-          grep -q 'admin-event-qr-auto-beta4.js' site/admin-beta4.html
-          grep -q 'admin-full-users-beta4.js' site/admin-beta4.html
+          grep -q 'admin-event-time-fields-beta4.js?v=bali-full-demo-6' site/admin-beta4.html
+          grep -q 'admin-event-qr-auto-beta4.js?v=bali-full-demo-6' site/admin-beta4.html
+          grep -q 'admin-full-users-beta4.js?v=bali-full-demo-6' site/admin-beta4.html
 
           if grep -Eqi 'telegram-web-app\.js|telegram\.org/js|supabase-js|cdn\.jsdelivr\.net/npm/@supabase' site/index.html site/admin-beta4.html; then
             echo "Telegram or Supabase SDK found in full browser DEMO entry point"
