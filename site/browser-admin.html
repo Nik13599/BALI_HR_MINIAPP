@@ -8,15 +8,9 @@
   <meta http-equiv="Expires" content="0">
   <title>BALI — Browser Demo Admin</title>
   <style>html,body,iframe{width:100%;height:100%;margin:0;border:0;background:#080a0a}</style>
-  <script>
-    try { delete window.Telegram; } catch { window.Telegram = undefined; }
-    try {
-      Object.keys(localStorage).filter(key => /telegram|tg_auth|initdata/i.test(key)).forEach(key => localStorage.removeItem(key));
-      Object.keys(sessionStorage).filter(key => /telegram|tg_auth|initdata/i.test(key)).forEach(key => sessionStorage.removeItem(key));
-    } catch {}
-  </script>
+  <script>try{delete window.Telegram}catch{window.Telegram=undefined}</script>
 </head>
 <body>
-  <iframe src="./admin-beta4.html?v=bali-browser-demo-1" title="BALI Browser Demo Admin"></iframe>
+  <iframe src="./admin-beta4.html?v=bali-browser-demo-2" title="BALI Browser Demo Admin"></iframe>
 </body>
 </html>
