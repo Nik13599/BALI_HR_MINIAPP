@@ -35,7 +35,11 @@
     "night-crown-core-beta4.js",
     "night-crown-checkin-bridge-beta4.js",
     "night-crown-presence-fix-beta4.js",
-    "beta4-social-core.js",
+    "beta4-social-core-beta4.js"
+  ];
+
+  critical[critical.length - 1] = "beta4-social-core.js";
+  critical.push(
     "full-demo-social-economy-beta4.js",
     "full-demo-people-upgrade-beta4.js",
     "bali-people-status-sync-beta4.js",
@@ -52,8 +56,9 @@
     "beta4-loyalty-ui-stable.js",
     "beta4-social-page.js",
     "night-crown-beta4.js",
+    "full-demo-nav-unlock-beta4.js",
     "beta4-qr-checkin.js"
-  ];
+  );
 
   const enhancements = [
     "night-crown-vote-lock-beta4.js",
@@ -119,6 +124,7 @@
   window.BaliWebDemoSanitize?.apply?.();
   window.BaliFullDemoEvents?.decorateEvents?.();
   window.BaliFullDemoPeople?.mountCurrentEvent?.();
+  window.BaliFullDemoNavigation?.sync?.();
   window.dispatchEvent(new CustomEvent("bali:full-demo-enhancements-ready"));
 })().catch(error => {
   console.error(error);
