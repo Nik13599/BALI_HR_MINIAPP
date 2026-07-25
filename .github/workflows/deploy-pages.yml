@@ -1,4 +1,4 @@
-name: Deploy BALI Browser Demo to GitHub Pages
+name: Deploy BALI Browser Demo
 
 on:
   workflow_dispatch:
@@ -16,41 +16,81 @@ permissions:
   pages: write
   id-token: write
 
+timeout-minutes: 15
+
 concurrency:
-  group: pages
+  group: github-pages
   cancel-in-progress: true
 
 jobs:
+  build:
+    name: Build static Pages artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate browser DEMO
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            index.html
+            404.html
+            site/index.html
+            site/admin.html
+            site/browser-demo.html
+            site/browser-admin.html
+            site/beta4-square-loader.js
+            site/bali-browser-demo-data.js
+            site/store.js
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing required file: $file"; exit 1; }
+          done
+
+          if grep -Eqi 'telegram-web-app\.js|telegram\.org/js|supabase-js|cdn\.jsdelivr\.net/npm/@supabase' site/index.html site/browser-demo.html; then
+            echo "External Telegram or Supabase SDK found in browser DEMO entry point"
+            exit 1
+          fi
+
+      - name: Prepare clean static site
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+          cp index.html 404.html _site/
+          cp -R site _site/site
+          touch _site/.nojekyll
+
+          test -f _site/index.html
+          test -f _site/site/index.html
+          test -f _site/site/browser-demo.html
+          test -f _site/site/admin.html
+
+          find _site -type l -print -quit | grep -q . && {
+            echo "Symbolic links are not allowed in a GitHub Pages artifact"
+            exit 1
+          } || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
   deploy:
+    name: Deploy GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
-      - name: Checkout browser demo
-        uses: actions/checkout@v4
-
-      - name: Validate browser demo files
-        run: |
-          test -f index.html
-          test -f 404.html
-          test -f site/index.html
-          test -f site/browser-demo.html
-          test -f site/admin.html
-          test -f site/browser-admin.html
-          test -f site/bali-browser-demo-data.js
-          test -f site/store.js
-          ! grep -q "telegram-web-app.js" site/index.html
-          ! grep -q "supabase-js" site/index.html
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload browser demo
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
-      - name: Deploy browser demo
+      - name: Deploy artifact
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 600000
+          error_count: 20
+          reporting_interval: 5000
