@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-web-demo-2";
+  const version = "bali-web-demo-3";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
 
@@ -13,6 +13,7 @@
 
   const js = [
     "config.js",
+    "bali-web-demo-sanitize.js",
     "store.js",
     "reviews-public-save-beta4.js",
     "demo-event-content-seed-beta4.js",
@@ -69,8 +70,7 @@
     "profile-controls-final-beta4.js",
     "legacy-event-attendance-beta4.js",
     "event-details-lineup-beta4.js",
-    "venue-reviews-user-beta4.js",
-    "bali-web-demo-sanitize.js"
+    "venue-reviews-user-beta4.js"
   ];
 
   css.forEach(name => {
@@ -90,6 +90,7 @@
     });
   }
 
+  window.BaliWebDemoSanitize?.apply?.();
   document.documentElement.dataset.baliMode = "web-demo";
   document.documentElement.dataset.database = "disabled";
   document.documentElement.dataset.externalAuth = "disabled";
