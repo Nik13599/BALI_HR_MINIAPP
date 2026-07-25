@@ -84,10 +84,7 @@
   }, true);
 
   const schedule = () => requestAnimationFrame(() => requestAnimationFrame(finalizeCards));
-  new MutationObserver(records => {
-    if (records.some(record => record.addedNodes.length || record.removedNodes.length)) schedule();
-  }).observe(document.documentElement,{childList:true,subtree:true});
-  ["bali:social-changed","bali:points-changed","bali:loyalty-changed","bali:beta4-changed","bali:checkin-complete","bali:checkin-left"].forEach(name => window.addEventListener(name,schedule));
+  ["bali:full-demo-enhancements-ready","bali:social-changed","bali:points-changed","bali:loyalty-changed","bali:beta4-changed","bali:checkin-complete","bali:checkin-left"].forEach(name => window.addEventListener(name,schedule));
   forceFullRender();
   window.BaliFullDemoPeopleFinalizer = { finalizeCards, forceFullRender };
 })();
