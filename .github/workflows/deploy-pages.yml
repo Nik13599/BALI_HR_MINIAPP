@@ -46,6 +46,7 @@ jobs:
             site/store.js
             site/beta4-square-loader.js
             site/beta4-app.js
+            site/fast-event-dialog-beta4.js
             site/beta4-qr-checkin.js
             site/event-qr-attendance-beta4.js
             site/night-crown-beta4.js
@@ -56,7 +57,6 @@ jobs:
             site/full-demo-social-economy-beta4.js
             site/full-demo-people-upgrade-beta4.js
             site/full-demo-people-finalizer-beta4.js
-            site/full-demo-event-presence-beta4.js
             site/full-demo-review-window-beta4.js
             site/auto-event-qr-beta4.js
             site/admin-event-time-fields-beta4.js
@@ -70,12 +70,13 @@ jobs:
 
           scripts=(
             site/beta4-square-loader.js
+            site/fast-event-dialog-beta4.js
+            site/event-qr-attendance-beta4.js
             site/full-demo-runtime-fixes-beta4.js
             site/full-demo-nav-unlock-beta4.js
             site/full-demo-social-economy-beta4.js
             site/full-demo-people-upgrade-beta4.js
             site/full-demo-people-finalizer-beta4.js
-            site/full-demo-event-presence-beta4.js
             site/full-demo-review-window-beta4.js
             site/auto-event-qr-beta4.js
             site/admin-event-time-fields-beta4.js
@@ -88,8 +89,12 @@ jobs:
             node --check "$file"
           done
 
-          grep -q 'beta4-square-loader.js?v=bali-full-demo-6' site/index.html
-          grep -q 'const version = "bali-full-demo-6"' site/beta4-square-loader.js
+          grep -q 'beta4-square-loader.js?v=bali-full-demo-7' site/index.html
+          grep -q 'const version = "bali-full-demo-7"' site/beta4-square-loader.js
+          grep -q 'fast-event-dialog-beta4.js' site/beta4-square-loader.js
+          grep -q 'party_size:partySizeValue' site/fast-event-dialog-beta4.js
+          grep -q 'companions:partySizeValue - 1' site/fast-event-dialog-beta4.js
+          grep -q 'interested:hadIntent' site/event-qr-attendance-beta4.js
           grep -q 'full-demo-runtime-fixes-beta4.js' site/beta4-square-loader.js
           grep -q 'full-demo-nav-unlock-beta4.js' site/beta4-square-loader.js
           grep -q 'full-demo-people-finalizer-beta4.js' site/beta4-square-loader.js
@@ -99,6 +104,11 @@ jobs:
           grep -q 'admin-event-time-fields-beta4.js?v=bali-full-demo-6' site/admin-beta4.html
           grep -q 'admin-event-qr-auto-beta4.js?v=bali-full-demo-6' site/admin-beta4.html
           grep -q 'admin-full-users-beta4.js?v=bali-full-demo-6' site/admin-beta4.html
+
+          if grep -Eq 'legacy-event-attendance-beta4\.js|full-demo-event-presence-beta4\.js|event-details-lineup-beta4\.js' site/beta4-square-loader.js; then
+            echo "Duplicate heavy event renderer is still active"
+            exit 1
+          fi
 
           if grep -Eqi 'telegram-web-app\.js|telegram\.org/js|supabase-js|cdn\.jsdelivr\.net/npm/@supabase' site/index.html site/admin-beta4.html; then
             echo "Telegram or Supabase SDK found in full browser DEMO entry point"
@@ -118,6 +128,7 @@ jobs:
           test -f _site/index.html
           test -f _site/site/index.html
           test -f _site/site/beta4-square-loader.js
+          test -f _site/site/fast-event-dialog-beta4.js
           test -f _site/site/full-demo-nav-unlock-beta4.js
           test -f _site/site/full-demo-people-upgrade-beta4.js
           test -f _site/site/full-demo-people-finalizer-beta4.js
