@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-browser-demo-2";
+  const version = "bali-browser-demo-3";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -17,7 +17,6 @@
     "bali-web-demo-sanitize.js",
     "store.js",
     "bali-browser-demo-data.js",
-    "reviews-public-save-beta4.js",
     "demo-event-content-seed-beta4.js",
     "points-core.js",
     "beta4-game.js",
