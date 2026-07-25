@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - gh-pages
     paths:
       - "site/**"
       - "index.html"
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout repository
+      - name: Checkout deployment branch
         uses: actions/checkout@v4
 
       - name: Validate browser DEMO
