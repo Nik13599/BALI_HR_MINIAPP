@@ -16,8 +16,6 @@ permissions:
   pages: write
   id-token: write
 
-timeout-minutes: 15
-
 concurrency:
   group: github-pages
   cancel-in-progress: true
@@ -26,6 +24,7 @@ jobs:
   build:
     name: Build static Pages artifact
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -69,10 +68,10 @@ jobs:
           test -f _site/site/browser-demo.html
           test -f _site/site/admin.html
 
-          find _site -type l -print -quit | grep -q . && {
+          if find _site -type l -print -quit | grep -q .; then
             echo "Symbolic links are not allowed in a GitHub Pages artifact"
             exit 1
-          } || true
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
@@ -83,6 +82,7 @@ jobs:
     name: Deploy GitHub Pages
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
