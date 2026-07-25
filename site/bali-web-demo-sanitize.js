@@ -26,10 +26,7 @@
     const result = {};
     for (const [key, item] of Object.entries(value)) {
       if (/^telegram(?:_?id|_?username)?$/i.test(key)) continue;
-      if (key === "username" && typeof item === "string") {
-        result[key] = item.replace(/^@+/, "");
-        continue;
-      }
+      if (/^(?:username|shareTelegram)$/i.test(key)) continue;
       result[key] = cleanRecord(item);
     }
     return result;
@@ -38,12 +35,13 @@
   function cleanDemoMemory() {
     const users = window.BaliDemo?.users;
     if (!Array.isArray(users)) return;
-    users.forEach((user, index) => {
+    users.forEach(user => {
       delete user.telegramId;
       delete user.telegram_id;
       delete user.telegram;
       delete user.telegramUsername;
-      if (typeof user.username === "string") user.username = user.username.replace(/^@+/, "") || `guest-${index + 1}`;
+      delete user.username;
+      delete user.shareTelegram;
     });
   }
 
@@ -123,6 +121,13 @@
     });
   }
 
+  function apply() {
+    try { delete window.Telegram; } catch { window.Telegram = undefined; }
+    cleanDemoMemory();
+    cleanLocalData();
+    sanitize(document);
+  }
+
   document.addEventListener("click", event => {
     const link = event.target.closest?.("a[href]");
     if (link && blockedUrl(link.getAttribute("href"))) {
@@ -137,9 +142,7 @@
     }
   }, true);
 
-  cleanDemoMemory();
-  cleanLocalData();
-  sanitize(document);
+  apply();
 
   const observer = new MutationObserver(records => {
     for (const record of records) {
@@ -150,12 +153,7 @@
   });
   observer.observe(document.documentElement, { childList:true, subtree:true });
 
-  window.addEventListener("bali:data-changed", () => {
-    cleanDemoMemory();
-    cleanLocalData();
-  });
-  window.addEventListener("bali:demo-user-changed", () => {
-    cleanDemoMemory();
-    cleanLocalData();
-  });
+  window.addEventListener("bali:data-changed", apply);
+  window.addEventListener("bali:demo-user-changed", apply);
+  window.BaliWebDemoSanitize = { apply, cleanLocalData };
 })();
