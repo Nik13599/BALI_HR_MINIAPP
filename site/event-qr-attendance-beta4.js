@@ -112,15 +112,23 @@
   function updateRsvp(eventId, userKey, row, status) {
     const rsvps = read(RSVP_KEY, {});
     rsvps[eventId] ||= {};
+    const previous = rsvps[eventId][userKey] || {};
+    const previousStatus = String(previous.status || "");
+    const hadIntent = previous.interested === true || (previous.interested !== false && ["interested","going","booked","checked_in"].includes(previousStatus));
+    const previousPartySize = Math.max(0, Number(previous.party_size || previous.partySize || previous.guests || previous.interest_count || (hadIntent ? 1 : 0)));
     rsvps[eventId][userKey] = {
-      ...(rsvps[eventId][userKey] || {}),
+      ...previous,
       user_key:userKey,
       name:row.name,
+      interested:hadIntent,
+      party_size:hadIntent ? Math.max(1, previousPartySize || 1) : 0,
+      companions:hadIntent ? Math.max(0, Math.max(1, previousPartySize || 1) - 1) : 0,
       status,
       attendance_mode:"qr",
       updated_at:now()
     };
     localStorage.setItem(RSVP_KEY, JSON.stringify(rsvps));
+    window.dispatchEvent(new CustomEvent("bali:rsvp-changed", { detail:{ eventId, userKey, status } }));
   }
 
   function reactivate(row, event, registry, id, userKey) {
