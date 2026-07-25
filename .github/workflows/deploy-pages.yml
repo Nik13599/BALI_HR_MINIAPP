@@ -1,4 +1,4 @@
-name: Deploy restored Beta4 to GitHub Pages
+name: Deploy BALI Browser Demo to GitHub Pages
 
 on:
   workflow_dispatch:
@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - "site/**"
+      - "index.html"
+      - "404.html"
       - ".github/workflows/deploy-pages.yml"
 
 permissions:
@@ -25,14 +27,30 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout restored Beta4
+      - name: Checkout browser demo
         uses: actions/checkout@v4
+
+      - name: Validate browser demo files
+        run: |
+          test -f index.html
+          test -f 404.html
+          test -f site/index.html
+          test -f site/browser-demo.html
+          test -f site/admin.html
+          test -f site/browser-admin.html
+          test -f site/bali-browser-demo-data.js
+          test -f site/store.js
+          ! grep -q "telegram-web-app.js" site/index.html
+          ! grep -q "supabase-js" site/index.html
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Upload repository
+
+      - name: Upload browser demo
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
-      - name: Deploy restored Beta4
+
+      - name: Deploy browser demo
         id: deployment
         uses: actions/deploy-pages@v4
