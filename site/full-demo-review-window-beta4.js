@@ -92,9 +92,8 @@
   }, true);
 
   const refresh = () => requestAnimationFrame(mount);
-  new MutationObserver(refresh).observe(document.documentElement, {childList:true,subtree:true});
-  ["bali:checkin-complete","bali:checkin-left","bali:data-changed"].forEach(name => window.addEventListener(name, refresh));
+  ["bali:full-demo-enhancements-ready","bali:checkin-complete","bali:checkin-left","bali:data-changed"].forEach(name => window.addEventListener(name, refresh));
+  setTimeout(refresh, 400);
   setInterval(mount, 60000);
-  refresh();
   window.BaliFullDemoReviewWindow = { eligibleEvents, mount, openEligibleReview };
 })();
