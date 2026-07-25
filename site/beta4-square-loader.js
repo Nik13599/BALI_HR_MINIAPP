@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-full-demo-6";
+  const version = "bali-full-demo-7";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -42,6 +42,7 @@
     "seating-templates-core-beta4.js",
     "full-demo-runtime-fixes-beta4.js",
     "beta4-app.js",
+    "fast-event-dialog-beta4.js",
     "legacy-nav-final-beta4.js",
     "home-layout-final-beta4.js",
     "beta4-menu-categories.js",
@@ -81,9 +82,6 @@
     "beta4-home-design.js",
     "profile-full-restore-beta4.js",
     "profile-controls-final-beta4.js",
-    "legacy-event-attendance-beta4.js",
-    "full-demo-event-presence-beta4.js",
-    "event-details-lineup-beta4.js",
     "full-demo-review-window-beta4.js",
     "venue-reviews-user-beta4.js"
   ];
