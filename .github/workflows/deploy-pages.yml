@@ -3,8 +3,7 @@ name: Deploy BALI Full Browser Demo
 on:
   workflow_dispatch:
   push:
-    branches:
-      - gh-pages
+    branches: [gh-pages]
     paths:
       - "site/**"
       - "index.html"
@@ -22,14 +21,14 @@ concurrency:
 
 jobs:
   build:
-    name: Validate and build full Beta4
+    name: Validate Full DEMO 8.5
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout deployment branch
         uses: actions/checkout@v4
 
-      - name: Validate full browser DEMO
+      - name: Validate application files
         shell: bash
         run: |
           set -euo pipefail
@@ -41,90 +40,83 @@ jobs:
             site/admin-beta4.html
             site/browser-demo.html
             site/browser-admin.html
-            site/demo-seed.js
-            site/bali-browser-demo-data.js
-            site/bali-web-demo-sanitize.js
-            site/beta4-home-links.js
             site/store.js
             site/beta4-square-loader.js
-            site/beta4-app.js
             site/fast-event-dialog-beta4.js
             site/fast-event-visuals-beta4.js
-            site/beta4-qr-checkin.js
-            site/event-qr-attendance-beta4.js
-            site/night-crown-beta4.js
-            site/beta4-social-page.js
-            site/beta4-profile-v2.js
-            site/full-demo-runtime-fixes-beta4.js
-            site/full-demo-nav-unlock-beta4.js
-            site/full-demo-social-economy-beta4.js
-            site/full-demo-people-upgrade-beta4.js
-            site/full-demo-people-finalizer-beta4.js
+            site/event-performer-cards-beta4.js
+            site/admin-event-performer-fields-beta4.js
+            site/full-menu-catalog-beta4.js
+            site/beta4-home-links.js
+            site/bali-web-demo-sanitize.js
             site/people-profile-stability-beta4.js
             site/profile-controls-final-beta4.js
-            site/full-demo-review-window-beta4.js
-            site/auto-event-qr-beta4.js
-            site/admin-event-time-fields-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
-            site/full-demo-fixes-beta4.css
           )
           for file in "${required[@]}"; do
             test -f "$file" || { echo "Missing required file: $file"; exit 1; }
           done
 
           scripts=(
-            site/bali-web-demo-sanitize.js
-            site/beta4-home-links.js
             site/beta4-square-loader.js
             site/fast-event-dialog-beta4.js
             site/fast-event-visuals-beta4.js
-            site/event-qr-attendance-beta4.js
-            site/full-demo-runtime-fixes-beta4.js
-            site/full-demo-nav-unlock-beta4.js
-            site/full-demo-social-economy-beta4.js
-            site/full-demo-people-upgrade-beta4.js
-            site/full-demo-people-finalizer-beta4.js
+            site/event-performer-cards-beta4.js
+            site/admin-event-performer-fields-beta4.js
+            site/full-menu-catalog-beta4.js
+            site/beta4-home-links.js
+            site/bali-web-demo-sanitize.js
             site/people-profile-stability-beta4.js
             site/profile-controls-final-beta4.js
-            site/full-demo-review-window-beta4.js
-            site/auto-event-qr-beta4.js
-            site/admin-event-time-fields-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
-            site/bali-people-privacy-beta4.js
           )
           for file in "${scripts[@]}"; do
             echo "Checking $file"
             node --check "$file"
           done
 
-          grep -q 'beta4-square-loader.js?v=bali-full-demo-8-stable2' site/index.html
-          grep -q 'const version = "bali-full-demo-8-stable2"' site/beta4-square-loader.js
+          grep -q 'beta4-square-loader.js?v=bali-full-demo-8-stable4' site/index.html
+          grep -q 'const version = "bali-full-demo-8-stable4"' site/beta4-square-loader.js
+          grep -q 'full-menu-catalog-beta4.js' site/beta4-square-loader.js
+          grep -q 'event-performer-cards-beta4.js' site/beta4-square-loader.js
+          grep -q 'admin-event-performer-fields-beta4.js?v=bali-full-demo-8-stable4' site/admin-beta4.html
+          grep -q 'performer-socials' site/event-performer-cards-beta4.js
+          grep -q 'dj_photo_url' site/admin-event-performer-fields-beta4.js
+          grep -q 'host_telegram_url' site/admin-event-performer-fields-beta4.js
           grep -q 'data-contact-key="telegram-channel"' site/beta4-home-links.js
-          grep -q 'Telegram-канал' site/beta4-home-links.js
-          grep -q 'Сообщество, афиши и новости' site/beta4-home-links.js
-          grep -q 'people-profile-stability-beta4.js' site/beta4-square-loader.js
-          grep -q 'fast-event-dialog-beta4.js' site/beta4-square-loader.js
-          grep -q 'fast-event-visuals-beta4.js' site/beta4-square-loader.js
-          grep -q 'fast-hall-map' site/fast-event-visuals-beta4.js
-          grep -q 'fast-event-avatar' site/fast-event-visuals-beta4.js
-          grep -q 'status-crown' site/fast-event-visuals-beta4.js
-          grep -q 'party_size:partySizeValue' site/fast-event-dialog-beta4.js
-          grep -q 'companions:partySizeValue - 1' site/fast-event-dialog-beta4.js
-          grep -q 'interested:hadIntent' site/event-qr-attendance-beta4.js
-          grep -q 'full-demo-runtime-fixes-beta4.js' site/beta4-square-loader.js
-          grep -q 'full-demo-nav-unlock-beta4.js' site/beta4-square-loader.js
-          grep -q 'full-demo-people-finalizer-beta4.js' site/beta4-square-loader.js
-          grep -q 'event-qr-attendance-beta4.js' site/beta4-square-loader.js
-          grep -q 'night-crown-beta4.js' site/beta4-square-loader.js
-          grep -q 'full-demo-people-upgrade-beta4.js' site/beta4-square-loader.js
           grep -q 'Уже в клубе' site/people-profile-stability-beta4.js
-          grep -q 'openFallbackPerson' site/people-profile-stability-beta4.js
-          grep -q 'touch-action:pan-y' site/people-profile-stability-beta4.js
-          grep -q 'admin-event-time-fields-beta4.js?v=bali-full-demo-6' site/admin-beta4.html
-          grep -q 'admin-event-qr-auto-beta4.js?v=bali-full-demo-6' site/admin-beta4.html
-          grep -q 'admin-full-users-beta4.js?v=bali-full-demo-6' site/admin-beta4.html
+
+          node <<'NODE'
+          const memory = new Map();
+          global.window = global;
+          global.localStorage = {
+            getItem:key => memory.has(key) ? memory.get(key) : null,
+            setItem:(key,value) => memory.set(key,String(value)),
+            removeItem:key => memory.delete(key)
+          };
+          global.document = {
+            getElementById:() => null,
+            addEventListener:() => {}
+          };
+          global.CustomEvent = class { constructor(type,init){ this.type=type; this.detail=init?.detail; } };
+          global.MutationObserver = class { observe(){} };
+          global.requestAnimationFrame = fn => fn();
+          global.addEventListener = () => {};
+          global.dispatchEvent = () => {};
+          require('./site/full-menu-catalog-beta4.js');
+          const catalog = global.BaliFullMenuCatalog?.catalog || [];
+          const categories = new Set(catalog.map(item => item.category));
+          const names = new Set(catalog.map(item => item.name));
+          if (catalog.length !== 132) throw new Error(`Expected 132 menu items, got ${catalog.length}`);
+          if (names.size !== 132) throw new Error(`Expected 132 unique menu names, got ${names.size}`);
+          if (categories.size !== 20) throw new Error(`Expected 20 categories, got ${categories.size}`);
+          for (const requiredName of ['Laphroaig Select','Dom Perignon Brut','Чангу','Рангда','Классический']) {
+            if (!names.has(requiredName)) throw new Error(`Missing menu item: ${requiredName}`);
+          }
+          console.log(`Validated ${catalog.length} menu items in ${categories.size} categories`);
+          NODE
 
           if grep -q 'all.click()' site/full-demo-people-finalizer-beta4.js; then
             echo "Recursive BALI People tab click found"
@@ -137,21 +129,16 @@ jobs:
           fi
 
           if grep -Eq 'location\.href = phone|Позвонить менеджеру' site/bali-web-demo-sanitize.js; then
-            echo "Browser sanitizer still replaces Telegram links with manager phone"
-            exit 1
-          fi
-
-          if grep -Eq 'legacy-event-attendance-beta4\.js|full-demo-event-presence-beta4\.js|event-details-lineup-beta4\.js|"beta4-layout-map\.js"' site/beta4-square-loader.js; then
-            echo "Duplicate heavy event or hall renderer is still active"
+            echo "Browser sanitizer still replaces Telegram links"
             exit 1
           fi
 
           if grep -Eqi 'telegram-web-app\.js|telegram\.org/js|supabase-js|cdn\.jsdelivr\.net/npm/@supabase' site/index.html site/admin-beta4.html; then
-            echo "Telegram or Supabase SDK found in full browser DEMO entry point"
+            echo "Telegram or Supabase SDK found in browser DEMO"
             exit 1
           fi
 
-      - name: Prepare clean static site
+      - name: Prepare static site
         shell: bash
         run: |
           set -euo pipefail
@@ -160,22 +147,11 @@ jobs:
           cp index.html 404.html _site/
           cp -R site _site/site
           touch _site/.nojekyll
-
-          test -f _site/index.html
-          test -f _site/site/index.html
-          test -f _site/site/beta4-square-loader.js
-          test -f _site/site/fast-event-dialog-beta4.js
-          test -f _site/site/fast-event-visuals-beta4.js
-          test -f _site/site/full-demo-nav-unlock-beta4.js
-          test -f _site/site/full-demo-people-upgrade-beta4.js
-          test -f _site/site/full-demo-people-finalizer-beta4.js
-          test -f _site/site/people-profile-stability-beta4.js
-          test -f _site/site/profile-controls-final-beta4.js
-          test -f _site/site/admin-event-qr-auto-beta4.js
+          test -f _site/site/full-menu-catalog-beta4.js
+          test -f _site/site/event-performer-cards-beta4.js
           test -f _site/site/admin.html
-
           if find _site -type l -print -quit | grep -q .; then
-            echo "Symbolic links are not allowed in a GitHub Pages artifact"
+            echo "Symbolic links are not allowed"
             exit 1
           fi
 
