@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-full-demo-8-stable2";
+  const version = "bali-full-demo-8-stable3";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -18,6 +18,7 @@
     "config.js",
     "bali-web-demo-sanitize.js",
     "store.js",
+    "full-menu-catalog-beta4.js",
     "auto-event-qr-beta4.js",
     "bali-browser-demo-data.js",
     "full-demo-data-upgrade-beta4.js",
@@ -43,6 +44,7 @@
     "full-demo-runtime-fixes-beta4.js",
     "beta4-app.js",
     "fast-event-dialog-beta4.js",
+    "event-performer-cards-beta4.js",
     "fast-event-visuals-beta4.js",
     "legacy-nav-final-beta4.js",
     "home-layout-final-beta4.js",
@@ -119,6 +121,7 @@
 
   window.BaliWebDemoSanitize?.apply?.();
   window.BaliHomeLinks?.sync?.();
+  window.BaliEventPerformerCards?.decorate?.();
   window.BaliFullDemoEvents?.decorateEvents?.();
   window.BaliFullDemoPeople?.mountCurrentEvent?.();
   window.BaliFullDemoPeopleFinalizer?.forceFullRender?.();
