@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-full-demo-8-stable1";
+  const version = "bali-full-demo-8-stable2";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -118,6 +118,7 @@
   }
 
   window.BaliWebDemoSanitize?.apply?.();
+  window.BaliHomeLinks?.sync?.();
   window.BaliFullDemoEvents?.decorateEvents?.();
   window.BaliFullDemoPeople?.mountCurrentEvent?.();
   window.BaliFullDemoPeopleFinalizer?.forceFullRender?.();
