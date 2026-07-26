@@ -43,6 +43,8 @@ jobs:
             site/browser-admin.html
             site/demo-seed.js
             site/bali-browser-demo-data.js
+            site/bali-web-demo-sanitize.js
+            site/beta4-home-links.js
             site/store.js
             site/beta4-square-loader.js
             site/beta4-app.js
@@ -72,6 +74,8 @@ jobs:
           done
 
           scripts=(
+            site/bali-web-demo-sanitize.js
+            site/beta4-home-links.js
             site/beta4-square-loader.js
             site/fast-event-dialog-beta4.js
             site/fast-event-visuals-beta4.js
@@ -95,8 +99,11 @@ jobs:
             node --check "$file"
           done
 
-          grep -q 'beta4-square-loader.js?v=bali-full-demo-8-stable1' site/index.html
-          grep -q 'const version = "bali-full-demo-8-stable1"' site/beta4-square-loader.js
+          grep -q 'beta4-square-loader.js?v=bali-full-demo-8-stable2' site/index.html
+          grep -q 'const version = "bali-full-demo-8-stable2"' site/beta4-square-loader.js
+          grep -q 'data-contact-key="telegram-channel"' site/beta4-home-links.js
+          grep -q 'Telegram-канал' site/beta4-home-links.js
+          grep -q 'Сообщество, афиши и новости' site/beta4-home-links.js
           grep -q 'people-profile-stability-beta4.js' site/beta4-square-loader.js
           grep -q 'fast-event-dialog-beta4.js' site/beta4-square-loader.js
           grep -q 'fast-event-visuals-beta4.js' site/beta4-square-loader.js
@@ -126,6 +133,11 @@ jobs:
 
           if grep -q 'new MutationObserver' site/profile-controls-final-beta4.js; then
             echo "Global profile MutationObserver found"
+            exit 1
+          fi
+
+          if grep -Eq 'location\.href = phone|Позвонить менеджеру' site/bali-web-demo-sanitize.js; then
+            echo "Browser sanitizer still replaces Telegram links with manager phone"
             exit 1
           fi
 
