@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-full-demo-8-home1";
+  const version = "bali-full-demo-8-stable1";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -83,7 +83,8 @@
     "profile-full-restore-beta4.js",
     "profile-controls-final-beta4.js",
     "full-demo-review-window-beta4.js",
-    "venue-reviews-user-beta4.js"
+    "venue-reviews-user-beta4.js",
+    "people-profile-stability-beta4.js"
   ];
 
   css.forEach(name => {
@@ -120,9 +121,10 @@
   window.BaliFullDemoEvents?.decorateEvents?.();
   window.BaliFullDemoPeople?.mountCurrentEvent?.();
   window.BaliFullDemoPeopleFinalizer?.forceFullRender?.();
+  window.BaliPeopleProfileStability?.relabel?.();
   window.BaliFullDemoNavigation?.sync?.();
   window.dispatchEvent(new CustomEvent("bali:full-demo-enhancements-ready"));
 })().catch(error => {
   console.error(error);
   document.body.innerHTML = `<div style="padding:24px;color:white;background:#080a0a;min-height:100vh;font-family:system-ui"><h2>Не удалось загрузить полную BALI DEMO</h2><p>${String(error.message || error)}</p><button onclick="location.reload()" style="min-height:44px;padding:0 16px;border:0;border-radius:12px;background:#c8ff3d;color:#080a0a;font-weight:800">Обновить страницу</button></div>`;
-})();
+});
