@@ -1,106 +1,15 @@
-(() => {
-  if (window.__BALI_FULL_MENU_CATALOG__) return;
-  window.__BALI_FULL_MENU_CATALOG__ = true;
-
-  const VERSION = 1;
-  const VERSION_KEY = "bali_full_menu_catalog_version_v1";
-  const STORAGE_KEY = "bali_menu_v2";
-  const SOURCE = "bali_full_menu_2026";
-
-  const raw = [
-    ["Холодные закуски", "Ассорти сырное", "130/40/20", 21],
-    ["Холодные закуски", "Ассорти мясное", "170/20/5", 25],
-    ["Холодные закуски", "Сёмга слабосолёная", "120", 30],
-    ["Холодные закуски", "Ассорти овощное", "200", 20],
-    ["Холодные закуски", "Мясная тарелка", "200", 30],
-    ["Холодные закуски", "Рыбная тарелка", "200", 30],
-    ["Холодные закуски", "Сырная тарелка", "200", 30],
-    ["Холодные закуски", "Овощная тарелка", "200", 20],
-    ["Холодные закуски", "Фруктовая тарелка", "1500", 50],
-
-    ["Горячие закуски", "Драники со сметаной", "150/50 · 4 шт.", 20],
-    ["Горячие закуски", "Драники с курицей и грибами", "150/150", 30],
-    ["Горячие закуски", "Драники с лососем", "150/70", 35],
-    ["Горячие закуски", "Мясное плато", "300", 45],
-
-    ["Паста", "Паста с курицей и грибами", "150/130", 25],
-    ["Паста", "Паста карбонара", "150/120", 25],
-
-    ["Гарниры и закуски", "Картофель фри с кетчупом", "150", 10],
-    ["Гарниры и закуски", "Куриные наггетсы с кетчупом", "150", 15],
-    ["Гарниры и закуски", "Картофельные дольки с кетчупом", "150", 12],
-    ["Гарниры и закуски", "Гренки чесночные", "150", 14],
-    ["Гарниры и закуски", "Пивной сет", "500", 55],
-
-    ["Шашлыки", "Шашлык из курицы", "200/50", 28],
-    ["Шашлыки", "Шашлык из свинины", "200/50", 32],
-    ["Шашлыки", "Шашлык из говядины", "200/50", 35],
-    ["Шашлыки", "Люля-кебаб из курицы", "200/50", 28],
-    ["Шашлыки", "Люля-кебаб из говядины", "200/50", 32],
-    ["Шашлыки", "Овощи на мангале", "200", 18],
-    ["Шашлыки", "Шашлык из телятины", "180", 34],
-
-    ["Соусы", "Кетчуп", "50", 3],
-    ["Соусы", "Сметана", "50", 3],
-    ["Соусы", "Майонез", "50", 3],
-    ["Соусы", "Аджика", "50", 3],
-    ["Соусы", "Тар-тар", "50", 3],
-    ["Соусы", "Наршараб", "50", 3],
-
-    ["Напитки", "Вода без газа / с газом", "500 мл", 5],
-    ["Напитки", "Сок в ассортименте", "250 мл", 7],
-    ["Напитки", "Coca-Cola / Sprite / Fanta", "500 мл", 7],
-    ["Напитки", "Энергетические напитки", "250 мл", 10],
-
-    ["Выпечка", "Хлеб ржаной", "1/60", 1],
-    ["Выпечка", "Лаваш", "200", 5],
-    ["Выпечка", "Хачапури по-аджарски", "450", 28],
-    ["Выпечка", "Хачапури по-мегрельски", "600", 28]
-  ];
-
-  const slug = value => String(value || "")
-    .toLocaleLowerCase("ru")
-    .normalize("NFKD")
-    .replace(/[^\p{L}\p{N}]+/gu, "-")
-    .replace(/^-+|-+$/g, "");
-
-  const catalog = raw.map(([category, name, weight, price], index) => ({
-    id: `menu-bali-${String(index + 1).padStart(2, "0")}-${slug(name)}`,
-    category,
-    name,
-    description: weight ? `Выход: ${weight}` : "",
-    weight,
-    price,
-    active: true,
-    sort_order: index + 1,
-    source: SOURCE
-  }));
-
-  const read = () => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  };
-
-  function install() {
-    const existing = read();
-    const defaultIds = new Set(["menu-1", "menu-2", "menu-3", "menu-4", "menu-5", "menu-6"]);
-    const catalogIds = new Set(catalog.map(item => item.id));
-    const custom = existing.filter(item => !defaultIds.has(String(item.id)) && !catalogIds.has(String(item.id)) && item.source !== SOURCE);
-    const next = [...catalog, ...custom.map((item, index) => ({
-      ...item,
-      sort_order: Number(item.sort_order || catalog.length + index + 1)
-    }))];
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    localStorage.setItem(VERSION_KEY, String(VERSION));
-    window.dispatchEvent(new CustomEvent("bali:data-changed", { detail:{ table:"menu_items", source:SOURCE, count:catalog.length } }));
-    return next;
-  }
-
-  if (localStorage.getItem(VERSION_KEY) !== String(VERSION)) install();
-  window.BaliFullMenuCatalog = { version:VERSION, source:SOURCE, catalog, install };
+(()=>{
+if(window.__BALI_FULL_MENU_CATALOG__)return;window.__BALI_FULL_MENU_CATALOG__=true;
+const V=2,VK="bali_full_menu_catalog_version_v2",SK="bali_menu_v2",CK="bali_menu_categories_v1",SRC="bali_bar_menu_photos_2026";
+const RAW=[["Виски","Laphroaig Select",60,"40 мл · Бутылка 700 мл — 1 500 BYN · Scotland","40 мл — 60 BYN"],["Виски","Macallan 12",90,"40 мл · Бутылка 700 мл — 1 575 BYN · Scotland","40 мл — 90 BYN"],["Виски","Macallan 15",2500,"Бутылка 700 мл — 2 500 BYN · Scotland","Бутылка — 2 500 BYN"],["Виски","Macallan 18",5000,"Бутылка 700 мл — 5 000 BYN · Scotland","Бутылка — 5 000 BYN"],["Виски","Glenfiddich 12",34,"40 мл · Бутылка 700 мл — 595 BYN · Scotland","40 мл — 34 BYN"],["Виски","Glenfiddich 15",86,"40 мл · Бутылка 700 мл — 1 505 BYN · Scotland","40 мл — 86 BYN"],["Виски","Johnnie Walker RED Label",22,"40 мл · Бутылка 1000 мл — 550 BYN · Scotland","40 мл — 22 BYN"],["Виски","Johnnie Walker BLACK Label",36,"40 мл · Бутылка 1000 мл — 900 BYN · Scotland","40 мл — 36 BYN"],["Виски","Johnnie Walker BLUE Label",3000,"Бутылка 700 мл — 3 000 BYN · Scotland","Бутылка — 3 000 BYN"],["Виски","Tullamore D.E.W.",30,"40 мл · Бутылка 700 мл — 525 BYN · Ireland","40 мл — 30 BYN"],["Виски","Jack Daniel's",30,"40 мл · Бутылка 1000 мл — 750 BYN · USA","40 мл — 30 BYN"],["Виски","Jack Daniel's Fire",38,"40 мл · Бутылка 700 мл — 665 BYN · USA","40 мл — 38 BYN"],["Виски","The Deacon",34,"40 мл · Бутылка 700 мл — 595 BYN · Scotland","40 мл — 34 BYN"],["Виски","Monkey Shoulder",34,"40 мл · Бутылка 1000 мл — 850 BYN · Scotland","40 мл — 34 BYN"],["Виски","Maker’s Mark",36,"40 мл · Бутылка 1000 мл — 900 BYN · USA","40 мл — 36 BYN"],["Виски","Jack Daniel's Honey",32,"40 мл · Бутылка 700 мл — 560 BYN · USA","40 мл — 32 BYN"],["Виски","Bushmills",18,"40 мл · Бутылка 1000 мл — 450 BYN · Ireland","40 мл — 18 BYN"],["Виски","Chivas Regal 12",32,"40 мл · Бутылка 1000 мл — 800 BYN · Scotland","40 мл — 32 BYN"],["Виски","Chivas Regal 18",1500,"Бутылка 700 мл — 1 500 BYN · Scotland","Бутылка — 1 500 BYN"],["Виски","Chivas Regal 21",2200,"Бутылка 700 мл — 2 200 BYN · Scotland","Бутылка — 2 200 BYN"],["Виски","Jameson",23,"40 мл · Бутылка 1000 мл — 575 BYN · Ireland","40 мл — 23 BYN"],["Виски","Jameson Crested",32,"40 мл · Бутылка 700 мл — 560 BYN · Ireland","40 мл — 32 BYN"],["Виски","Jameson Stout Edition",28,"40 мл · Бутылка 700 мл — 490 BYN · Ireland","40 мл — 28 BYN"],["Ром","Bumbu The Original",32,"40 мл · Бутылка 700 мл — 560 BYN · Barbados","40 мл — 32 BYN"],["Ром","Bumbu XO",40,"40 мл · Бутылка 700 мл — 700 BYN · Barbados","40 мл — 40 BYN"],["Ром","Matusalem Gran Reserva 15",34,"40 мл · Бутылка 700 мл — 595 BYN · Dominican","40 мл — 34 BYN"],["Ром","Matusalem Gran Reserva 23",1300,"Бутылка 700 мл — 1 300 BYN · Dominican","Бутылка — 1 300 BYN"],["Ром","Plantation Original Dark",24,"40 мл · Бутылка 700 мл — 420 BYN · France","40 мл — 24 BYN"],["Ром","Plantation Pineapple",34,"40 мл · Бутылка 700 мл — 595 BYN · France","40 мл — 34 BYN"],["Ром","Plantation XO",44,"40 мл · Бутылка 700 мл — 770 BYN · France","40 мл — 44 BYN"],["Ром","Dictador 12",34,"40 мл · Бутылка 700 мл — 595 BYN · Columbia","40 мл — 34 BYN"],["Ром","Bacardi Negra",20,"40 мл · Бутылка 1000 мл — 500 BYN · Cuba","40 мл — 20 BYN"],["Ром","Bacardi Spiced",22,"40 мл · Бутылка 1000 мл — 550 BYN · Cuba","40 мл — 22 BYN"],["Ром","Captain Morgan Dark",20,"40 мл · Бутылка 1000 мл — 500 BYN · Jamaica","40 мл — 20 BYN"],["Ром","Captain Morgan Spiced",22,"40 мл · Бутылка 1000 мл — 550 BYN · Jamaica","40 мл — 22 BYN"],["Ром","Kraken",26,"40 мл · Бутылка 1000 мл — 650 BYN · London","40 мл — 26 BYN"],["Джин","Bulldog",34,"40 мл · Бутылка 700 мл — 595 BYN · London","40 мл — 34 BYN"],["Джин","Bombay",24,"40 мл · Бутылка 1000 мл — 600 BYN · London","40 мл — 24 BYN"],["Джин","Hendrick's",38,"40 мл · Бутылка 700 мл — 665 BYN · Scotland","40 мл — 38 BYN"],["Джин","Monkey 47",32,"40 мл · Бутылка 500 мл — 400 BYN · Germany","40 мл — 32 BYN"],["Джин","Beefeater",22,"40 мл · Бутылка 500 мл — 275 BYN · London","40 мл — 22 BYN"],["Текила","Espolon Blanco",24,"40 мл · Бутылка 750 мл — 450 BYN · Mexico","40 мл — 24 BYN"],["Текила","Espolon Reposado",24,"40 мл · Бутылка 750 мл — 450 BYN · Mexico","40 мл — 24 BYN"],["Текила","Patron Reposado",60,"40 мл · Бутылка 700 мл — 1 050 BYN · Mexico","40 мл — 60 BYN"],["Текила","Patron Silver",60,"40 мл · Бутылка 700 мл — 1 050 BYN · Mexico","40 мл — 60 BYN"],["Текила","Clase Azul Reposado",3000,"Бутылка 700 мл — 3 000 BYN · Mexico","Бутылка — 3 000 BYN"],["Водка","Grey Goose",38,"40 мл · Бутылка 1000 мл — 950 BYN · France","40 мл — 38 BYN"],["Водка","Finlandia",20,"40 мл · Бутылка 1000 мл — 500 BYN · Finland","40 мл — 20 BYN"],["Водка","Absolut",20,"40 мл · Бутылка 700 мл — 350 BYN · Sweden","40 мл — 20 BYN"],["Водка","Vseslav Charodey",18,"40 мл · Бутылка 700 мл — 315 BYN · Belarus","40 мл — 18 BYN"],["Ликеры","Campari",20,"40 мл · Бутылка 1000 мл — 500 BYN · Italy","40 мл — 20 BYN"],["Ликеры","Cynar",24,"40 мл · Бутылка 700 мл — 420 BYN · Italy","40 мл — 24 BYN"],["Ликеры","Frangelico",30,"40 мл · Бутылка 700 мл — 525 BYN · Italy","40 мл — 30 BYN"],["Ликеры","Aperol",20,"40 мл · Бутылка 1000 мл — 500 BYN · Italy","40 мл — 20 BYN"],["Ликеры","Sarti Rosa",22,"40 мл · Бутылка 700 мл — 385 BYN · Italy","40 мл — 22 BYN"],["Ликеры","Bumbu Cream",26,"40 мл · Бутылка 700 мл — 455 BYN · Barbados","40 мл — 26 BYN"],["Ликеры","Jagermeister",22,"40 мл · Бутылка 1000 мл — 550 BYN · Germany","40 мл — 22 BYN"],["Ликеры","Jagermeister Manifest",32,"40 мл · Бутылка 1000 мл — 800 BYN · Germany","40 мл — 32 BYN"],["Ликеры","Jagermeister Orange",30,"40 мл · Бутылка 1000 мл — 750 BYN · Germany","40 мл — 30 BYN"],["Ликеры","Becherovka",20,"40 мл · Бутылка 700 мл — 350 BYN · Czech Republic","40 мл — 20 BYN"],["Ликеры","Fireball",20,"40 мл · Бутылка 1000 мл — 500 BYN · Canada","40 мл — 20 BYN"],["Ликеры","Absent Perno",30,"40 мл · Бутылка 700 мл — 525 BYN · France","40 мл — 30 BYN"],["Вермуты","Martini Extra Dry",14,"40 мл · Бутылка 1000 мл — 350 BYN · Italy","40 мл — 14 BYN"],["Вермуты","Martini Rosso",14,"40 мл · Бутылка 1000 мл — 350 BYN · Italy","40 мл — 14 BYN"],["Вермуты","Martini Bianco",14,"40 мл · Бутылка 1000 мл — 350 BYN · Italy","40 мл — 14 BYN"],["Вермуты","Martini Fiero",16,"40 мл · Бутылка 1000 мл — 400 BYN · Italy","40 мл — 16 BYN"],["Коньяк / бренди","Courvoisier VS",60,"40 мл · Бутылка 700 мл — 1 050 BYN · France","40 мл — 60 BYN"],["Коньяк / бренди","Courvoisier VSOP",64,"40 мл · Бутылка 700 мл — 1 120 BYN · France","40 мл — 64 BYN"],["Коньяк / бренди","Hennessy VS",44,"40 мл · Бутылка 700 мл — 770 BYN · France","40 мл — 44 BYN"],["Коньяк / бренди","Hennessy VSOP",70,"40 мл · Бутылка 700 мл — 1 225 BYN · France","40 мл — 70 BYN"],["Коньяк / бренди","Hennessy XO",240,"40 мл · Бутылка 700 мл — 4 200 BYN · France","40 мл — 240 BYN"],["Коньяк / бренди","Torres 10",22,"40 мл · Бутылка 700 мл — 385 BYN · Spain","40 мл — 22 BYN"],["Пиво","Miller",15,"450 мл · Belarus","450 мл — 15 BYN"],["Пиво","Maison Arne Blanche",15,"400 мл · Belarus","400 мл — 15 BYN"],["Пиво","Krushovice Alco 0%",10,"330 мл · Belarus","330 мл — 10 BYN"],["Пиво","Corona Extra",20,"335 мл · Mexico","335 мл — 20 BYN"],["Белое вино","Casillero De Diablo Sauv. Blanc",24,"125 мл · Бутылка — 144 BYN · сухое · Chile","125 мл — 24 BYN"],["Белое вино","Villa Wolf Gewurztraminer",36,"125 мл · Бутылка — 216 BYN · полусухое · Germany","125 мл — 36 BYN"],["Белое вино","JD Chablis Premier Cru",200,"125 мл · Бутылка — 1 200 BYN · сухое · France","125 мл — 200 BYN"],["Белое вино","Gustave Lorenz Riesling reserve",38,"125 мл · Бутылка — 228 BYN · полусухое · France","125 мл — 38 BYN"],["Белое вино","Domaine Marguerite Carillon",30,"125 мл · Бутылка — 180 BYN · сухое · France","125 мл — 30 BYN"],["Красное вино","Casillero De Diablo Carmenere",24,"125 мл · Бутылка — 144 BYN · сухое · Chile","125 мл — 24 BYN"],["Красное вино","Planeta La Segreta Il Rosso",36,"125 мл · Бутылка — 216 BYN · сухое · Italy","125 мл — 36 BYN"],["Красное вино","Ca’Bianca Barolo DOCC",150,"125 мл · Бутылка — 900 BYN · сухое · Italy","125 мл — 150 BYN"],["Красное вино","Cocolate Tube Primitivo",40,"125 мл · Бутылка — 240 BYN · полусухое · Italy","125 мл — 40 BYN"],["Красное вино","The Dogfather Zinfandel Reserve",46,"125 мл · Бутылка — 276 BYN · полусухое · USA","125 мл — 46 BYN"],["Шампанское / игристое вино","Cin Zano Asti",28,"125 мл · Бутылка — 168 BYN · Italy","125 мл — 28 BYN"],["Шампанское / игристое вино","Prosecco Bea Vita",26,"125 мл · Бутылка — 156 BYN · Italy","125 мл — 26 BYN"],["Шампанское / игристое вино","Mazet Brut",26,"125 мл · Бутылка — 156 BYN · France","125 мл — 26 BYN"],["Шампанское / игристое вино","Luc Belaire розовое сухое",500,"Бутылка — 500 BYN · France","Бутылка — 500 BYN"],["Шампанское / игристое вино","Luc Belaire белое брют",500,"Бутылка — 500 BYN · France","Бутылка — 500 BYN"],["Шампанское / игристое вино","Veuve Clicquot Brut белое брют",1500,"Бутылка — 1 500 BYN · France","Бутылка — 1 500 BYN"],["Шампанское / игристое вино","Moet & Chandon Brut белое брют",850,"Бутылка — 850 BYN · France","Бутылка — 850 BYN"],["Шампанское / игристое вино","Moet & Chandon Brut розовое брют",950,"Бутылка — 950 BYN · France","Бутылка — 950 BYN"],["Шампанское / игристое вино","Bottega Gold Prosecco белое брют",75,"125 мл · Бутылка — 450 BYN · Italy","125 мл — 75 BYN"],["Шампанское / игристое вино","Bottega Rose Gold Pinot Nero розовое брют",90,"125 мл · Бутылка — 540 BYN · Italy","125 мл — 90 BYN"],["Шампанское / игристое вино","Mumm белое брют",750,"Бутылка — 750 BYN · France","Бутылка — 750 BYN"],["Шампанское / игристое вино","Dom Perignon Brut",6000,"Бутылка — 6 000 BYN · France","Бутылка — 6 000 BYN"],["Шампанское / игристое вино","Ruinart, Blanc de Blancs",3000,"Бутылка — 3 000 BYN · France","Бутылка — 3 000 BYN"],["Безалкогольное вино","Nozeco игристое",18,"125 мл · Бутылка — 108 BYN · France","125 мл — 18 BYN"],["Безалкогольное вино","Light house белое",18,"125 мл · Бутылка — 108 BYN · Germany","125 мл — 18 BYN"],["Безалкогольное вино","Light house розовое",18,"125 мл · Бутылка — 108 BYN · Germany","125 мл — 18 BYN"],["Напитки","Рич: апельсин / вишня / яблоко / томат",10,"200 мл · Belarus","200 мл — 10 BYN"],["Напитки","Кока-кола / Швепс / Спрайт",10,"330 мл · Belarus","330 мл — 10 BYN"],["Напитки","Кока-кола зеро",10,"330 мл · Belarus","330 мл — 10 BYN"],["Напитки","Red Bull",15,"250 мл · Austria","250 мл — 15 BYN"],["Напитки","Red Bull зеро",15,"250 мл · Austria","250 мл — 15 BYN"],["Напитки","Боровая газ / негаз",10,"200 мл · Belarus","200 мл — 10 BYN"],["Напитки","Tassay газ / негаз",40,"750 мл · Kazakhstan","750 мл — 40 BYN"],["Кофе / чай","Американо",10,"","10 BYN"],["Кофе / чай","Эспрессо",10,"","10 BYN"],["Кофе / чай","Черный чай",10,"","10 BYN"],["Кофе / чай","Зеленый чай",10,"","10 BYN"],["Авторские коктейли","Чангу",25,"Джин / Вишня / Брауни / Миндаль","25 BYN"],["Авторские коктейли","Кута",25,"Ром / Алоэ / Карамель / Фундук / Апероль","25 BYN"],["Авторские коктейли","Убуд",25,"Текила / Яблоко / Киви","25 BYN"],["Авторские коктейли","Амед",25,"Виски / Кофе / Ваниль / Банан","25 BYN"],["Авторские коктейли","Нуса-дуа",25,"Текила / Бузина / Грейпфрут","25 BYN"],["Авторские коктейли","Букит",25,"Водка / Груша / Персик / Клюква","25 BYN"],["Классические коктейли","Классический коктейль",30,"Уточняйте у бармена или официанта","30 BYN"],["Авторские шоты","Сарасвати",10,"40 мл · Кокос / Ваниль / Ананас","40 мл — 10 BYN"],["Авторские шоты","Деви Шри",10,"40 мл · Ананас / Юдзу / Апероль","40 мл — 10 BYN"],["Авторские шоты","Ганеша",10,"40 мл · Вишня / Кафирский лайм","40 мл — 10 BYN"],["Авторские шоты","Баронг",10,"40 мл · Киви / Фисташка","40 мл — 10 BYN"],["Авторские шоты","Рангда",10,"40 мл · Кокос / Сливки","40 мл — 10 BYN"],["Авторские настойки","Фаербол",8,"40 мл","40 мл — 8 BYN"],["Авторские настойки","Клюква",8,"40 мл","40 мл — 8 BYN"],["Авторские настойки","Малина",8,"40 мл","40 мл — 8 BYN"],["Авторские настойки","Грейпфрут",8,"40 мл","40 мл — 8 BYN"],["Авторские настойки","Гранат",8,"40 мл","40 мл — 8 BYN"],["Лимонады б/а","Киви / фисташка",15,"Безалкогольный лимонад · 150 мл","15 BYN"],["Лимонады б/а","Классический",15,"Безалкогольный лимонад · 150 мл","15 BYN"]];
+const catalog=RAW.map((r,i)=>({category:r[0],name:r[1],price:r[2],description:r[3],price_label:r[4],id:`menu-bar-${String(i+1).padStart(3,"0")}`,active:true,sort_order:i+1,source:SRC}));
+const read=(k,f=[])=>{try{return JSON.parse(localStorage.getItem(k)||"null")??f}catch{return f}};
+function cats(rows=read(SK,[])){const old=read(CK,[]),m=new Map((Array.isArray(old)?old:[]).map(x=>[String(x.name||"").trim(),x])),names=[...new Set((Array.isArray(rows)?rows:[]).filter(x=>x.active!==false).map(x=>String(x.category||"Другое").trim()).filter(Boolean))],next=names.map((name,i)=>({...(m.get(name)||{}),id:m.get(name)?.id||`category-menu-${i+1}`,name,sort_order:i+1,active:m.get(name)?.active!==false}));localStorage.setItem(CK,JSON.stringify(next));window.dispatchEvent(new CustomEvent("bali:menu-categories-changed"));return next}
+function install(){const existing=read(SK,[]),defaults=new Set(["menu-1","menu-2","menu-3","menu-4","menu-5","menu-6","menu-demo-1","menu-demo-2","menu-demo-3","menu-demo-4","menu-demo-5","menu-demo-6","menu-demo-7","menu-demo-8","menu-demo-9","menu-demo-10"]),custom=(Array.isArray(existing)?existing:[]).filter(x=>!defaults.has(String(x.id||""))&&!["bali_full_menu_2026",SRC].includes(String(x.source||""))&&!/^menu-(?:bali|bar)-/i.test(String(x.id||""))),next=[...catalog,...custom.map((x,i)=>({...x,sort_order:Number(x.sort_order||catalog.length+i+1)}))];localStorage.setItem(SK,JSON.stringify(next));cats(next);localStorage.setItem(VK,String(V));window.dispatchEvent(new CustomEvent("bali:data-changed",{detail:{table:"menu_items",source:SRC,count:catalog.length}}));return next}
+function decorate(){const root=document.getElementById("menuList");if(!root)return false;const m=new Map(read(SK,[]).map(x=>[String(x.name||""),x]));root.querySelectorAll(".menu-item").forEach(card=>{const x=m.get(card.querySelector("h3")?.textContent?.trim()||""),p=card.querySelector("strong");if(x?.price_label&&p)p.textContent=x.price_label});return true}
+if(localStorage.getItem(VK)!==String(V))install();else cats();
+document.addEventListener("click",e=>{if(e.target.closest('[data-page="menu"],#menuTabs [data-category]'))requestAnimationFrame(decorate)},true);
+window.addEventListener("bali:data-changed",e=>{if(e?.detail?.table!=="menu_items")return;cats();requestAnimationFrame(decorate)});
+window.addEventListener("bali:full-demo-ready",()=>{const root=document.getElementById("menuList");if(root&&!root.dataset.priceObserver){root.dataset.priceObserver="1";new MutationObserver(()=>requestAnimationFrame(decorate)).observe(root,{childList:true})}requestAnimationFrame(decorate)});
+window.BaliFullMenuCatalog={version:V,source:SRC,catalog,install,syncCategories:cats,decorateMenu:decorate};
 })();
