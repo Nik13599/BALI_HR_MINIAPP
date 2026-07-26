@@ -5,9 +5,9 @@
   function apply() {
     const stats = document.getElementById("profileStats");
     if (stats) {
-      stats.innerHTML = "";
-      stats.hidden = true;
-      stats.classList.add("profile-v2-hidden");
+      if (stats.childNodes.length) stats.replaceChildren();
+      if (!stats.hidden) stats.hidden = true;
+      if (!stats.classList.contains("profile-v2-hidden")) stats.classList.add("profile-v2-hidden");
     }
     document.querySelector(".profile-visit-history")?.remove();
     document.querySelectorAll("#profileHero .profile-rank-button").forEach(node => node.remove());
@@ -28,15 +28,29 @@
   }
 
   let scheduled = false;
-  const schedule = () => {
+  const schedule = (delay = 0) => {
     if (scheduled) return;
     scheduled = true;
-    requestAnimationFrame(() => { scheduled = false; apply(); });
+    setTimeout(() => requestAnimationFrame(() => {
+      scheduled = false;
+      apply();
+    }), delay);
   };
-  new MutationObserver(records => {
-    if (records.some(record => record.addedNodes.length || record.removedNodes.length)) schedule();
-  }).observe(document.body, { childList:true, subtree:true });
-  ["bali:beta4-changed","bali:points-changed","bali:social-changed","bali:data-changed"].forEach(name => window.addEventListener(name, schedule));
-  schedule();
-  window.BaliProfileControlsFinal = { apply };
+
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-page="profile"]')) schedule(20);
+  }, true);
+
+  ["bali:full-demo-ready","bali:full-demo-enhancements-ready"].forEach(name => window.addEventListener(name, () => schedule(0)));
+  ["bali:beta4-changed","bali:points-changed","bali:social-changed","bali:data-changed"].forEach(name => window.addEventListener(name, () => {
+    if (document.querySelector('[data-screen="profile"].active')) schedule(0);
+  }));
+
+  let attempts = 0;
+  const timer = setInterval(() => {
+    attempts += 1;
+    if (apply() || attempts > 30) clearInterval(timer);
+  }, 100);
+
+  window.BaliProfileControlsFinal = { apply, schedule };
 })();
