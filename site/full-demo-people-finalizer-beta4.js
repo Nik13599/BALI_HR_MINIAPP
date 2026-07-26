@@ -39,6 +39,7 @@
       card.dataset.peopleSearch = normalize(searchable.join(" "));
       card.dataset.peopleAge = String(ageFor(person) || 0);
       card.dataset.peopleGender = genderFor(person);
+      card.style.cursor = "pointer";
       if (!peopleApi.viewerHasVip()) {
         card.querySelectorAll(".people-public-badges span").forEach(badge => {
           if (/\bбалл/i.test(badge.textContent || "")) badge.remove();
@@ -66,25 +67,31 @@
     }
   }
 
+  let scheduled = false;
   function forceFullRender() {
-    const all = document.querySelector('[data-social-v2-tab="all"]');
-    if (all && !document.querySelector('[data-social-v2-tab="inside"].active') && !document.querySelector('[data-social-v2-tab="thumbs"].active')) all.click();
-    requestAnimationFrame(() => requestAnimationFrame(finalizeCards));
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      scheduled = false;
+      finalizeCards();
+    }));
   }
 
   document.addEventListener("input", event => {
-    if (["baliPeopleNameSearch","baliPeopleAgeMin","baliPeopleAgeMax"].includes(event.target.id)) requestAnimationFrame(() => requestAnimationFrame(finalizeCards));
+    if (["baliPeopleNameSearch","baliPeopleAgeMin","baliPeopleAgeMax"].includes(event.target.id)) forceFullRender();
   });
   document.addEventListener("change", event => {
-    if (event.target.id === "baliPeopleGender") requestAnimationFrame(() => requestAnimationFrame(finalizeCards));
+    if (event.target.id === "baliPeopleGender") forceFullRender();
   });
   document.addEventListener("click", event => {
-    if (event.target.closest("[data-social-v2-tab],[data-page=\"dating\"]")) setTimeout(forceFullRender,0);
-    if (event.target.closest("[data-open-social-person]") && !event.target.closest("button")) setTimeout(finalizeCards,20);
+    if (event.target.closest("[data-social-v2-tab],[data-page=\"dating\"]")) setTimeout(forceFullRender, 20);
+    if (event.target.closest("[data-open-social-person]") && !event.target.closest("button")) setTimeout(forceFullRender, 20);
   }, true);
 
-  const schedule = () => requestAnimationFrame(() => requestAnimationFrame(finalizeCards));
-  ["bali:full-demo-enhancements-ready","bali:social-changed","bali:points-changed","bali:loyalty-changed","bali:beta4-changed","bali:checkin-complete","bali:checkin-left"].forEach(name => window.addEventListener(name,schedule));
+  const scheduleWhenVisible = () => {
+    if (document.querySelector('[data-screen="dating"].active') || document.getElementById("socialPersonDialog")?.open) forceFullRender();
+  };
+  ["bali:full-demo-enhancements-ready","bali:social-changed","bali:points-changed","bali:loyalty-changed","bali:beta4-changed","bali:checkin-complete","bali:checkin-left"].forEach(name => window.addEventListener(name, scheduleWhenVisible));
   forceFullRender();
   window.BaliFullDemoPeopleFinalizer = { finalizeCards, forceFullRender };
 })();
