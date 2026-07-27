@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-full-demo-8-stable4";
+  const version = "bali-full-demo-8-stable5";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -24,6 +24,7 @@
     "full-demo-data-upgrade-beta4.js",
     "demo-event-content-seed-beta4.js",
     "points-core.js",
+    "referral-share-beta4.js",
     "beta4-game.js",
     "app-users-core-beta4.js",
     "bali-age-gate-beta4.js",
@@ -111,6 +112,7 @@
   document.documentElement.dataset.externalAuth = "disabled";
   document.documentElement.dataset.fullDemoReady = "true";
   window.BaliWebDemoSanitize?.apply?.();
+  window.BaliReferralShare?.decorate?.();
   window.dispatchEvent(new CustomEvent("bali:full-demo-ready"));
 
   await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
@@ -127,6 +129,7 @@
   window.BaliFullDemoPeopleFinalizer?.forceFullRender?.();
   window.BaliPeopleProfileStability?.relabel?.();
   window.BaliFullDemoNavigation?.sync?.();
+  window.BaliReferralShare?.decorate?.();
   window.dispatchEvent(new CustomEvent("bali:full-demo-enhancements-ready"));
 })().catch(error => {
   console.error(error);
