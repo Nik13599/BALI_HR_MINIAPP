@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-full-demo-8-stable6";
+  const version = "bali-full-demo-8-stable7";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -45,6 +45,7 @@
     "seating-templates-core-beta4.js",
     "full-demo-runtime-fixes-beta4.js",
     "beta4-app.js",
+    "home-community-copy-beta4.js",
     "fast-event-dialog-beta4.js",
     "event-performer-cards-beta4.js",
     "fast-event-visuals-beta4.js",
@@ -114,6 +115,7 @@
   document.documentElement.dataset.fullDemoReady = "true";
   window.BaliWebDemoSanitize?.apply?.();
   window.BaliReferralShare?.decorate?.();
+  window.BaliHomeCommunityCopy?.apply?.();
   window.dispatchEvent(new CustomEvent("bali:full-demo-ready"));
 
   await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
@@ -131,6 +133,7 @@
   window.BaliPeopleProfileStability?.relabel?.();
   window.BaliFullDemoNavigation?.sync?.();
   window.BaliReferralShare?.decorate?.();
+  window.BaliHomeCommunityCopy?.apply?.();
   window.dispatchEvent(new CustomEvent("bali:full-demo-enhancements-ready"));
 })().catch(error => {
   console.error(error);
