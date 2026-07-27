@@ -4,7 +4,6 @@
 
   const points = window.BaliPoints;
   const tg = window.Telegram?.WebApp;
-  const config = window.BALI_CONFIG || {};
   const REFERRAL_CLAIMS_KEY = "bali_referral_claims_v1";
   const SHARE_ACTIONS_KEY = "bali_event_share_actions_v1";
 
@@ -16,7 +15,6 @@
     localStorage.setItem(key, JSON.stringify(value));
     return value;
   };
-  const esc = (value = "") => String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
   const toast = message => {
     const el = document.getElementById("toast");
     if (el) {
@@ -67,6 +65,33 @@
     }
   }
 
+  async function sharePoster(item, url, text) {
+    const imageUrl = item.image_url || item.image || item.poster_url || item.poster || "";
+    if (imageUrl && navigator.share && navigator.canShare) {
+      try {
+        const absoluteUrl = new URL(imageUrl, location.href).toString();
+        const response = await fetch(absoluteUrl, { mode: "cors", credentials: "omit" });
+        if (response.ok) {
+          const blob = await response.blob();
+          const extension = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
+          const file = new File([blob], `bali-event.${extension}`, { type: blob.type || "image/jpeg" });
+          const payload = { title: item.title || "BALI", text: `${text}\n${url}`, files: [file] };
+          if (navigator.canShare(payload)) {
+            await navigator.share(payload);
+            return true;
+          }
+        }
+      } catch (error) {
+        if (error?.name === "AbortError") return false;
+        console.warn("BALI poster share fallback", error);
+      }
+    }
+
+    const fallbackText = imageUrl ? `${text}\nАфиша: ${new URL(imageUrl, location.href).toString()}` : text;
+    telegramShare(url, fallbackText);
+    return true;
+  }
+
   function applyReferralFromUrl() {
     const params = new URLSearchParams(location.search);
     const ref = String(params.get("ref") || "").trim();
@@ -101,12 +126,13 @@
     return read("bali_events_v2", []).find(item => String(item.id) === String(eventId)) || {};
   }
 
-  function shareEvent(eventId) {
+  async function shareEvent(eventId) {
     if (!eventId) return;
     const item = eventModel(eventId);
     const title = item.title || document.getElementById("eventDialogTitle")?.textContent || "мероприятие BALI";
     const reward = Number(points?.settings?.().eventShare || 10);
-    telegramShare(eventShareUrl(eventId), `Смотри мероприятие «${title}» в BALI`);
+    const shared = await sharePoster(item, eventShareUrl(eventId), `Смотри мероприятие «${title}» в BALI`);
+    if (!shared) return;
 
     const actions = read(SHARE_ACTIONS_KEY, {});
     const key = `${profile().userKey || profile().code}:${eventId}`;
@@ -127,8 +153,8 @@
     style.textContent = `
       .bali-invite-card{margin-top:14px;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.04)}
       .bali-invite-card h3{margin:0 0 6px;font-size:14px}.bali-invite-card p{margin:0 0 12px;color:var(--muted,#9da49f);font-size:10px;line-height:1.55}
-      .bali-share-event{width:100%;margin-top:10px;min-height:44px;border:1px solid rgba(255,255,255,.18);border-radius:13px;background:rgba(255,255,255,.06);color:#fff;font-weight:800}
-      .event .bali-card-share{position:absolute;right:10px;top:10px;z-index:3;width:38px;height:38px;border:1px solid rgba(255,255,255,.24);border-radius:50%;background:rgba(8,10,10,.78);color:#fff;font-size:17px}
+      .bali-share-event{width:100%;margin-top:10px;min-height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.18);border-radius:13px;background:rgba(255,255,255,.06);color:#fff;font-weight:800}
+      .event .bali-card-share{position:absolute;right:10px;top:10px;z-index:3;width:42px;height:42px;border:1px solid rgba(255,255,255,.24);border-radius:50%;background:rgba(8,10,10,.78);color:#fff;font-size:17px}
       .event{position:relative}
     `;
     document.head.appendChild(style);
@@ -141,7 +167,7 @@
     const card = document.createElement("section");
     card.className = "bali-invite-card";
     card.dataset.baliInviteCard = "1";
-    card.innerHTML = `<h3>Пригласи друга</h3><p>Выбери человека в Telegram и отправь ему персональную ссылку. После его первого входа тебе начислится ${reward} BALI-баллов.</p><button type="button" class="primary full" data-invite-friend>Пригласить друга</button>`;
+    card.innerHTML = `<h3>Приглашай друзей — получай баллы</h3><p>Выбери человека в Telegram и отправь ему персональную ссылку. После его первого входа тебе начислится ${reward} BALI-баллов.</p><button type="button" class="primary full" data-invite-friend>Пригласить друга и получить ${reward} баллов</button>`;
     const wallet = screen.querySelector(".wallet");
     if (wallet) wallet.insertAdjacentElement("afterend", card);
     else screen.appendChild(card);
@@ -150,22 +176,25 @@
   function decorateEventDialog() {
     const social = document.getElementById("eventSocial");
     if (!social || social.querySelector("[data-share-current-event]")) return;
+    const reward = Number(points?.settings?.().eventShare || 10);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "bali-share-event";
     button.dataset.shareCurrentEvent = "1";
-    button.textContent = "↗ Поделиться мероприятием";
+    button.textContent = `↗ Делись мероприятием — получай ${reward} баллов`;
     social.appendChild(button);
   }
 
   function decorateEventCards() {
     document.querySelectorAll(".event[data-event]").forEach(card => {
       if (card.querySelector("[data-share-event-card]")) return;
+      const reward = Number(points?.settings?.().eventShare || 10);
       const button = document.createElement("button");
       button.type = "button";
       button.className = "bali-card-share";
       button.dataset.shareEventCard = card.dataset.event;
-      button.setAttribute("aria-label", "Поделиться мероприятием");
+      button.setAttribute("aria-label", `Поделиться афишей и получить ${reward} баллов`);
+      button.title = `Поделиться афишей и получить ${reward} баллов`;
       button.textContent = "↗";
       card.appendChild(button);
     });
