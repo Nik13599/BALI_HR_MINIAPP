@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-full-demo-8-stable5";
+  const version = "bali-full-demo-8-stable6";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -25,6 +25,7 @@
     "demo-event-content-seed-beta4.js",
     "points-core.js",
     "referral-share-beta4.js",
+    "referral-commission-beta4.js",
     "beta4-game.js",
     "app-users-core-beta4.js",
     "bali-age-gate-beta4.js",
