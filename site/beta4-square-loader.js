@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-full-demo-8-stable7";
+  const version = "bali-full-demo-8-stable10";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -31,7 +31,7 @@
     "bali-age-gate-beta4.js",
     "beta4-loyalty-core.js",
     "chip-requests-core-beta4.js",
-    "beta4-reward-icons-core.js",
+    "beta4-reward-icons-core-beta4.js",
     "home-design-core-beta4.js",
     "event-qr-attendance-beta4.js",
     "event-qr-local-bridge-beta4.js",
@@ -46,6 +46,7 @@
     "full-demo-runtime-fixes-beta4.js",
     "beta4-app.js",
     "home-community-copy-beta4.js",
+    "home-booking-controls-beta4.js",
     "fast-event-dialog-beta4.js",
     "event-performer-cards-beta4.js",
     "fast-event-visuals-beta4.js",
@@ -116,6 +117,7 @@
   window.BaliWebDemoSanitize?.apply?.();
   window.BaliReferralShare?.decorate?.();
   window.BaliHomeCommunityCopy?.apply?.();
+  window.BaliHomeBookingControls?.renderBooking?.();
   window.dispatchEvent(new CustomEvent("bali:full-demo-ready"));
 
   await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
@@ -134,6 +136,7 @@
   window.BaliFullDemoNavigation?.sync?.();
   window.BaliReferralShare?.decorate?.();
   window.BaliHomeCommunityCopy?.apply?.();
+  window.BaliHomeBookingControls?.renderBooking?.();
   window.dispatchEvent(new CustomEvent("bali:full-demo-enhancements-ready"));
 })().catch(error => {
   console.error(error);
