@@ -56,6 +56,7 @@ jobs:
             site/full-menu-catalog-beta4.js
             site/beta4-home-links.js
             site/bali-web-demo-sanitize.js
+            site/telegram-fullscreen-beta4.js
             site/people-profile-stability-beta4.js
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
@@ -103,6 +104,7 @@ jobs:
             site/full-menu-catalog-beta4.js
             site/beta4-home-links.js
             site/bali-web-demo-sanitize.js
+            site/telegram-fullscreen-beta4.js
             site/people-profile-stability-beta4.js
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
@@ -150,6 +152,9 @@ jobs:
           grep -q 'admin-match3-game-beta4.js' site/admin-beta4.html
           grep -Fq 'crown:["points-core.js","beta4-game.js","beta4-loyalty-core.js","match3-game-core-beta4.js","admin-match3-game-beta4.js"]' site/admin-mobile-runtime.js
           grep -q 'nav-icons-core-beta4.js' site/beta4-square-loader.js
+          grep -q 'telegram-fullscreen-beta4.js' site/index.html
+          grep -q 'requestFullscreen' site/telegram-fullscreen-beta4.js
+          grep -q 'contentSafeAreaInset' site/telegram-fullscreen-beta4.js
           grep -Fq 'settings:["home-design-core-beta4.js","admin-home-design-upload-fix-beta4.js","admin-home-design-beta4.js","nav-icons-core-beta4.js","admin-nav-icons-beta4.js"]' site/admin-mobile-runtime.js
           grep -q 'event-performer-cards-beta4.js' site/beta4-square-loader.js
           grep -q 'performer-socials' site/event-performer-cards-beta4.js
@@ -220,6 +225,42 @@ jobs:
           if (!events.some(row => row.id === "custom-event")) throw new Error("Custom event was removed");
           if (people.length !== 2 || people.find(row => row.id === "person-1").name !== "Current") throw new Error("People dedupe did not keep the newest row");
           console.log("Validated demo data consistency migration");
+          NODE
+
+          node <<'NODE'
+          global.window = global;
+          global.BALI_TELEGRAM_MINI_APP = true;
+          const styles = new Map();
+          const calls = { ready:0, expand:0, fullscreen:0 };
+          global.document = {
+            hidden:false,
+            documentElement:{ style:{ setProperty:(key,value) => styles.set(key,value) }, dataset:{} },
+            addEventListener:() => {}
+          };
+          global.innerHeight = 640;
+          global.addEventListener = () => {};
+          global.requestAnimationFrame = fn => fn();
+          global.Telegram = { WebApp:{
+            viewportStableHeight:620,
+            isFullscreen:false,
+            isExpanded:true,
+            safeAreaInset:{top:20,right:0,bottom:12,left:0},
+            contentSafeAreaInset:{top:28,right:0,bottom:16,left:0},
+            isVersionAtLeast:version => version === "8.0",
+            ready:() => calls.ready++,
+            expand:() => calls.expand++,
+            requestFullscreen:() => calls.fullscreen++,
+            setHeaderColor:() => {},
+            setBackgroundColor:() => {},
+            setBottomBarColor:() => {},
+            onEvent:() => {}
+          }};
+          require('./site/telegram-fullscreen-beta4.js');
+          if (!global.BaliTelegramFullscreen?.active) throw new Error("Telegram fullscreen controller is inactive");
+          if (calls.ready !== 1 || calls.expand !== 1 || calls.fullscreen !== 1) throw new Error("Fullscreen startup sequence did not run");
+          if (styles.get("--bali-viewport-height") !== "620px") throw new Error("Telegram viewport height was not synchronized");
+          if (styles.get("--bali-content-safe-top") !== "28px" || styles.get("--bali-content-safe-bottom") !== "16px") throw new Error("Telegram safe-area insets were not synchronized");
+          console.log("Validated Telegram fullscreen startup and safe areas");
           NODE
 
           node <<'NODE'
@@ -305,8 +346,8 @@ jobs:
             exit 1
           fi
 
-          if grep -Eqi 'telegram-web-app\.js|telegram\.org/js|supabase-js|cdn\.jsdelivr\.net/npm/@supabase' site/index.html site/admin-beta4.html; then
-            echo "Telegram or Supabase SDK found in browser DEMO"
+          if grep -Eqi 'supabase-js|cdn\.jsdelivr\.net/npm/@supabase' site/index.html site/admin-beta4.html || grep -Eqi 'telegram-web-app\.js|telegram\.org/js' site/admin-beta4.html; then
+            echo "Unexpected external SDK found in the browser demo or admin"
             exit 1
           fi
 
