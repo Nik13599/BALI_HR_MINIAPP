@@ -459,6 +459,7 @@
     button.type = "button";
     button.dataset.page = "crown";
     button.innerHTML = "<i aria-hidden=\"true\"></i><span>Игра</span>";
+    window.BaliNavIcons?.applyButton?.(button);
     nav.insertBefore(button, nav.querySelector('[data-page="profile"]'));
 
     screen.querySelector(".match3-scene").style.setProperty("--match3-bg", `url("${state.config.backgroundImage.replace(/"/g, "%22")}")`);

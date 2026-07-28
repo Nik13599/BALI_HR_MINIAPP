@@ -67,6 +67,8 @@ jobs:
             site/match3-game-beta4.css
             site/admin-match3-game-beta4.js
             site/admin-match3-game-beta4.css
+            site/nav-icons-core-beta4.js
+            site/admin-nav-icons-beta4.js
             site/assets/match3/background.webp
             site/assets/match3/headphones.webp
             site/assets/match3/martini.webp
@@ -110,6 +112,8 @@ jobs:
             site/match3-game-core-beta4.js
             site/match3-game-ui-beta4.js
             site/admin-match3-game-beta4.js
+            site/nav-icons-core-beta4.js
+            site/admin-nav-icons-beta4.js
             site/home-community-copy-beta4.js
             site/home-design-core-beta4.js
             site/demo-data-consistency-beta4.js
@@ -145,6 +149,8 @@ jobs:
           grep -q 'match3-game-core-beta4.js' site/admin-beta4.html
           grep -q 'admin-match3-game-beta4.js' site/admin-beta4.html
           grep -Fq 'crown:["points-core.js","beta4-game.js","beta4-loyalty-core.js","match3-game-core-beta4.js","admin-match3-game-beta4.js"]' site/admin-mobile-runtime.js
+          grep -q 'nav-icons-core-beta4.js' site/beta4-square-loader.js
+          grep -Fq 'settings:["home-design-core-beta4.js","admin-home-design-upload-fix-beta4.js","admin-home-design-beta4.js","nav-icons-core-beta4.js","admin-nav-icons-beta4.js"]' site/admin-mobile-runtime.js
           grep -q 'event-performer-cards-beta4.js' site/beta4-square-loader.js
           grep -q 'performer-socials' site/event-performer-cards-beta4.js
           grep -q 'dj_photo_url' site/admin-event-performer-fields-beta4.js
@@ -237,6 +243,31 @@ jobs:
           const result = game.submitScore(99999, { completed:true, bestCombo:5 });
           if (result.row.position !== 1 || result.row.score !== 99999) throw new Error("Weekly score was not ranked");
           console.log("Validated BALI Match weekly ranking and defaults");
+          NODE
+
+          node <<'NODE'
+          const memory = new Map();
+          global.window = global;
+          global.localStorage = {
+            getItem:key => memory.has(key) ? memory.get(key) : null,
+            setItem:(key,value) => memory.set(key,String(value)),
+            removeItem:key => memory.delete(key)
+          };
+          global.CustomEvent = class { constructor(type,init){ this.type=type; this.detail=init?.detail; } };
+          global.dispatchEvent = () => {};
+          global.addEventListener = () => {};
+          global.requestAnimationFrame = fn => fn();
+          require('./site/nav-icons-core-beta4.js');
+          const icons = global.BaliNavIcons;
+          if (!icons || icons.read().length !== 6) throw new Error("Expected six configurable navigation icons");
+          if (!icons.item("crown").image.includes("triangle.webp")) throw new Error("Match-3 default icon is missing");
+          icons.write(icons.read().map(row => row.page === "home" ? {...row,iconText:"H",image:"custom.webp"} : row));
+          if (icons.item("home").image !== "custom.webp") throw new Error("Navigation icon update was not saved");
+          icons.resetPage("home");
+          if (icons.item("home").iconText !== "⌂" || icons.item("home").image) throw new Error("Per-icon reset failed");
+          icons.write([]);
+          if (icons.read().length !== 6) throw new Error("Navigation icon normalization failed");
+          console.log("Validated configurable navigation icons and resets");
           NODE
 
           if grep -q 'all.click()' site/full-demo-people-finalizer-beta4.js; then
