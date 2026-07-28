@@ -42,7 +42,7 @@
   };
   const app = document.getElementById("app");
   if (app) new MutationObserver(schedule).observe(app,{childList:true});
-  ["bali:full-demo-ready","bali:full-demo-enhancements-ready","bali:social-changed","bali:night-crown-changed"].forEach(name => window.addEventListener(name,schedule));
+  ["bali:full-demo-ready","bali:full-demo-enhancements-ready","bali:social-changed","bali:match3-changed"].forEach(name => window.addEventListener(name,schedule));
   schedule();
   window.BaliFullDemoNavigation = { sync, go };
 })();

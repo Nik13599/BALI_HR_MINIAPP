@@ -60,7 +60,23 @@ jobs:
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
+            site/admin-mobile-runtime.js
             site/admin-night-crown-bootstrap-beta4.js
+            site/match3-game-core-beta4.js
+            site/match3-game-ui-beta4.js
+            site/match3-game-beta4.css
+            site/admin-match3-game-beta4.js
+            site/admin-match3-game-beta4.css
+            site/assets/match3/background.webp
+            site/assets/match3/headphones.webp
+            site/assets/match3/martini.webp
+            site/assets/match3/palm.webp
+            site/assets/match3/turntable.webp
+            site/assets/match3/disco.webp
+            site/assets/match3/mask.webp
+            site/assets/match3/lotus.webp
+            site/assets/match3/triangle.webp
+            site/assets/match3/reward.webp
             site/home-community-copy-beta4.js
             site/home-design-core-beta4.js
             site/demo-data-consistency-beta4.js
@@ -89,7 +105,11 @@ jobs:
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
+            site/admin-mobile-runtime.js
             site/admin-night-crown-bootstrap-beta4.js
+            site/match3-game-core-beta4.js
+            site/match3-game-ui-beta4.js
+            site/admin-match3-game-beta4.js
             site/home-community-copy-beta4.js
             site/home-design-core-beta4.js
             site/demo-data-consistency-beta4.js
@@ -120,6 +140,11 @@ jobs:
           grep -q 'demo-data-consistency-beta4.js' site/beta4-square-loader.js
           grep -q 'demo-data-consistency-beta4.js' site/admin-beta4.html
           grep -q 'script.async=false' site/beta4-square-loader.js
+          grep -q 'match3-game-core-beta4.js' site/beta4-square-loader.js
+          grep -q 'match3-game-ui-beta4.js' site/beta4-square-loader.js
+          grep -q 'match3-game-core-beta4.js' site/admin-beta4.html
+          grep -q 'admin-match3-game-beta4.js' site/admin-beta4.html
+          grep -Fq 'crown:["points-core.js","beta4-game.js","beta4-loyalty-core.js","match3-game-core-beta4.js","admin-match3-game-beta4.js"]' site/admin-mobile-runtime.js
           grep -q 'event-performer-cards-beta4.js' site/beta4-square-loader.js
           grep -q 'performer-socials' site/event-performer-cards-beta4.js
           grep -q 'dj_photo_url' site/admin-event-performer-fields-beta4.js
@@ -191,6 +216,29 @@ jobs:
           console.log("Validated demo data consistency migration");
           NODE
 
+          node <<'NODE'
+          const memory = new Map();
+          global.window = global;
+          global.localStorage = {
+            getItem:key => memory.has(key) ? memory.get(key) : null,
+            setItem:(key,value) => memory.set(key,String(value)),
+            removeItem:key => memory.delete(key)
+          };
+          global.CustomEvent = class { constructor(type,init){ this.type=type; this.detail=init?.detail; } };
+          global.dispatchEvent = () => {};
+          global.addEventListener = () => {};
+          require('./site/match3-game-core-beta4.js');
+          const game = global.BaliMatch3;
+          if (!game) throw new Error("BALI Match core did not initialize");
+          if (game.config().tiles.length !== 8) throw new Error("Expected 8 default match-3 items");
+          if (game.config().rewards.length !== 10) throw new Error("Expected rewards for TOP 10");
+          const initial = game.leaderboard();
+          if (new Set(initial.map(row => row.userKey)).size !== initial.length) throw new Error("Weekly leaderboard contains duplicates");
+          const result = game.submitScore(99999, { completed:true, bestCombo:5 });
+          if (result.row.position !== 1 || result.row.score !== 99999) throw new Error("Weekly score was not ranked");
+          console.log("Validated BALI Match weekly ranking and defaults");
+          NODE
+
           if grep -q 'all.click()' site/full-demo-people-finalizer-beta4.js; then
             echo "Recursive BALI People tab click found"
             exit 1
@@ -208,6 +256,16 @@ jobs:
 
           if grep -Eq 'observe\(document\.documentElement|setInterval\(sync' site/full-demo-nav-unlock-beta4.js site/full-demo-social-economy-beta4.js site/referral-share-beta4.js; then
             echo "Unscoped observer or navigation polling found"
+            exit 1
+          fi
+
+          if grep -Eq 'night-crown-beta4\.js|admin-night-crown-bootstrap-beta4\.js' site/beta4-square-loader.js site/admin-beta4.html; then
+            echo "Legacy king/queen contest UI is still loaded"
+            exit 1
+          fi
+
+          if grep -F 'crown:[' site/admin-mobile-runtime.js | grep -Eq 'night-crown-core-beta4|admin-night-crown-beta4'; then
+            echo "Legacy king/queen contest is still configured as the admin crown route"
             exit 1
           fi
 
