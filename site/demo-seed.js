@@ -11,7 +11,8 @@
     "bali_attendance_codes_v1", "bali_points_accounts_v1", "bali_beta4_profile_v1", "bali_beta4_vip_v1",
     "bali_beta4_vip_gifts_v1", "bali_vip_config_v1", "bali_beta4_achievements_v1",
     "bali_beta4_loyalty_config_v1", "bali_beta4_chips_v1", "bali_beta4_chip_history_v1",
-    "bali_beta4_custom_rewards_v1", "bali_beta4_reward_grants_v1", "bali_app_users_v1",
+    "bali_beta4_custom_rewards_v1", "bali_beta4_reward_grants_v1",
+    "bali_beta4_reward_points_audit_v1", "bali_beta4_reward_notifications_v1", "bali_app_users_v1",
     "bali_age_verification_v1", "bali_social_profile_v1", "bali_social_people_v1",
     "bali_social_requests_v1", "bali_social_gifts_v1", "bali_social_swipes_v2",
     "bali_event_checkins_v1", "bali_event_rsvps_v1", "bali_event_qr_trust_v2",
@@ -167,9 +168,9 @@
     const crownVotes = votePairs.map(([from,to,gender],index)=>({id:`crown-vote-${index+1}`,event_id:"event-demo-crown",event_title:"BALI Neon Crown",event_date:isoDate(0),voter_key:from,candidate_key:to,candidate_name:byKey[to].name,candidate_gender:gender,created_at:isoTime(0,23,index*3)}));
 
     const rewards = [
-      {id:"reward-demo-regular",title:"Постоянный гость",description:"Посетить BALI минимум 5 раз",image:"",xp:300,conditionType:"visits",eventId:"",eventTitle:"",threshold:5,active:true,sort_order:1,createdAt:isoTime(-200,12,0),updatedAt:isoTime(0,12,0)},
-      {id:"reward-demo-crown",title:"Участник Neon Crown",description:"Посетить BALI Neon Crown",image:"",xp:500,conditionType:"event",eventId:"event-demo-crown",eventTitle:"BALI Neon Crown",threshold:1,active:true,sort_order:2,createdAt:isoTime(-20,12,0),updatedAt:isoTime(0,12,0)},
-      {id:"reward-demo-legend",title:"Легенда танцпола",description:"Эксклюзивная ручная награда",image:"",xp:1000,conditionType:"manual",eventId:"",eventTitle:"",threshold:1,active:true,sort_order:3,createdAt:isoTime(-100,12,0),updatedAt:isoTime(0,12,0)}
+      {id:"reward-demo-regular",title:"Постоянный гость",description:"Посетить BALI минимум 5 раз",image:"",xp:300,conditionType:"visits",eventId:"",eventTitle:"",threshold:5,active:true,repeatable:false,awardPointsEnabled:true,pointsRewardAmount:250,pointsRewardType:"points",awardPointsMode:"first",deductPointsOnRevoke:false,pointsHistoryComment:"Награда: Постоянный гость",sort_order:1,createdAt:isoTime(-200,12,0),updatedAt:isoTime(0,12,0)},
+      {id:"reward-demo-crown",title:"Участник BALI Match",description:"Войти в TOP 10 недельного рейтинга игры",image:"",xp:500,conditionType:"ranking",eventId:"",eventTitle:"",threshold:10,active:true,repeatable:true,awardPointsEnabled:true,pointsRewardAmount:500,pointsRewardType:"points",awardPointsMode:"each",deductPointsOnRevoke:false,pointsHistoryComment:"Награда: Участник BALI Match",sort_order:2,createdAt:isoTime(-20,12,0),updatedAt:isoTime(0,12,0)},
+      {id:"reward-demo-legend",title:"Легенда танцпола",description:"Эксклюзивная ручная награда",image:"",xp:1000,conditionType:"manual",eventId:"",eventTitle:"",threshold:1,active:true,repeatable:false,awardPointsEnabled:true,pointsRewardAmount:1000,pointsRewardType:"points",awardPointsMode:"first",deductPointsOnRevoke:false,pointsHistoryComment:"Награда: Легенда танцпола",sort_order:3,createdAt:isoTime(-100,12,0),updatedAt:isoTime(0,12,0)}
     ];
 
     const socialPeople = users.map(socialFor);
