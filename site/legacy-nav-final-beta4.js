@@ -7,11 +7,12 @@
     ["events", "◫", "Афиши"],
     ["menu", "◇", "Меню"],
     ["dating", "🌴", "BALI PEOPLE"],
-    ["crown", "👑", "Конкурс"],
+    ["crown", "", "Игра"],
     ["profile", "◎", "Профиль"]
   ];
 
   const screenExists = page => Boolean(document.querySelector(`[data-screen="${page}"]`));
+  const visibleButtons = () => buttons.filter(([page]) => page !== "crown" || window.BaliMatch3?.config?.().enabled !== false);
 
   function syncAvailability(nav) {
     nav.querySelectorAll('button[data-page]').forEach(button => {
@@ -22,7 +23,7 @@
       button.setAttribute('aria-busy', available ? 'false' : 'true');
       button.title = available ? '' : 'Раздел загружается';
     });
-    return buttons.every(([page]) => screenExists(page));
+    return visibleButtons().every(([page]) => screenExists(page));
   }
 
   function finalize() {
@@ -30,7 +31,7 @@
     if (!nav) return false;
 
     const activePage = document.querySelector('.page.active[data-screen]')?.dataset.screen || 'home';
-    nav.replaceChildren(...buttons.map(([page, icon, label]) => {
+    nav.replaceChildren(...visibleButtons().map(([page, icon, label]) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.dataset.page = page;
