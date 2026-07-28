@@ -113,7 +113,7 @@
     if (!booking) return toast("Бронирование не найдено");
     document.getElementById("userBookingDetailsDialog")?.close();
     const form = document.getElementById("userBookingEditForm");
-    form.id.value = booking.id;
+    form.elements.namedItem("id").value = booking.id;
     form.booking_date.value = booking.booking_date || "";
     form.booking_time.value = booking.booking_time || "23:00";
     form.guests.value = Number(booking.guests || 2);
@@ -148,7 +148,7 @@
     event.preventDefault();
     const form = event.target;
     const rows = await store.list("bookings");
-    const booking = rows.find(row => String(row.id) === String(form.id.value));
+    const booking = rows.find(row => String(row.id) === String(form.elements.namedItem("id").value));
     if (!booking) return;
     const conflict = rows.some(row => String(row.id) !== String(booking.id) && String(row.booking_date) === String(form.booking_date.value) && String(row.table_id) === String(booking.table_id) && !["cancelled", "completed"].includes(row.status));
     if (conflict) return toast("Этот стол уже занят на выбранную дату");
