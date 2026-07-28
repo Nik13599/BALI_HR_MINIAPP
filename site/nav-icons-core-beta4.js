@@ -3,12 +3,12 @@
 
   const KEY = "bali_nav_icons_v1";
   const DEFAULTS = [
-    { page: "home", label: "Главная", iconText: "⌂", image: "" },
-    { page: "events", label: "Афиши", iconText: "◫", image: "" },
-    { page: "menu", label: "Меню", iconText: "◇", image: "" },
-    { page: "dating", label: "BALI PEOPLE", iconText: "🌴", image: "" },
-    { page: "crown", label: "Игра", iconText: "", image: "./assets/match3/triangle.webp" },
-    { page: "profile", label: "Профиль", iconText: "◎", image: "" },
+    { page: "home", label: "Главная", iconText: "⌂", image: "./assets/bali-temple/nav-home.svg" },
+    { page: "events", label: "Афиши", iconText: "◫", image: "./assets/bali-temple/nav-events.svg" },
+    { page: "menu", label: "Меню", iconText: "◇", image: "./assets/bali-temple/nav-menu.svg" },
+    { page: "dating", label: "BALI PEOPLE", iconText: "●", image: "./assets/bali-temple/nav-people.svg" },
+    { page: "crown", label: "Игра", iconText: "◆", image: "./assets/bali-temple/nav-game.svg" },
+    { page: "profile", label: "Профиль", iconText: "◎", image: "./assets/bali-temple/nav-profile.svg" },
   ];
 
   const clone = (value) => JSON.parse(JSON.stringify(value));

@@ -1,12 +1,12 @@
 (async () => {
-  const version = "bali-full-demo-8-stable15";
+  const version = "bali-full-demo-8-stable16";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
   window.BALI_FULL_DEMO = true;
   window.BALI_COMPACT_PROFILE = true;
 
-  const css = ["beta4-app.css","beta4-layout-map.css","beta4-home-links.css","beta4-social.css","match3-game-beta4.css","legacy-nav-final-beta4.css","full-demo-fixes-beta4.css"];
+  const css = ["beta4-app.css","beta4-layout-map.css","beta4-home-links.css","beta4-social.css","match3-game-beta4.css","legacy-nav-final-beta4.css","full-demo-fixes-beta4.css","bali-temple-theme-beta4.css"];
   const critical = [
     "config.js","bali-web-demo-sanitize.js","store.js","full-menu-catalog-beta4.js","auto-event-qr-beta4.js","bali-browser-demo-data.js","full-demo-data-upgrade-beta4.js","demo-event-content-seed-beta4.js","demo-data-consistency-beta4.js","points-core.js","referral-share-beta4.js","referral-commission-beta4.js","beta4-game.js","match3-game-core-beta4.js","nav-icons-core-beta4.js","app-users-core-beta4.js","bali-age-gate-beta4.js","beta4-loyalty-core.js","chip-requests-core-beta4.js","beta4-reward-icons-core.js","home-design-core-beta4.js","event-qr-attendance-beta4.js","event-qr-local-bridge-beta4.js","beta4-social-core.js","full-demo-social-economy-beta4.js","full-demo-people-upgrade-beta4.js","bali-people-status-sync-beta4.js","seating-templates-core-beta4.js","full-demo-runtime-fixes-beta4.js","beta4-app.js","match3-game-ui-beta4.js","home-community-copy-beta4.js","home-booking-controls-beta4.js","fast-event-dialog-beta4.js","event-performer-cards-beta4.js","fast-event-visuals-beta4.js","legacy-nav-final-beta4.js","home-layout-final-beta4.js","beta4-menu-categories.js","beta4-menu-media.js","beta4-home-links.js","beta4-profile-booking.js","beta4-loyalty-ui-stable.js","beta4-social-page.js","full-demo-nav-unlock-beta4.js","beta4-qr-checkin.js"
   ];
