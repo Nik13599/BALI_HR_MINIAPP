@@ -2,6 +2,13 @@ name: Deploy BALI Full Browser Demo
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [gh-pages]
+    paths:
+      - "site/**"
+      - "index.html"
+      - "404.html"
+      - ".github/workflows/deploy-pages.yml"
   push:
     branches: [gh-pages]
     paths:
@@ -16,7 +23,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -53,6 +60,11 @@ jobs:
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
+            site/home-community-copy-beta4.js
+            site/home-booking-controls-beta4.js
+            site/referral-share-beta4.js
+            site/referral-commission-beta4.js
+            site/admin-booking-edit-beta4.js
           )
           for file in "${required[@]}"; do
             test -f "$file" || { echo "Missing required file: $file"; exit 1; }
@@ -71,22 +83,39 @@ jobs:
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
+            site/home-community-copy-beta4.js
+            site/home-booking-controls-beta4.js
+            site/referral-share-beta4.js
+            site/referral-commission-beta4.js
+            site/admin-booking-edit-beta4.js
           )
           for file in "${scripts[@]}"; do
             echo "Checking $file"
             node --check "$file"
           done
 
-          grep -q 'beta4-square-loader.js?v=bali-full-demo-8-stable4' site/index.html
-          grep -q 'const version = "bali-full-demo-8-stable4"' site/beta4-square-loader.js
+          version="$(sed -nE 's/.*beta4-square-loader\.js\?v=([^"]+).*/\1/p' site/index.html | head -n1)"
+          test -n "$version" || { echo "Unable to resolve demo cache version"; exit 1; }
+          echo "Validating cache version: $version"
+          grep -Fq "const version = \"$version\"" site/beta4-square-loader.js
+          grep -Fq "url=./site/index.html?v=$version" index.html
+          grep -Fq "/BALI_HR_MINIAPP/site/index.html?v=$version" 404.html
+          grep -Fq "url=./index.html?v=$version" site/browser-demo.html
+          grep -Fq "admin-beta4.html?v=$version" site/admin.html
+          grep -Fq "admin-beta4.html?v=$version" site/browser-admin.html
+          grep -Fq "admin-booking-edit-beta4.js?v=$version" site/admin-beta4.html
           grep -q 'full-menu-catalog-beta4.js' site/beta4-square-loader.js
           grep -q 'event-performer-cards-beta4.js' site/beta4-square-loader.js
-          grep -q 'admin-event-performer-fields-beta4.js?v=bali-full-demo-8-stable4' site/admin-beta4.html
           grep -q 'performer-socials' site/event-performer-cards-beta4.js
           grep -q 'dj_photo_url' site/admin-event-performer-fields-beta4.js
           grep -q 'host_telegram_url' site/admin-event-performer-fields-beta4.js
           grep -q 'data-contact-key="telegram-channel"' site/beta4-home-links.js
           grep -q 'Уже в клубе' site/people-profile-stability-beta4.js
+
+          if grep -Eq '\b(form|f)\.id\.value' site/home-booking-controls-beta4.js site/admin-booking-edit-beta4.js; then
+            echo "Booking editor uses the form id attribute instead of the hidden id control"
+            exit 1
+          fi
 
           node <<'NODE'
           const memory = new Map();
@@ -161,6 +190,7 @@ jobs:
           path: _site
 
   deploy:
+    if: github.event_name != 'pull_request'
     name: Deploy GitHub Pages
     needs: build
     runs-on: ubuntu-latest
