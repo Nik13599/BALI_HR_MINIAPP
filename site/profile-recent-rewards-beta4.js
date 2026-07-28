@@ -50,8 +50,6 @@
     requestAnimationFrame(() => { lock = false; apply(); });
   };
   refresh();
-  new MutationObserver(records => {
-    if (records.some(record => record.addedNodes.length || record.removedNodes.length)) refresh();
-  }).observe(document.body, { childList:true, subtree:true });
-  ["bali:beta4-changed", "bali:loyalty-changed", "bali:points-changed", "bali:social-changed"].forEach(name => window.addEventListener(name, refresh));
+  ["bali:beta4-changed", "bali:loyalty-changed", "bali:points-changed", "bali:social-changed", "bali:full-demo-enhancements-ready"]
+    .forEach(name => window.addEventListener(name, refresh));
 })();

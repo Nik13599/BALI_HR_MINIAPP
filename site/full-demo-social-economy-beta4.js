@@ -34,14 +34,16 @@
 
   function decorate() {
     document.querySelectorAll("[data-person-thumb]").forEach(button => {
-      button.textContent = "❤️";
-      button.title = "Поставить сердечко";
+      if (button.textContent !== "❤️") button.textContent = "❤️";
+      if (button.title !== "Поставить сердечко") button.title = "Поставить сердечко";
     });
     document.querySelectorAll("[data-send-social-gift]").forEach(button => {
       const id = button.dataset.sendSocialGift;
       const small = button.querySelector("small");
-      if (small) small.textContent = `${costFor(id)} баллов`;
-      button.title = `Подарить за ${costFor(id)} BALI-Баллов`;
+      const label = `${costFor(id)} баллов`;
+      const title = `Подарить за ${costFor(id)} BALI-Баллов`;
+      if (small && small.textContent !== label) small.textContent = label;
+      if (button.title !== title) button.title = title;
     });
   }
 
@@ -82,7 +84,8 @@
     scheduled = true;
     requestAnimationFrame(() => { scheduled = false; decorate(); });
   };
-  new MutationObserver(schedule).observe(document.documentElement, { childList:true, subtree:true });
+  const app = document.getElementById("app");
+  if (app) new MutationObserver(schedule).observe(app, { childList:true, subtree:true });
   ["bali:social-changed","bali:points-changed"].forEach(name => window.addEventListener(name, schedule));
   schedule();
   window.BaliFullDemoSocialEconomy = { COSTS, costFor };

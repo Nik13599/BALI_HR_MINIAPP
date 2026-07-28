@@ -40,9 +40,9 @@
     scheduled = true;
     requestAnimationFrame(() => { scheduled = false; sync(); });
   };
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  const app = document.getElementById("app");
+  if (app) new MutationObserver(schedule).observe(app,{childList:true});
   ["bali:full-demo-ready","bali:full-demo-enhancements-ready","bali:social-changed","bali:night-crown-changed"].forEach(name => window.addEventListener(name,schedule));
-  setInterval(sync,1000);
   schedule();
   window.BaliFullDemoNavigation = { sync, go };
 })();
