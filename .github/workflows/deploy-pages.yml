@@ -60,7 +60,13 @@ jobs:
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
+            site/admin-night-crown-bootstrap-beta4.js
             site/home-community-copy-beta4.js
+            site/home-design-core-beta4.js
+            site/demo-data-consistency-beta4.js
+            site/profile-recent-rewards-beta4.js
+            site/full-demo-nav-unlock-beta4.js
+            site/full-demo-social-economy-beta4.js
             site/home-booking-controls-beta4.js
             site/referral-share-beta4.js
             site/referral-commission-beta4.js
@@ -83,7 +89,13 @@ jobs:
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
+            site/admin-night-crown-bootstrap-beta4.js
             site/home-community-copy-beta4.js
+            site/home-design-core-beta4.js
+            site/demo-data-consistency-beta4.js
+            site/profile-recent-rewards-beta4.js
+            site/full-demo-nav-unlock-beta4.js
+            site/full-demo-social-economy-beta4.js
             site/home-booking-controls-beta4.js
             site/referral-share-beta4.js
             site/referral-commission-beta4.js
@@ -105,6 +117,9 @@ jobs:
           grep -Fq "admin-beta4.html?v=$version" site/browser-admin.html
           grep -Fq "admin-booking-edit-beta4.js?v=$version" site/admin-beta4.html
           grep -q 'full-menu-catalog-beta4.js' site/beta4-square-loader.js
+          grep -q 'demo-data-consistency-beta4.js' site/beta4-square-loader.js
+          grep -q 'demo-data-consistency-beta4.js' site/admin-beta4.html
+          grep -q 'script.async=false' site/beta4-square-loader.js
           grep -q 'event-performer-cards-beta4.js' site/beta4-square-loader.js
           grep -q 'performer-socials' site/event-performer-cards-beta4.js
           grep -q 'dj_photo_url' site/admin-event-performer-fields-beta4.js
@@ -147,6 +162,35 @@ jobs:
           console.log(`Validated ${catalog.length} menu items in ${categories.size} categories`);
           NODE
 
+          node <<'NODE'
+          const memory = new Map();
+          global.window = global;
+          global.localStorage = {
+            getItem:key => memory.has(key) ? memory.get(key) : null,
+            setItem:(key,value) => memory.set(key,String(value)),
+            removeItem:key => memory.delete(key)
+          };
+          const write = (key, value) => memory.set(key, JSON.stringify(value));
+          write("bali_events_v2", [
+            {id:"event-demo-crown",event_date:"2020-01-01",event_time:"20:00"},
+            {id:"event-demo-crown",event_date:"2021-01-01",updated_at:"2021-01-02T00:00:00Z"},
+            {id:"custom-event",event_date:"2030-01-01"}
+          ]);
+          write("bali_social_people_v1", [
+            {id:"person-1",name:"Old",updatedAt:"2020-01-01T00:00:00Z"},
+            {id:"person-1",name:"Current",updatedAt:"2021-01-01T00:00:00Z"},
+            {id:"person-2",name:"Custom"}
+          ]);
+          require('./site/demo-data-consistency-beta4.js');
+          const events = JSON.parse(memory.get("bali_events_v2"));
+          const people = JSON.parse(memory.get("bali_social_people_v1"));
+          if (events.filter(row => row.id === "event-demo-crown").length !== 1) throw new Error("Demo event duplicate was not removed");
+          if (events.find(row => row.id === "event-demo-crown").event_date === "2021-01-01") throw new Error("Demo event date was not refreshed");
+          if (!events.some(row => row.id === "custom-event")) throw new Error("Custom event was removed");
+          if (people.length !== 2 || people.find(row => row.id === "person-1").name !== "Current") throw new Error("People dedupe did not keep the newest row");
+          console.log("Validated demo data consistency migration");
+          NODE
+
           if grep -q 'all.click()' site/full-demo-people-finalizer-beta4.js; then
             echo "Recursive BALI People tab click found"
             exit 1
@@ -154,6 +198,16 @@ jobs:
 
           if grep -q 'new MutationObserver' site/profile-controls-final-beta4.js; then
             echo "Global profile MutationObserver found"
+            exit 1
+          fi
+
+          if grep -q 'observe(document.documentElement' site/home-community-copy-beta4.js; then
+            echo "Global home copy MutationObserver found"
+            exit 1
+          fi
+
+          if grep -Eq 'observe\(document\.documentElement|setInterval\(sync' site/full-demo-nav-unlock-beta4.js site/full-demo-social-economy-beta4.js site/referral-share-beta4.js; then
+            echo "Unscoped observer or navigation polling found"
             exit 1
           fi
 

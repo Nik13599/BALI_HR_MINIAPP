@@ -6,9 +6,9 @@
     global: { accent: "#c8ff3d", pageBackground: "#080a0a", text: "#f5f7f5" },
     hero: {
       eyebrow: "NIGHT CLUB · CONTACT BAR · 18+",
-      title: "Твоя ночь",
-      accentTitle: "начинается здесь",
-      text: "Клубный формат BALI: события, танцпол, контактный бар, кальяны и индивидуальная рассадка столов.",
+      title: "BALI",
+      accentTitle: "",
+      text: "BALI — приложение ночного клуба и комьюнити людей, объединённых музыкой, любимыми диджеями, артистами и яркими вечеринками.",
       backgroundColor: "#151a17",
       backgroundImage: "",
       align: "left",

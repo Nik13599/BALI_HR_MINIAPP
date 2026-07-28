@@ -231,8 +231,9 @@
     }
   }, true);
 
-  const observer = new MutationObserver(() => requestAnimationFrame(decorate));
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  const app = document.getElementById("app");
+  const observer = app ? new MutationObserver(() => requestAnimationFrame(decorate)) : null;
+  observer?.observe(app, { childList: true, subtree: true });
   ["bali:full-demo-ready", "bali:full-demo-enhancements-ready", "bali:data-changed", "bali:beta4-changed"].forEach(name => window.addEventListener(name, decorate));
 
   applyReferralFromUrl();
