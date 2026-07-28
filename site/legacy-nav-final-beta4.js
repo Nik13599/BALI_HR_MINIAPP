@@ -42,12 +42,14 @@
       const span = document.createElement('span');
       span.textContent = label;
       button.append(i, span);
+      window.BaliNavIcons?.applyButton?.(button);
       return button;
     }));
 
     nav.classList.remove('social-six');
     nav.style.removeProperty('grid-template-columns');
     nav.dataset.navigationReady = 'true';
+    window.BaliNavIcons?.applyAll?.(nav);
     syncAvailability(nav);
     return true;
   }
