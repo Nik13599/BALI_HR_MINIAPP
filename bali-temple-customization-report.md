@@ -28,6 +28,9 @@ Typography was not changed.
 
 - `site/bali-temple-theme-beta4.css`
 - `site/admin-bali-temple-theme-beta4.css`
+- `site/bali-visual-blocks-beta4.css`
+- `site/bali-visual-blocks-core-beta4.js`
+- `site/admin-visual-blocks-beta4.js`
 - `site/assets/bali-temple/hero-stone-face.webp`
 - `site/assets/bali-temple/bronze-statues.webp`
 - `site/assets/bali-temple/gold-bear.webp`
@@ -43,12 +46,22 @@ Typography was not changed.
 
 ## Updated Wiring
 
-- `site/beta4-square-loader.js`: loads the user theme last; cache version raised to `bali-full-demo-8-stable16`.
+- `site/beta4-square-loader.js`: loads the user theme and visual block editor last; cache version raised to `bali-full-demo-8-stable19`.
 - `site/admin-beta4.html`: loads the admin theme last; updated cache references.
-- `site/nav-icons-core-beta4.js`: only the six visual defaults now point to the new local icon set. Custom upload, URL, save, per-icon reset, and full reset behavior are unchanged.
-- `site/admin-mobile-runtime.js`: cache version updated; the already-existing reviews module is registered with the mobile router so its navigation button no longer falls back to dashboard.
+- `site/nav-icons-core-beta4.js`: the six visual defaults point to the new local icon set, and button labels can now be renamed and reset together with their icons.
+- `site/admin-mobile-runtime.js`: cache version updated; the reviews route and full visual block editor are registered with the mobile router.
 - `index.html`, `404.html`, `site/index.html`, `site/admin.html`, `site/browser-demo.html`, `site/browser-admin.html`: cache-busting references updated.
-- `.github/workflows/deploy-pages.yml`: validates the new themes/assets, the reviews route, and the new icon defaults/reset behavior.
+- `.github/workflows/deploy-pages.yml`: validates the new themes/assets, 28-block registry, reviews route, and icon label/default/reset behavior.
+
+## Full Visual Block Editor
+
+- Settings now contains 28 major visual blocks across Home, Events, Menu, BALI PEOPLE, Match-3, and Profile.
+- Every block exposes its exact recommended image dimensions, title override, image URL/upload, crop-safe position, darkening level, per-block reset, and global reset.
+- Uploaded PNG/JPG/WEBP files are cropped to the declared dimensions and stored as compressed WEBP.
+- Existing home design images now display their source dimensions, including the logo, hero, QR, contact icons, and section backgrounds.
+- Bottom-navigation labels can be renamed together with their 256 × 256 px icons and restored individually.
+- Dynamic profile cards reapply their saved design after profile data refreshes.
+- The admin entry redirects directly to the admin application instead of nesting it in an iframe, reducing startup work and avoiding stale wrapper state.
 
 ## Generated and Licensed Assets
 
@@ -62,12 +75,12 @@ Navigation icons are local Lucide SVGs with the included ISC license. No emoji o
 
 ## Preserved Functional Files
 
-No changes were made to:
+No business-rule changes were made to:
 
 - `site/store.js`;
 - `site/beta4-app.js`;
 - `site/admin.js`;
-- booking manager/edit business logic;
+- booking manager/edit data operations;
 - Match-3 core or UI logic;
 - points, rewards, VIP, ranking, and user data logic;
 - SQL schema;
@@ -83,12 +96,13 @@ Hall geometry is unchanged:
 
 ## QA Summary
 
-- JavaScript syntax: 178 files passed.
+- JavaScript syntax: 180 files passed.
 - Git diff check: passed.
 - Cache-version and required-theme-file validation: passed.
 - User navigation: all 6 routes passed.
 - Admin navigation: all 10 routes passed.
-- Navigation icons: defaults, custom save, per-icon reset, and full reset passed.
+- Visual editor: 28 blocks, exact dimensions, title/image save, per-block reset, and global reset passed.
+- Navigation icons: defaults, custom label/image save, per-icon reset, and full reset passed.
 - Duplicate cleanup: event and people newest-record selection passed.
 - Match-3: 8 default items, 49-cell board, TOP-10 rewards, unique ranking, and score submission passed.
 - Final user/admin browser console: no errors or warnings.

@@ -18,6 +18,7 @@
       const row = saved.get(fallback.page) || {};
       return {
         ...fallback,
+        label: String(row.label ?? fallback.label).trim().slice(0, 24) || fallback.label,
         iconText: String(row.iconText ?? fallback.iconText).slice(0, 12),
         image: String(row.image ?? fallback.image).trim(),
       };
@@ -73,6 +74,12 @@
       button.prepend(icon);
     }
     icon.setAttribute("aria-hidden", "true");
+    let label = button.querySelector("span");
+    if (!label) {
+      label = document.createElement("span");
+      button.appendChild(label);
+    }
+    label.textContent = row.label;
     if (!row.image) {
       renderFallback(icon, row);
       return;

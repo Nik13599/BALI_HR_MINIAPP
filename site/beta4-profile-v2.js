@@ -172,6 +172,7 @@
       <button class="profile-v2-tile gifts" type="button" data-open-profile-gifts>
         <small>ОТ ПОЛЬЗОВАТЕЛЕЙ</small><strong>Мои подарки · ${gifts.length}</strong><span>Посмотреть подарки и отправителей →</span>
       </button>`;
+    window.dispatchEvent(new CustomEvent("bali:profile-v2-mounted"));
     return true;
   }
 
