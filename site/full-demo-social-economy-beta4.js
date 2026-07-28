@@ -7,7 +7,7 @@
   const points = window.BaliPoints;
   if (!social || !points) return;
 
-  const COSTS = Object.freeze({ rose:250, cocktail:500, disco:1000, crown:2500 });
+  const COSTS = Object.freeze({});
   let targetId = "";
 
   function toast(message) {
@@ -21,7 +21,7 @@
 
   function costFor(giftId) {
     const gift = social.GIFT_CATALOG.find(row => row.id === giftId);
-    return Number(COSTS[giftId] || Number(gift?.stars || 0) * 10 || 100);
+    return Math.max(1, Number(gift?.stars || gift?.points || 1));
   }
 
   function spend(cost, title) {

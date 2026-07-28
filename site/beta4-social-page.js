@@ -88,11 +88,26 @@
   }
 
   function ensureDialogs() {
-    if (document.getElementById("socialPersonDialog")) return;
+    if (document.getElementById("socialPersonDialog")) {
+      renderGiftCatalog();
+      return;
+    }
     document.body.insertAdjacentHTML("beforeend", `
       <dialog class="social-v2-dialog" id="socialPersonDialog"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Профиль</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-profile" id="socialPersonBody"></div></div></dialog>
       <dialog class="social-v2-dialog" id="socialInviteV2"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Пригласить на мероприятие</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-options"><div class="social-invite-note">Выберите ближайшее активное мероприятие. Приглашение исчезнет после его завершения.</div><select id="socialInviteEvent"></select><button class="primary full" id="socialInviteSubmit" data-send-social-invite="event">Пригласить на мероприятие</button></div></div></dialog>
-      <dialog class="social-v2-dialog" id="socialGiftV2"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Подарок</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-options"><div class="social-v2-gifts">${social.GIFT_CATALOG.map(gift => `<button type="button" data-send-social-gift="${esc(gift.id)}"><i>${gift.icon}</i><strong>${esc(gift.name)}</strong><small>⭐ ${gift.stars}</small></button>`).join("")}</div></div></div></dialog>`);
+      <dialog class="social-v2-dialog" id="socialGiftV2"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Подарок</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-options"><div class="social-v2-gifts">${social.GIFT_CATALOG.filter(gift => gift.active !== false).map(gift => `<button type="button" data-send-social-gift="${esc(gift.id)}"><i>${esc(gift.icon)}</i><strong>${esc(gift.name)}</strong><small>B ${Number(gift.stars || 0)}</small></button>`).join("")}</div></div></div></dialog>`);
+    renderGiftCatalog();
+  }
+
+  function renderGiftCatalog() {
+    const root = document.querySelector("#socialGiftV2 .social-v2-gifts");
+    if (!root) return;
+    const gifts = social.GIFT_CATALOG.filter(gift => gift.active !== false);
+    const signature = JSON.stringify(gifts.map(gift => [gift.id, gift.icon, gift.name, Number(gift.stars || 0)]));
+    if (root.dataset.catalogSignature === signature) return;
+    root.innerHTML = gifts.map(gift => `<button type="button" data-send-social-gift="${esc(gift.id)}"><i>${esc(gift.icon)}</i><strong>${esc(gift.name)}</strong><small>${Number(gift.stars || 0)} BALI-Баллов</small></button>`).join("")
+      || '<div class="social-v2-empty">Подарки временно недоступны.</div>';
+    root.dataset.catalogSignature = signature;
   }
 
   function photo(person) {
@@ -194,6 +209,7 @@
 
   function openGift(id) {
     activePerson = id || activePerson;
+    renderGiftCatalog();
     document.getElementById("socialGiftV2").showModal();
   }
 
@@ -259,7 +275,10 @@
     if (event.target.closest("[data-social-v2-close]")) event.target.closest("dialog")?.close();
   }, true);
 
-  window.addEventListener("bali:social-changed", () => requestAnimationFrame(render));
+  window.addEventListener("bali:social-changed", () => requestAnimationFrame(() => {
+    renderGiftCatalog();
+    render();
+  }));
   ["bali:data-changed", "bali:checkin-complete", "bali:checkin-left"].forEach(name => window.addEventListener(name, () => tab === "inside" && requestAnimationFrame(render)));
   styles();
   let attempts = 0;

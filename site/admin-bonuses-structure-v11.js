@@ -18,6 +18,11 @@
       description: "Тарифы, сроки, привилегии мероприятий, подарки и активные VIP-статусы.",
       icon: "VIP"
     },
+    "vip-gift": {
+      title: "VIP-подарки",
+      description: "Выдача VIP конкретному гостю, сроки действия и досрочный отзыв.",
+      icon: "VIP+"
+    },
     economy: {
       title: "Цены, фишки и обмен",
       description: "Цены VIP в BALI-Баллах, курс обмена и параметры получения фишек.",
@@ -27,9 +32,14 @@
       title: "Управление наградами",
       description: "Создание, редактирование, выдача наград и загрузка их значков.",
       icon: "🏆"
+    },
+    gifts: {
+      title: "Управление подарками",
+      description: "Каталог подарков, стоимость, выдача пользователям и история операций.",
+      icon: "🎁"
     }
   };
-  const order = ["chip-requests", "points", "vip-plans", "economy", "rewards"];
+  const order = ["chip-requests", "points", "vip-plans", "vip-gift", "economy", "rewards", "gifts"];
 
   function styles() {
     if (document.getElementById("bonusesStructureV11Style")) return;
@@ -79,26 +89,19 @@
     document.querySelector(".bonus-hub-head")?.remove();
     mergeRewards();
 
-    grid.querySelector('[data-open-bonus-section="vip-gift"]')?.remove();
     grid.querySelector('[data-open-bonus-section="reward-icons"]')?.remove();
-
-    const cards = new Map();
-    order.forEach(id => {
-      const card = grid.querySelector(`[data-open-bonus-section="${id}"]`);
-      if (card) cards.set(id, card);
-    });
-
-    for (const id of order) {
-      const card = cards.get(id);
-      if (!card) continue;
-      updateCard(card, id);
-      grid.appendChild(card);
-    }
 
     [...grid.querySelectorAll(".bonus-hub-card")].forEach(card => {
       const id = card.dataset.openBonusSection;
       if (!order.includes(id)) card.remove();
     });
+
+    const cards = order
+      .map(id => grid.querySelector(`[data-open-bonus-section="${id}"]`))
+      .filter(Boolean);
+    cards.forEach(card => updateCard(card, card.dataset.openBonusSection));
+    const current = [...grid.querySelectorAll(":scope > .bonus-hub-card")];
+    if (cards.some((card, index) => current[index] !== card)) grid.append(...cards);
   }
 
   styles();

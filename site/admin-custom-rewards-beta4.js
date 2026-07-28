@@ -38,14 +38,16 @@
       if (key) map.set(String(key), { ...account, key: String(key) });
     });
     customers.forEach(customer => {
-      const key = customer.telegram_id
+      const phone = digits(customer.phone);
+      const linked = [...map.values()].find(row => phone && digits(row.phone) === phone);
+      const key = linked?.key || (customer.telegram_id
         ? `tg:${customer.telegram_id}`
-        : digits(customer.phone)
-          ? `phone:${digits(customer.phone)}`
-          : String(customer.id);
+        : phone
+          ? `phone:${phone}`
+          : String(customer.id));
       const previous = map.get(key) || {};
       map.set(key, {
-        ...previous,
+        ...(linked || previous),
         ...customer,
         key,
         userKey: key,
@@ -338,7 +340,7 @@
 
       toast(existing ? "Награда изменена" : "Новая награда добавлена");
       pendingImage = "";
-      render();
+      window.render?.();
     });
 
     root.querySelectorAll("[data-edit-reward]").forEach(button => button.addEventListener("click", () => {
@@ -372,7 +374,7 @@
       if (reward && confirm(`Удалить награду «${reward.title}»?`)) {
         loyalty.removeReward(reward.id);
         toast("Награда удалена");
-        render();
+        window.render?.();
       }
     }));
 
@@ -443,7 +445,7 @@
         overrideReason:override ? event.currentTarget.overrideReason.value : ""
       });
       toast(result.ok ? `Награда выдана · ${result.grant.pointsAwarded ? `+${number(result.grant.pointsAwarded)} баллов · ` : ""}+${reward.xp} XP` : result.message);
-      render();
+      window.render?.();
     });
 
     const bulkForm = root.querySelector("#bulkRewardGrant");
@@ -485,7 +487,7 @@
       const granted = result.results?.filter(item => item.ok && !item.duplicate).length || 0;
       const credited = result.results?.reduce((sum, item) => sum + Number(item.grant?.pointsAwarded || 0), 0) || 0;
       toast(result.ok ? `Пакет завершён: ${granted} наград · ${number(credited)} баллов` : result.message);
-      render();
+      window.render?.();
     });
 
     root.querySelectorAll("[data-revoke-reward]").forEach(button => button.addEventListener("click", () => {
@@ -499,7 +501,7 @@
       if (!confirm(`Отозвать награду «${reward.title}» у ${grant.userName}?\n\n${deduction}`)) return;
       const result = loyalty.revokeReward(grant.id, { adminId:ADMIN_ID, permissions:ADMIN_PERMISSIONS });
       toast(result.ok ? `Награда отозвана${result.deduction ? ` · списано ${number(Math.abs(result.deduction.delta || 0))}` : ""}` : result.message);
-      if (result.ok) render();
+      if (result.ok) window.render?.();
     }));
   }
 

@@ -14,7 +14,7 @@
     "bali_beta4_custom_rewards_v1", "bali_beta4_reward_grants_v1",
     "bali_beta4_reward_points_audit_v1", "bali_beta4_reward_notifications_v1", "bali_app_users_v1",
     "bali_age_verification_v1", "bali_social_profile_v1", "bali_social_people_v1",
-    "bali_social_requests_v1", "bali_social_gifts_v1", "bali_social_swipes_v2",
+    "bali_social_requests_v1", "bali_social_gifts_v1", "bali_social_gift_catalog_v1", "bali_social_swipes_v2",
     "bali_event_checkins_v1", "bali_event_rsvps_v1", "bali_event_qr_trust_v2",
     "bali_night_crown_entries_v1", "bali_night_crown_votes_v1", "bali_night_crown_prizes_v1",
     "bali_chip_requests_v1", "bali_event_checkin_notices_v1", "bali_home_design_v1"
