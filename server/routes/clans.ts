@@ -165,6 +165,44 @@ export function createClanRouter(db: Queryable): Router {
     res.json({ clans });
   }));
 
+  router.get("/ranking", asyncHandler(async (req, res) => {
+    const rows = await many<any>(
+      db,
+      `select c.id, c.name, c.clan_type, c.rating_points,
+              leader.name as leader_name,
+              coalesce(members.member_count, 0)::integer as member_count,
+              case when mine.clan_id is null then false else true end as is_member
+         from public.clans c
+         left join public.app_users leader on leader.user_key = c.leader_user_key
+         left join (
+           select clan_id, count(*) as member_count
+             from public.clan_memberships
+            where status = 'active'
+            group by clan_id
+         ) members on members.clan_id = c.id
+         left join (
+           select distinct clan_id
+             from public.clan_memberships
+            where user_key = $1 and status = 'active'
+         ) mine on mine.clan_id = c.id
+        where c.status = 'active'
+        order by c.rating_points desc, coalesce(members.member_count, 0) desc, c.name asc`,
+      [req.userPrincipal!.userKey]
+    );
+    res.json({
+      clans: rows.map((row, index) => ({
+        id: row.id,
+        name: row.name,
+        clanType: row.clan_type,
+        leaderName: row.leader_name || "",
+        ratingPoints: Number(row.rating_points || 0),
+        memberCount: Number(row.member_count || 0),
+        isMember: Boolean(row.is_member),
+        position: index + 1
+      }))
+    });
+  }));
+
   router.get("/:clanId/chat", requireClanPermission(db, "chat.read"), asyncHandler(async (req, res) => {
     const id = chatId(req);
     const limit = boundedInteger(req.query.limit, 50, 1, 100);

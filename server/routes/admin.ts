@@ -28,6 +28,7 @@ async function clanChat(db: Queryable, clanId: string): Promise<any> {
   const row = await one<any>(
     db,
     `select c.id as clan_id, c.name as clan_name, c.clan_type, c.status as clan_status,
+            c.rating_points,
             c.leader_user_key, ch.*
        from public.clans c
        join public.clan_chats ch on ch.clan_id = c.id
@@ -73,7 +74,7 @@ export function createAdminRouter(db: Queryable): Router {
     const search = String(req.query.search || "").trim();
     const rows = await many<any>(
       db,
-      `select c.id as clan_id, c.name, c.clan_type, c.status,
+      `select c.id as clan_id, c.name, c.clan_type, c.status, c.rating_points,
               c.leader_user_key, leader.name as leader_name,
               ch.id as chat_id, ch.enabled, ch.read_only,
               coalesce(members.member_count, 0)::integer as member_count,
@@ -119,6 +120,40 @@ export function createAdminRouter(db: Queryable): Router {
     );
     res.json({ chats: rows });
   }));
+
+  router.put(
+    "/clans/:clanId/rating",
+    requireRole("admin", "superadmin"),
+    asyncHandler(async (req, res) => {
+      const clanId = identifier(req.params.clanId, "clanId");
+      const before = await one<any>(
+        db,
+        `select id, name, rating_points from public.clans where id = $1`,
+        [clanId]
+      );
+      if (!before) throw new ApiError(404, "Clan was not found", "not_found");
+      const ratingPoints = boundedInteger(req.body?.ratingPoints, Number(before.rating_points || 0), 0, 1_000_000_000);
+      const after = await one<any>(
+        db,
+        `update public.clans
+            set rating_points = $1, updated_at = now()
+          where id = $2
+          returning id, name, rating_points`,
+        [ratingPoints, clanId]
+      );
+      await adminAudit(db, req, {
+        permissionKey: "clan.rating.update",
+        action: "clan.rating.update",
+        targetType: "clan",
+        targetId: clanId,
+        clanId,
+        reason: optionalText(req.body?.reason, 1000),
+        before,
+        after
+      });
+      res.json({ clan: after });
+    })
+  );
 
   router.get("/clans/:clanId/chat", asyncHandler(async (req, res) => {
     const chat = await clanChat(db, req.params.clanId);

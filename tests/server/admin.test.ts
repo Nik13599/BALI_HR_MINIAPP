@@ -53,6 +53,25 @@ test("an administrator can list and inspect every clan chat", async () => {
   assert.equal(details.body.members.length, 3);
 });
 
+test("an administrator can update clan rating and the public order changes", async () => {
+  const s = await setup();
+  const updated = await s.context.adminAgent
+    .put(`/api/v1/admin/clans/${s.clanId}/rating`)
+    .send({ ratingPoints: 9876, reason: "Результат недельного сезона" });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.clan.rating_points, 9876);
+
+  const ranking = await s.member.get("/api/v1/clans/ranking");
+  assert.equal(ranking.status, 200);
+  assert.equal(ranking.body.clans[0].ratingPoints, 9876);
+
+  const audit = await s.context.db.query(
+    `select action, reason from clan_chat_audit_log where action = 'clan.rating.update'`
+  );
+  assert.equal(audit.rowCount, 1);
+  assert.equal(audit.rows[0].reason, "Результат недельного сезона");
+});
+
 test("an administrator can search messages inside one clan chat", async () => {
   const s = await setup();
   await s.member

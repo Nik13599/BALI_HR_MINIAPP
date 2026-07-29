@@ -16,7 +16,17 @@
       return payload;
     });
   };
-  const state = { mode:"people", tab:"chat", clans:[], clanId:"", bundle:null, availableEvents:[], loading:false };
+  const state = {
+    mode:"people",
+    tab:"chat",
+    clans:[],
+    ranking:[],
+    clanId:"",
+    bundle:null,
+    availableEvents:[],
+    loading:false,
+    rankingLoading:false
+  };
   const esc = (value = "") => String(value).replace(/[&<>'"]/g, char => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;"
   })[char]);
@@ -24,6 +34,8 @@
     day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit"
   }) : "—";
   const roleName = role => ({ leader:"Лидер", deputy:"Заместитель", moderator:"Модератор", member:"Участник" })[role] || role;
+  const clanTypeName = type => ({ legend:"Легендарный", vip:"VIP", community:"Сообщество", social:"Социальный" })[type] || type || "Сообщество";
+  const points = value => Number(value || 0).toLocaleString("ru-RU");
   const can = permission => state.bundle?.permissions?.includes(permission);
   const currentUserId = () => String(window.BaliClans?.currentUser?.()?.id || "tg:1001");
   const toast = message => {
@@ -41,11 +53,24 @@
     const style = document.createElement("style");
     style.id = "baliPeopleClansStyle";
     style.textContent = `
-      .people-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:0 0 12px;padding:4px;border:1px solid var(--line);border-radius:15px;background:#090c0b}
-      .people-mode-switch button{min-height:42px;border:0;border-radius:11px;background:transparent;color:var(--muted);font:800 10px/1.2 system-ui;letter-spacing:.08em}
+      .people-mode-switch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 12px;padding:4px;border:1px solid var(--line);border-radius:15px;background:#090c0b}
+      .people-mode-switch button{min-width:0;min-height:42px;padding:0 4px;border:0;border-radius:11px;background:transparent;color:var(--muted);font:800 9px/1.2 system-ui;letter-spacing:.04em}
       .people-mode-switch button.active{background:var(--lime);color:#080a08}
-      .bali-clan-pane[hidden],.bali-people-directory[hidden]{display:none!important}
+      .bali-clan-pane[hidden],.bali-clan-ranking-pane[hidden],.bali-people-directory[hidden]{display:none!important}
       .clan-integrated-shell{display:grid;gap:10px;padding-bottom:92px}
+      .clan-ranking-shell{display:grid;gap:10px;padding-bottom:92px}
+      .clan-ranking-hero{position:relative;overflow:hidden;padding:16px;border:1px solid rgba(200,255,61,.28);border-radius:19px;background:radial-gradient(circle at 85% 10%,rgba(200,255,61,.18),transparent 42%),linear-gradient(145deg,#151a17,#090c0b)}
+      .clan-ranking-hero:after{content:"★";position:absolute;right:-4px;bottom:-28px;color:#c8ff3d10;font:900 100px/1 system-ui}
+      .clan-ranking-hero h3{position:relative;z-index:1;margin:6px 0 5px;font:800 18px/1.2 Unbounded;color:#fff}
+      .clan-ranking-hero p{position:relative;z-index:1;max-width:270px;margin:0;color:var(--muted);font-size:9px;line-height:1.5}
+      .clan-ranking-list{display:grid;gap:8px}
+      .clan-ranking-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0;padding:11px;border:1px solid var(--line);border-radius:15px;background:#101411}
+      .clan-ranking-row.mine{border-color:#c8ff3d66;background:linear-gradient(100deg,#c8ff3d13,#101411 58%)}
+      .clan-ranking-position{display:grid;width:42px;height:42px;place-items:center;border-radius:13px;background:#ffffff08;color:#fff;font:900 14px/1 Unbounded}
+      .clan-ranking-row.top-1 .clan-ranking-position{background:#f4cf5d;color:#171207}.clan-ranking-row.top-2 .clan-ranking-position{background:#c8cdd0;color:#111}.clan-ranking-row.top-3 .clan-ranking-position{background:#b97a45;color:#130b05}
+      .clan-ranking-copy{min-width:0}.clan-ranking-copy h4{overflow:hidden;margin:0 0 4px;color:#fff;font-size:11px;text-overflow:ellipsis;white-space:nowrap}.clan-ranking-copy p{overflow:hidden;margin:0;color:var(--muted);font-size:8px;text-overflow:ellipsis;white-space:nowrap}
+      .clan-ranking-score{text-align:right}.clan-ranking-score strong{display:block;color:var(--lime);font:800 12px/1.1 Unbounded}.clan-ranking-score small{display:block;margin-top:4px;color:var(--muted);font-size:7px;text-transform:uppercase}
+      .clan-ranking-open{grid-column:2/4;min-height:34px;border:1px solid #c8ff3d55;border-radius:10px;background:#c8ff3d0c;color:var(--lime);font:800 8px/1 system-ui}
       .clan-hero{position:relative;overflow:hidden;padding:15px;border:1px solid rgba(200,255,61,.28);border-radius:19px;background:radial-gradient(circle at 90% 0,rgba(200,255,61,.18),transparent 42%),linear-gradient(145deg,#151a17,#090c0b)}
       .clan-hero:after{content:"B";position:absolute;right:-8px;bottom:-34px;color:#c8ff3d0d;font:900 120px/1 Unbounded}
       .clan-hero-top{position:relative;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -86,7 +111,7 @@
       .clan-tools input,.clan-tools textarea,.clan-tools select{width:100%;min-height:42px;padding:9px;border:1px solid var(--line);border-radius:11px;background:#090c0a;color:#fff;font:9px/1.4 system-ui;box-sizing:border-box}
       .clan-empty{padding:25px 12px;color:var(--muted);text-align:center;font-size:9px;line-height:1.5}
       .clan-notification{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:8px}.clan-notification input{accent-color:var(--lime)}
-      @media(max-width:360px){.clan-main-tabs button{font-size:7px}.clan-event-mini{grid-template-columns:60px 1fr}.clan-event-mini img{width:60px}.clan-composer{grid-template-columns:1fr}.clan-composer button{width:100%}}
+      @media(max-width:360px){.people-mode-switch button{font-size:8px}.clan-main-tabs button{font-size:7px}.clan-event-mini{grid-template-columns:60px 1fr}.clan-event-mini img{width:60px}.clan-composer{grid-template-columns:1fr}.clan-composer button{width:100%}.clan-ranking-row{grid-template-columns:38px minmax(0,1fr) auto;gap:8px;padding:9px}.clan-ranking-position{width:38px;height:38px}}
     `;
     document.head.appendChild(style);
   }
@@ -103,6 +128,7 @@
     modeSwitch.className = "people-mode-switch";
     modeSwitch.innerHTML = `
       <button type="button" class="active" data-people-mode="people">ЛЮДИ</button>
+      <button type="button" data-people-mode="ranking">КЛАНЫ</button>
       <button type="button" data-people-mode="clan">МОЙ КЛАН</button>`;
     socialTabs.before(modeSwitch);
 
@@ -116,6 +142,12 @@
     clanPane.id = "baliPeopleClanPane";
     clanPane.hidden = true;
     directory.after(clanPane);
+
+    const rankingPane = document.createElement("div");
+    rankingPane.className = "bali-clan-ranking-pane";
+    rankingPane.id = "baliPeopleClanRankingPane";
+    rankingPane.hidden = true;
+    clanPane.before(rankingPane);
     renderMode();
     return true;
   }
@@ -126,10 +158,56 @@
     });
     const directory = document.querySelector(".bali-people-directory");
     const clanPane = document.getElementById("baliPeopleClanPane");
-    if (!directory || !clanPane) return;
+    const rankingPane = document.getElementById("baliPeopleClanRankingPane");
+    if (!directory || !clanPane || !rankingPane) return;
     directory.hidden = state.mode !== "people";
     clanPane.hidden = state.mode !== "clan";
+    rankingPane.hidden = state.mode !== "ranking";
+    if (state.mode === "ranking") loadRanking();
     if (state.mode === "clan") loadClan();
+  }
+
+  function renderRanking() {
+    const root = document.getElementById("baliPeopleClanRankingPane");
+    if (!root) return;
+    root.innerHTML = `<div class="clan-ranking-shell">
+      <section class="clan-ranking-hero">
+        <span class="eyebrow">BALI PEOPLE · ВСЕ КЛАНЫ</span>
+        <h3>Рейтинг кланов</h3>
+        <p>Место определяется рейтинговыми очками. При равенстве выше клан с большим числом активных участников.</p>
+      </section>
+      <section class="clan-ranking-list">
+        ${state.ranking.length ? state.ranking.map(row => `<article class="clan-ranking-row top-${Number(row.position)} ${row.isMember ? "mine" : ""}">
+          <div class="clan-ranking-position">${Number(row.position)}</div>
+          <div class="clan-ranking-copy">
+            <h4>${esc(row.name)}</h4>
+            <p>${esc(clanTypeName(row.clanType))} · ${Number(row.memberCount || 0)} участников${row.leaderName ? ` · ${esc(row.leaderName)}` : ""}</p>
+          </div>
+          <div class="clan-ranking-score"><strong>${points(row.ratingPoints)}</strong><small>очков</small></div>
+          ${row.isMember ? `<button type="button" class="clan-ranking-open" data-open-ranked-clan="${esc(row.id)}">ОТКРЫТЬ МОЙ КЛАН</button>` : ""}
+        </article>`).join("") : '<div class="clan-empty">Активных кланов пока нет.</div>'}
+      </section>
+    </div>`;
+  }
+
+  async function loadRanking(force = false) {
+    const root = document.getElementById("baliPeopleClanRankingPane");
+    if (!root || state.rankingLoading) return;
+    if (state.ranking.length && !force) {
+      renderRanking();
+      return;
+    }
+    state.rankingLoading = true;
+    root.innerHTML = '<div class="clan-empty">Загружаем рейтинг кланов BALI…</div>';
+    try {
+      const result = await api("/api/v1/clans/ranking");
+      state.ranking = result.clans || [];
+      renderRanking();
+    } catch (error) {
+      root.innerHTML = `<div class="clan-empty">Не удалось загрузить рейтинг.<br>${esc(error.message)}</div>`;
+    } finally {
+      state.rankingLoading = false;
+    }
   }
 
   async function loadClan(force = false) {
@@ -275,6 +353,14 @@
       renderMode();
       return;
     }
+    const rankedClan = event.target.closest("[data-open-ranked-clan]");
+    if (rankedClan) {
+      state.clanId = rankedClan.dataset.openRankedClan;
+      state.bundle = null;
+      state.mode = "clan";
+      renderMode();
+      return;
+    }
     const tab = event.target.closest("[data-clan-tab]");
     if (tab) {
       state.tab = tab.dataset.clanTab;
@@ -373,11 +459,15 @@
     if (state.mode === "clan") loadClan(true);
   });
   window.addEventListener("bali:clan-beta-updated", () => {
+    state.ranking = [];
+    if (state.mode === "ranking" && !state.rankingLoading) loadRanking(true);
     if (state.mode === "clan" && !state.loading) loadClan(true);
   });
   window.addEventListener("storage", event => {
     if (event.key !== (window.BaliClans?.storageKey || "bali_clans_integrated_demo_v1")) return;
     state.bundle = null;
+    state.ranking = [];
+    if (state.mode === "ranking" && !state.rankingLoading) loadRanking(true);
     if (state.mode === "clan" && !state.loading) loadClan(true);
   });
 

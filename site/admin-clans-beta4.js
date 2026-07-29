@@ -116,13 +116,13 @@
   function clanList() {
     return `<aside class="clan-admin-list">
       <form class="clan-admin-list-head" id="clanAdminSearchForm"><strong>Кланы BALI PEOPLE</strong><input name="search" value="${esc(viewState.search)}" placeholder="Поиск клана"></form>
-      <div class="clan-admin-list-items">${viewState.chats.length ? viewState.chats.map(row => `<button type="button" class="clan-admin-clan ${row.clan_id === viewState.clanId ? "active" : ""}" data-admin-clan-id="${esc(row.clan_id)}"><strong>${esc(row.name)}</strong><small>${row.member_count} участников · ${row.message_count} сообщений</small>${row.open_report_count ? `<em>${row.open_report_count} новых жалоб</em>` : ""}</button>`).join("") : '<div class="clan-admin-empty">Кланы не найдены</div>'}</div>
+      <div class="clan-admin-list-items">${viewState.chats.length ? viewState.chats.map(row => `<button type="button" class="clan-admin-clan ${row.clan_id === viewState.clanId ? "active" : ""}" data-admin-clan-id="${esc(row.clan_id)}"><strong>${esc(row.name)}</strong><small>${Number(row.rating_points || 0).toLocaleString("ru-RU")} рейтинга · ${row.member_count} участников</small>${row.open_report_count ? `<em>${row.open_report_count} новых жалоб</em>` : ""}</button>`).join("") : '<div class="clan-admin-empty">Кланы не найдены</div>'}</div>
     </aside>`;
   }
 
   function detailHeader() {
     const chat = viewState.detail.chat;
-    return `<div class="clan-admin-title"><div><span class="eyebrow">BALI PEOPLE · ${esc(chat.clan_type)}</span><h3>${esc(chat.clan_name)}</h3><p>ID: ${esc(chat.clan_id)} · лидер ${esc(chat.leader_user_key)}</p></div><div class="clan-admin-status"><span class="clan-admin-badge ${chat.enabled ? "on" : "warn"}">${chat.enabled ? "Чат включён" : "Чат выключен"}</span><span class="clan-admin-badge ${chat.read_only ? "warn" : "on"}">${chat.read_only ? "Только чтение" : "Запись разрешена"}</span></div></div>`;
+    return `<div class="clan-admin-title"><div><span class="eyebrow">BALI PEOPLE · ${esc(chat.clan_type)}</span><h3>${esc(chat.clan_name)}</h3><p>ID: ${esc(chat.clan_id)} · лидер ${esc(chat.leader_user_key)}</p></div><div class="clan-admin-status"><span class="clan-admin-badge on">${Number(chat.rating_points || 0).toLocaleString("ru-RU")} очков</span><span class="clan-admin-badge ${chat.enabled ? "on" : "warn"}">${chat.enabled ? "Чат включён" : "Чат выключен"}</span><span class="clan-admin-badge ${chat.read_only ? "warn" : "on"}">${chat.read_only ? "Только чтение" : "Запись разрешена"}</span></div></div>`;
   }
 
   function tabs() {
@@ -143,6 +143,11 @@
         <label>Удаление своего сообщения, секунд<input type="number" name="deleteWindow" min="0" max="86400" value="${Number(chat.own_delete_window_seconds || 0)}"></label>
         <label>Причина изменения<input name="reason" value="Настройка через текущую админку BALI"></label>
         <button class="clan-admin-button" type="submit">СОХРАНИТЬ РЕЖИМ</button>
+      </form></section>
+      <section class="clan-admin-card"><div class="clan-admin-card-head"><h4>Рейтинг клана</h4><small>Виден всем пользователям</small></div><form class="clan-admin-form" id="clanAdminRatingForm">
+        <label>Рейтинговые очки<input type="number" name="ratingPoints" min="0" max="1000000000" step="1" value="${Number(chat.rating_points || 0)}" required></label>
+        <label>Причина изменения<input name="reason" value="Обновление рейтинга через админку BALI"></label>
+        <button class="clan-admin-button" type="submit">СОХРАНИТЬ РЕЙТИНГ</button>
       </form></section>
       <section class="clan-admin-card"><div class="clan-admin-card-head"><h4>Сводка</h4></div><div class="clan-admin-form">
         <label>Активных участников<strong>${activeMembers}</strong></label>
@@ -278,6 +283,13 @@
           reason:data.get("reason")
         }, "PATCH"));
         return refresh(root, "Настройки чата сохранены");
+      }
+      if (form.id === "clanAdminRatingForm") {
+        await api(`/api/v1/admin/clans/${encodeURIComponent(viewState.clanId)}/rating`, json({
+          ratingPoints:Number(data.get("ratingPoints")),
+          reason:data.get("reason")
+        }, "PUT"));
+        return refresh(root, "Рейтинг клана сохранён");
       }
       if (form.id === "clanAdminLeaderForm") {
         await api(`/api/v1/admin/clans/${encodeURIComponent(viewState.clanId)}/leader`, json({ userKey:data.get("userKey"), reason:data.get("reason") }, "PUT"));

@@ -189,6 +189,18 @@ test("rollback migration removes all added security and clan-chat objects", asyn
   assert.doesNotMatch(sql, /^\s*(?:begin|commit)\s*;/im);
 });
 
+test("clan rating migration is additive, constrained, indexed, and reversible", async () => {
+  const [up, down] = await Promise.all([
+    readFile(path.resolve("migrations/002_clan_rating.up.sql"), "utf8"),
+    readFile(path.resolve("migrations/002_clan_rating.down.sql"), "utf8")
+  ]);
+  assert.match(up, /add column if not exists rating_points integer not null default 0/i);
+  assert.match(up, /check \(rating_points >= 0\)/i);
+  assert.match(up, /create index if not exists clans_public_rating_idx/i);
+  assert.match(down, /drop column if exists rating_points/i);
+  assert.doesNotMatch(up, /^\s*(?:begin|commit)\s*;/im);
+});
+
 test("demo route remains available outside staging and production", async () => {
   context = await createTestContext({ environment: "development" });
 

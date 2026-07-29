@@ -44,6 +44,16 @@ const clans = await api("/api/v1/clans");
 assert.equal(clans.clans.length, 2);
 assert.equal(clans.clans[0].role, "leader");
 
+const ranking = await api("/api/v1/clans/ranking");
+assert.equal(ranking.clans.length, 10);
+assert.equal(ranking.clans[0].name, "JUNGLE SPIRIT");
+assert.equal(ranking.clans.find(row => row.id === "clan-night").isMember, true);
+assert.equal(ranking.clans.find(row => row.id === "clan-jungle-spirit").isMember, false);
+await assert.rejects(
+  api("/api/v1/clans/clan-jungle-spirit/chat"),
+  /только участникам/
+);
+
 const initial = await api("/api/v1/clans/clan-night/chat");
 assert.ok(initial.permissions.includes("poll.create"));
 assert.equal(initial.messages.length, 4);
@@ -66,7 +76,7 @@ assert.equal(withPoll.polls.length, 2);
 
 const adminSession = await api("/api/v1/auth/admin/session");
 assert.equal(adminSession.admin.email, "beta@bali.test");
-const adminChats = await api("/api/v1/admin/chats?search=night");
+const adminChats = await api("/api/v1/admin/chats?search=night%20legends");
 assert.equal(adminChats.chats.length, 1);
 
 await api("/api/v1/admin/clans/clan-night/chat", {
@@ -82,8 +92,16 @@ const updatedDetail = await api("/api/v1/admin/clans/clan-night/chat");
 assert.equal(updatedDetail.chat.read_only, true);
 assert.equal(updatedDetail.chat.own_delete_window_seconds, 120);
 
+await api("/api/v1/admin/clans/clan-night/rating", {
+  method:"PUT",
+  body:JSON.stringify({ ratingPoints:20000, reason:"Smoke rating" })
+});
+const updatedRanking = await api("/api/v1/clans/ranking");
+assert.equal(updatedRanking.clans[0].id, "clan-night");
+assert.equal(updatedRanking.clans[0].ratingPoints, 20000);
+
 const audit = await api("/api/v1/admin/audit?limit=500");
-assert.equal(audit.audit[0].action, "chat.settings.update");
+assert.equal(audit.audit[0].action, "clan.rating.update");
 
 context.BaliClans.reset();
 const resetBundle = await api("/api/v1/clans/clan-night/chat");
@@ -100,10 +118,13 @@ const [loader, userModule, adminHtml, adminModule, adminRuntime] = await Promise
 assert.match(loader, /bali-clans-demo-core-beta4\.js/);
 assert.match(loader, /bali-people-clans-beta4\.js/);
 assert.match(userModule, /data-people-mode="clan"/);
+assert.match(userModule, /data-people-mode="ranking"/);
 assert.match(userModule, /baliPeopleClanPane/);
+assert.match(userModule, /baliPeopleClanRankingPane/);
 assert.match(adminHtml, /data-view="clans"/);
 assert.match(adminHtml, /admin-clans-beta4\.js/);
 assert.match(adminModule, /BaliAdminViews\.clans/);
+assert.match(adminModule, /clanAdminRatingForm/);
 assert.match(adminRuntime, /moduleSets\.clans=\[\]/);
 
 console.log("BALI People integrated clans user/admin smoke test passed");

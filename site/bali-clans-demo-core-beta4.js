@@ -28,9 +28,40 @@
   const clone = value => JSON.parse(JSON.stringify(value));
   const uid = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
+  function rankingClan(id, name, clanType, ratingPoints, leaderName, memberCount) {
+    const leaderKey = `demo:${id}:leader`;
+    return {
+      id,
+      name,
+      clan_type:clanType,
+      rating_points:ratingPoints,
+      leader_user_key:leaderKey,
+      enabled:true,
+      read_only:false,
+      own_delete_window_seconds:900,
+      unread_count:0,
+      notificationPreference:{ muted_until:null, announcements_only:false },
+      members:Array.from({ length:memberCount }, (_row, index) => ({
+        user_key:index === 0 ? leaderKey : `demo:${id}:member:${index}`,
+        name:index === 0 ? leaderName : `Участник ${index + 1}`,
+        username:"",
+        role:index === 0 ? "leader" : "member",
+        status:"active"
+      })),
+      messages:[],
+      polls:[],
+      events:[],
+      announcements:[],
+      pins:[],
+      grants:[],
+      restrictions:[],
+      reports:[]
+    };
+  }
+
   function seed() {
     return {
-      version: 1,
+      version: 2,
       adminLoggedIn: true,
       currentUser: {
         id: USER_KEY,
@@ -86,6 +117,7 @@
           id:"clan-night",
           name:"BALI NIGHT LEGENDS",
           clan_type:"legend",
+          rating_points:12840,
           leader_user_key:USER_KEY,
           enabled:true,
           read_only:false,
@@ -215,6 +247,7 @@
           id:"clan-temple",
           name:"GOLDEN TEMPLE",
           clan_type:"vip",
+          rating_points:10920,
           leader_user_key:"tg:2001",
           enabled:true,
           read_only:true,
@@ -254,7 +287,15 @@
           grants:[],
           restrictions:[],
           reports:[]
-        }
+        },
+        rankingClan("clan-jungle-spirit", "JUNGLE SPIRIT", "community", 15640, "Maya Flame", 38),
+        rankingClan("clan-neon-dynasty", "NEON DYNASTY", "vip", 14310, "Neon Queen", 31),
+        rankingClan("clan-bali-wave", "BALI WAVE", "social", 11780, "Ocean Alex", 27),
+        rankingClan("clan-night-orchids", "NIGHT ORCHIDS", "community", 9650, "Lana Noir", 24),
+        rankingClan("clan-lava-tribe", "LAVA TRIBE", "legend", 8420, "Fire Keeper", 19),
+        rankingClan("clan-sunset-family", "SUNSET FAMILY", "social", 7310, "DJ Sunset", 17),
+        rankingClan("clan-temple-guard", "TEMPLE GUARD", "community", 6890, "Golden Boy", 15),
+        rankingClan("clan-monsoon", "MONSOON CREW", "social", 5240, "Rain Maker", 12)
       ]
     };
   }
@@ -292,7 +333,7 @@
   function read() {
     try {
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (parsed?.version === 1 && Array.isArray(parsed.clans)) return syncActiveIdentity(parsed);
+      if (parsed?.version === 2 && Array.isArray(parsed.clans)) return syncActiveIdentity(parsed);
     } catch {
       // Invalid beta data is replaced by a known fixture.
     }
@@ -423,6 +464,7 @@
       name:clan.name,
       clan_type:clan.clan_type,
       status:"active",
+      rating_points:Number(clan.rating_points || 0),
       leader_user_key:clan.leader_user_key,
       leader_name:clan.members.find(row => row.user_key === clan.leader_user_key)?.name || "",
       chat_id:`chat-${clan.id}`,
@@ -444,6 +486,7 @@
         clan_id:clan.id,
         clan_name:clan.name,
         clan_type:clan.clan_type,
+        rating_points:Number(clan.rating_points || 0),
         leader_user_key:clan.leader_user_key,
         enabled:clan.enabled,
         read_only:clan.read_only,
@@ -480,7 +523,9 @@
   function handleUserApi(state, pathname, method, body) {
     if (pathname === "/api/v1/clans" && method === "GET") {
       return {
-        clans:state.clans.map(clan => ({
+        clans:state.clans
+          .filter(clan => clan.members.some(row => row.user_key === USER_KEY && row.status === "active"))
+          .map(clan => ({
           id:clan.id,
           name:clan.name,
           clan_type:clan.clan_type,
@@ -492,10 +537,29 @@
         }))
       };
     }
+    if (pathname === "/api/v1/clans/ranking" && method === "GET") {
+      const clans = state.clans
+        .map(clan => ({
+          id:clan.id,
+          name:clan.name,
+          clanType:clan.clan_type,
+          leaderName:clan.members.find(row => row.user_key === clan.leader_user_key)?.name || "",
+          ratingPoints:Number(clan.rating_points || 0),
+          memberCount:clan.members.filter(row => row.status === "active").length,
+          isMember:clan.members.some(row => row.user_key === USER_KEY && row.status === "active")
+        }))
+        .sort((left, right) => right.ratingPoints - left.ratingPoints
+          || right.memberCount - left.memberCount
+          || left.name.localeCompare(right.name, "ru"));
+      return { clans:clans.map((clan, index) => ({ ...clan, position:index + 1 })) };
+    }
 
     const match = pathname.match(/^\/api\/v1\/clans\/([^/]+)\/(.+)$/);
     if (!match) return undefined;
     const clan = clanById(state, decodeURIComponent(match[1]));
+    if (!clan.members.some(row => row.user_key === USER_KEY && row.status === "active")) {
+      error("Чат доступен только участникам клана", 403);
+    }
     const action = match[2];
 
     if (action === "chat" && method === "GET") return clanBundle(clan);
@@ -720,6 +784,19 @@
       addAudit(state, "chat.settings.update", "chat", clan.id, String(body.reason || ""));
       write(state);
       return { chat:adminDetail(clan).chat };
+    }
+
+    match = pathname.match(/^\/api\/v1\/admin\/clans\/([^/]+)\/rating$/);
+    if (match && method === "PUT") {
+      const clan = clanById(state, decodeURIComponent(match[1]));
+      const ratingPoints = Number(body.ratingPoints);
+      if (!Number.isInteger(ratingPoints) || ratingPoints < 0 || ratingPoints > 1_000_000_000) {
+        error("Рейтинг должен быть целым числом от 0 до 1000000000");
+      }
+      clan.rating_points = ratingPoints;
+      addAudit(state, "clan.rating.update", "clan", clan.id, String(body.reason || ""));
+      write(state);
+      return { clan:{ id:clan.id, name:clan.name, rating_points:clan.rating_points } };
     }
 
     match = pathname.match(/^\/api\/v1\/admin\/clans\/([^/]+)\/messages$/);

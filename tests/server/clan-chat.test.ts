@@ -58,6 +58,34 @@ async function createPoll(s: ClanScenario, question = "Кто будет?") {
     .send({ question, options: ["Буду", "Не буду"] });
 }
 
+test("an authenticated user can see the complete clan rating without opening private chats", async () => {
+  const s = await setup();
+  await s.context.db.query(
+    `update clans set rating_points = 1200 where id = $1`,
+    [s.clanId]
+  );
+  const rival = await createClan(s.context, {
+    id: "clan-rival",
+    name: "BALI Rivals",
+    leaderUserKey: `tg:${USERS.outsider.id}`,
+    ratingPoints: 2400
+  });
+
+  const response = await s.member.get("/api/v1/clans/ranking");
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    response.body.clans.map((row: any) => [row.id, row.position, row.ratingPoints, row.isMember]),
+    [
+      [rival.clanId, 1, 2400, false],
+      [s.clanId, 2, 1200, true]
+    ]
+  );
+  assert.equal(response.body.clans[1].memberCount, 4);
+
+  const privateChat = await s.member.get(`/api/v1/clans/${rival.clanId}/chat`);
+  assert.equal(privateChat.status, 403);
+});
+
 test("an active clan member can read the clan chat", async () => {
   const s = await setup();
   const response = await s.member.get(`/api/v1/clans/${s.clanId}/chat`);
