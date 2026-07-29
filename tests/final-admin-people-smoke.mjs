@@ -26,5 +26,8 @@ assert.ok(adminRuntime.includes("moduleSets.clans=[]"), "Clan admin view must be
 assert.ok(admin.includes("window.BaliAdminViews"), "Admin must support integrated extension views");
 assert.ok(clans.includes("window.BaliAdminViews.clans"), "Clan management must register as a native admin view");
 assert.ok(clans.includes("/api/v1/admin/clans/"), "Clan administration must use the secured backend API");
+assert.ok(clans.includes("clanAdminCreateForm"), "Admin must create user and corporate clans");
+assert.ok(clans.includes("leaderUserKey"), "Admin must appoint the senior while creating a clan");
+assert.ok(clans.includes('value="corporate"'), "Admin must expose the corporate clan category");
 
 console.log("Latest admin, rewards, gifts, visual controls and integrated clan smoke test passed");

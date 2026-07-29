@@ -53,6 +53,77 @@ test("an administrator can list and inspect every clan chat", async () => {
   assert.equal(details.body.members.length, 3);
 });
 
+test("an administrator can create user and corporate clans and appoint a senior", async () => {
+  context = await createTestContext();
+  const leader = await loginUser(context, USERS.leader);
+  const leaderUserKey = `tg:${USERS.leader.id}`;
+
+  const userClan = await context.adminAgent
+    .post("/api/v1/admin/clans")
+    .send({
+      name: "BALI USER CREW",
+      clanType: "user",
+      leaderUserKey,
+      ratingPoints: 120,
+      reason: "Создание пользовательского клана"
+    });
+  assert.equal(userClan.status, 201);
+  assert.equal(userClan.body.clan.clan_type, "user");
+
+  const corporateClan = await context.adminAgent
+    .post("/api/v1/admin/clans")
+    .send({
+      name: "BALI CORPORATE TEAM",
+      clanType: "corporate",
+      leaderUserKey,
+      ratingPoints: 80,
+      reason: "Создание корпоративного клана"
+    });
+  assert.equal(corporateClan.status, 201);
+  assert.equal(corporateClan.body.clan.clan_type, "corporate");
+
+  const memberships = await leader.get("/api/v1/clans");
+  assert.equal(memberships.status, 200);
+  assert.deepEqual(
+    memberships.body.clans.map((row: any) => row.clan_type).sort(),
+    ["corporate", "user"]
+  );
+  assert.ok(memberships.body.clans.every((row: any) => row.role === "leader"));
+
+  const users = await context.adminAgent.get("/api/v1/admin/users");
+  assert.equal(users.status, 200);
+  const candidate = users.body.users.find((row: any) => row.user_key === leaderUserKey);
+  assert.equal(candidate.user_clan_name, "BALI USER CREW");
+  assert.equal(candidate.corporate_clan_name, "BALI CORPORATE TEAM");
+
+  const audit = await context.db.query(
+    `select action from clan_chat_audit_log where action = 'clan.create' order by created_at`
+  );
+  assert.equal(audit.rowCount, 2);
+});
+
+test("one user cannot hold two active memberships in the same clan category", async () => {
+  context = await createTestContext();
+  await loginUser(context, USERS.leader);
+  const leaderUserKey = `tg:${USERS.leader.id}`;
+
+  const first = await context.adminAgent
+    .post("/api/v1/admin/clans")
+    .send({ name: "FIRST USER CLAN", clanType: "user", leaderUserKey });
+  assert.equal(first.status, 201);
+
+  const duplicate = await context.adminAgent
+    .post("/api/v1/admin/clans")
+    .send({ name: "SECOND USER CLAN", clanType: "user", leaderUserKey });
+  assert.equal(duplicate.status, 409);
+  assert.equal(duplicate.body.error.code, "clan_category_membership_conflict");
+
+  const corporate = await context.adminAgent
+    .post("/api/v1/admin/clans")
+    .send({ name: "ALLOWED CORPORATE CLAN", clanType: "corporate", leaderUserKey });
+  assert.equal(corporate.status, 201);
+});
+
 test("an administrator can update clan rating and the public order changes", async () => {
   const s = await setup();
   const updated = await s.context.adminAgent

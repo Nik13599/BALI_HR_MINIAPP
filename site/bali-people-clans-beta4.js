@@ -21,6 +21,7 @@
     tab:"chat",
     clans:[],
     ranking:[],
+    rankingType:"user",
     clanId:"",
     bundle:null,
     availableEvents:[],
@@ -33,8 +34,9 @@
   const dateTime = value => value ? new Date(value).toLocaleString("ru-RU", {
     day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit"
   }) : "—";
-  const roleName = role => ({ leader:"Лидер", deputy:"Заместитель", moderator:"Модератор", member:"Участник" })[role] || role;
-  const clanTypeName = type => ({ legend:"Легендарный", vip:"VIP", community:"Сообщество", social:"Социальный" })[type] || type || "Сообщество";
+  const roleName = role => ({ leader:"Старший", deputy:"Заместитель", moderator:"Модератор", member:"Участник" })[role] || role;
+  const clanTypeName = type => type === "corporate" ? "Корпоративный" : "Пользовательский";
+  const clanTypePluralName = type => type === "corporate" ? "Корпоративные" : "Пользовательские";
   const points = value => Number(value || 0).toLocaleString("ru-RU");
   const can = permission => state.bundle?.permissions?.includes(permission);
   const currentUserId = () => String(window.BaliClans?.currentUser?.()?.id || "tg:1001");
@@ -63,6 +65,9 @@
       .clan-ranking-hero:after{content:"★";position:absolute;right:-4px;bottom:-28px;color:#c8ff3d10;font:900 100px/1 system-ui}
       .clan-ranking-hero h3{position:relative;z-index:1;margin:6px 0 5px;font:800 18px/1.2 Unbounded;color:#fff}
       .clan-ranking-hero p{position:relative;z-index:1;max-width:270px;margin:0;color:var(--muted);font-size:9px;line-height:1.5}
+      .clan-ranking-categories{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:4px;border:1px solid var(--line);border-radius:14px;background:#090c0b}
+      .clan-ranking-categories button{min-height:40px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:800 8px/1.2 system-ui}
+      .clan-ranking-categories button.active{background:var(--lime);color:#080a08}
       .clan-ranking-list{display:grid;gap:8px}
       .clan-ranking-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0;padding:11px;border:1px solid var(--line);border-radius:15px;background:#101411}
       .clan-ranking-row.mine{border-color:#c8ff3d66;background:linear-gradient(100deg,#c8ff3d13,#101411 58%)}
@@ -129,7 +134,7 @@
     modeSwitch.innerHTML = `
       <button type="button" class="active" data-people-mode="people">ЛЮДИ</button>
       <button type="button" data-people-mode="ranking">КЛАНЫ</button>
-      <button type="button" data-people-mode="clan">МОЙ КЛАН</button>`;
+      <button type="button" data-people-mode="clan">МОИ КЛАНЫ</button>`;
     socialTabs.before(modeSwitch);
 
     const directory = document.createElement("div");
@@ -170,14 +175,21 @@
   function renderRanking() {
     const root = document.getElementById("baliPeopleClanRankingPane");
     if (!root) return;
+    const rows = state.ranking.filter(row => row.clanType === state.rankingType);
+    const categoryName = clanTypeName(state.rankingType);
+    const categoryPluralName = clanTypePluralName(state.rankingType);
     root.innerHTML = `<div class="clan-ranking-shell">
       <section class="clan-ranking-hero">
-        <span class="eyebrow">BALI PEOPLE · ВСЕ КЛАНЫ</span>
-        <h3>Рейтинг кланов</h3>
-        <p>Место определяется рейтинговыми очками. При равенстве выше клан с большим числом активных участников.</p>
+        <span class="eyebrow">BALI PEOPLE · ${esc(categoryPluralName.toUpperCase())} КЛАНЫ</span>
+        <h3>Соревнование кланов</h3>
+        <p>Пользовательские и корпоративные кланы соревнуются отдельно. Место определяется очками внутри выбранной категории.</p>
       </section>
+      <nav class="clan-ranking-categories">
+        <button type="button" class="${state.rankingType === "user" ? "active" : ""}" data-clan-ranking-category="user">ПОЛЬЗОВАТЕЛЬСКИЕ</button>
+        <button type="button" class="${state.rankingType === "corporate" ? "active" : ""}" data-clan-ranking-category="corporate">КОРПОРАТИВНЫЕ</button>
+      </nav>
       <section class="clan-ranking-list">
-        ${state.ranking.length ? state.ranking.map(row => `<article class="clan-ranking-row top-${Number(row.position)} ${row.isMember ? "mine" : ""}">
+        ${rows.length ? rows.map(row => `<article class="clan-ranking-row top-${Number(row.position)} ${row.isMember ? "mine" : ""}">
           <div class="clan-ranking-position">${Number(row.position)}</div>
           <div class="clan-ranking-copy">
             <h4>${esc(row.name)}</h4>
@@ -185,7 +197,7 @@
           </div>
           <div class="clan-ranking-score"><strong>${points(row.ratingPoints)}</strong><small>очков</small></div>
           ${row.isMember ? `<button type="button" class="clan-ranking-open" data-open-ranked-clan="${esc(row.id)}">ОТКРЫТЬ МОЙ КЛАН</button>` : ""}
-        </article>`).join("") : '<div class="clan-empty">Активных кланов пока нет.</div>'}
+        </article>`).join("") : `<div class="clan-empty">Активных кланов категории «${esc(categoryName)}» пока нет.</div>`}
       </section>
     </div>`;
   }
@@ -244,13 +256,14 @@
 
   function hero() {
     const clan = state.bundle.clan;
+    const clanType = clan.clanType || state.clans.find(row => row.id === state.clanId)?.clan_type || "user";
     return `
       <section class="clan-hero">
         <div class="clan-hero-top">
-          <div><span class="eyebrow">BALI PEOPLE · КЛАН</span><h3>${esc(clan.name)}</h3><p>${state.bundle.chat.readOnly ? "Чат временно только для чтения" : "Закрытое пространство участников"}</p></div>
+          <div><span class="eyebrow">BALI PEOPLE · ${esc(clanTypeName(clanType).toUpperCase())}</span><h3>${esc(clan.name)}</h3><p>${state.bundle.chat.readOnly ? "Чат временно только для чтения" : "Закрытое пространство участников"}</p></div>
           <span class="clan-role">${esc(roleName(clan.role))}</span>
         </div>
-        ${state.clans.length > 1 ? `<select class="clan-selector" data-clan-select>${state.clans.map(row => `<option value="${esc(row.id)}" ${row.id === state.clanId ? "selected" : ""}>${esc(row.name)} · ${esc(roleName(row.role))}</option>`).join("")}</select>` : ""}
+        ${state.clans.length > 1 ? `<select class="clan-selector" data-clan-select>${state.clans.map(row => `<option value="${esc(row.id)}" ${row.id === state.clanId ? "selected" : ""}>${esc(clanTypeName(row.clan_type))} · ${esc(row.name)} · ${esc(roleName(row.role))}</option>`).join("")}</select>` : ""}
       </section>
       <nav class="clan-main-tabs">
         ${[["chat","✦","Чат"],["members","●","Участники"],["polls","✓","Опросы"],["events","◫","События"]].map(([id,icon,label]) => `<button type="button" class="${state.tab === id ? "active" : ""}" data-clan-tab="${id}"><i>${icon}</i>${label}</button>`).join("")}
@@ -359,6 +372,12 @@
       state.bundle = null;
       state.mode = "clan";
       renderMode();
+      return;
+    }
+    const rankingCategory = event.target.closest("[data-clan-ranking-category]");
+    if (rankingCategory) {
+      state.rankingType = rankingCategory.dataset.clanRankingCategory;
+      renderRanking();
       return;
     }
     const tab = event.target.closest("[data-clan-tab]");

@@ -63,7 +63,7 @@ export async function decidePermission(
     db,
     `select
        m.id as membership_id, m.user_key, m.role, m.status as membership_status,
-       c.id as clan_id, c.name as clan_name, c.status as clan_status, c.leader_user_key,
+       c.id as clan_id, c.name as clan_name, c.clan_type, c.status as clan_status, c.leader_user_key,
        ch.id as chat_id, ch.enabled, ch.read_only, ch.own_delete_window_seconds, ch.settings
      from public.clan_memberships m
      join public.clans c on c.id = m.clan_id

@@ -22,7 +22,8 @@
   const dateTime = value => value ? new Date(value).toLocaleString("ru-RU", {
     day:"2-digit", month:"short", year:"2-digit", hour:"2-digit", minute:"2-digit"
   }) : "—";
-  const roleName = role => ({ leader:"Лидер", deputy:"Заместитель", moderator:"Модератор", member:"Участник" })[role] || role;
+  const roleName = role => ({ leader:"Старший", deputy:"Заместитель", moderator:"Модератор", member:"Участник" })[role] || role;
+  const clanTypeName = type => type === "corporate" ? "Корпоративный" : "Пользовательский";
   const permissionName = key => ({
     "announcement.create":"Объявления",
     "event.attach":"Прикреплять события",
@@ -40,7 +41,7 @@
     "report.create":"Отправлять жалобы",
     "restriction.manage":"Ограничивать участников"
   })[key] || key;
-  const viewState = { chats:[], clanId:"", detail:null, tab:"overview", search:"", messageSearch:"", audit:[], limits:[] };
+  const viewState = { chats:[], users:[], clanId:"", detail:null, tab:"overview", search:"", messageSearch:"", audit:[], limits:[] };
   let adminContext = null;
 
   function installStyles() {
@@ -48,11 +49,13 @@
     const style = document.createElement("style");
     style.id = "adminClansBeta4Style";
     style.textContent = `
-      .clan-admin-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+      .clan-admin-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:14px}
       .clan-admin-stat{padding:17px;border:1px solid var(--line);border-radius:17px;background:var(--panel)}
       .clan-admin-stat span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase}.clan-admin-stat strong{display:block;margin-top:7px;font-size:28px;color:var(--lime)}
       .clan-admin-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:14px;align-items:start}
       .clan-admin-list,.clan-admin-main{border:1px solid var(--line);border-radius:18px;background:var(--panel);overflow:hidden}
+      .clan-admin-create{margin-bottom:14px}.clan-admin-create .clan-admin-form{grid-template-columns:1.35fr .8fr 1.4fr .65fr auto;align-items:end}.clan-admin-create .clan-admin-button{min-height:42px}
+      .clan-admin-create-note{padding:0 13px 13px;color:var(--muted);font-size:9px;line-height:1.5}
       .clan-admin-list-head{display:grid;gap:9px;padding:13px;border-bottom:1px solid var(--line)}
       .clan-admin-list-head input,.clan-admin-form input,.clan-admin-form textarea,.clan-admin-form select{width:100%;min-height:42px;padding:9px 11px;border:1px solid var(--line);border-radius:11px;background:#0a0d0b;color:#fff;box-sizing:border-box}
       .clan-admin-list-items{display:grid;max-height:68vh;overflow:auto}.clan-admin-clan{display:grid;gap:5px;padding:13px;border:0;border-bottom:1px solid var(--line);background:transparent;color:#fff;text-align:left}
@@ -69,8 +72,9 @@
       .clan-admin-message{max-width:420px;white-space:normal;overflow-wrap:anywhere}.clan-admin-empty{padding:28px;color:var(--muted);text-align:center;font-size:11px}
       .clan-admin-permissions{display:flex;gap:5px;flex-wrap:wrap}.clan-admin-permissions span{padding:5px 7px;border-radius:999px;background:#c8ff3d10;color:var(--lime);font-size:8px}
       .clan-admin-audit{display:grid;gap:7px;padding:11px}.clan-admin-audit article{display:grid;grid-template-columns:145px 1fr;gap:10px;padding:9px;border:1px solid var(--line);border-radius:10px;font-size:9px}.clan-admin-audit time{color:var(--muted)}
+      @media(max-width:1100px){.clan-admin-create .clan-admin-form{grid-template-columns:repeat(2,minmax(0,1fr))}.clan-admin-create .clan-admin-button{grid-column:1/-1}}
       @media(max-width:1000px){.clan-admin-layout{grid-template-columns:230px minmax(0,1fr)}.clan-admin-stats{grid-template-columns:repeat(2,1fr)}}
-      @media(max-width:760px){.clan-admin-layout{grid-template-columns:1fr}.clan-admin-list-items{max-height:210px}.clan-admin-grid{grid-template-columns:1fr}.clan-admin-stats{grid-template-columns:1fr 1fr}.clan-admin-title{display:grid}.clan-admin-status{justify-content:flex-start}.clan-admin-body{padding:9px}.clan-admin-stat{padding:12px}.clan-admin-stat strong{font-size:22px}}
+      @media(max-width:760px){.clan-admin-layout{grid-template-columns:1fr}.clan-admin-list-items{max-height:210px}.clan-admin-grid,.clan-admin-create .clan-admin-form{grid-template-columns:1fr}.clan-admin-stats{grid-template-columns:1fr 1fr}.clan-admin-title{display:grid}.clan-admin-status{justify-content:flex-start}.clan-admin-body{padding:9px}.clan-admin-stat{padding:12px}.clan-admin-stat strong{font-size:22px}}
     `;
     document.head.appendChild(style);
   }
@@ -81,6 +85,11 @@
     if (!viewState.clanId || !viewState.chats.some(row => row.clan_id === viewState.clanId)) {
       viewState.clanId = viewState.chats[0]?.clan_id || "";
     }
+  }
+
+  async function loadUsers() {
+    const result = await api("/api/v1/admin/users");
+    viewState.users = result.users || [];
   }
 
   async function loadDetail() {
@@ -102,27 +111,52 @@
 
   function stats() {
     const enabled = viewState.chats.filter(row => row.enabled).length;
+    const userClans = viewState.chats.filter(row => row.clan_type === "user").length;
+    const corporateClans = viewState.chats.filter(row => row.clan_type === "corporate").length;
     const members = viewState.chats.reduce((sum, row) => sum + Number(row.member_count || 0), 0);
     const reports = viewState.chats.reduce((sum, row) => sum + Number(row.open_report_count || 0), 0);
     const messages = viewState.chats.reduce((sum, row) => sum + Number(row.message_count || 0), 0);
     return `<div class="clan-admin-stats">
-      <article class="clan-admin-stat"><span>Кланы</span><strong>${viewState.chats.length}</strong></article>
-      <article class="clan-admin-stat"><span>Активные чаты</span><strong>${enabled}</strong></article>
+      <article class="clan-admin-stat"><span>Все кланы / чаты</span><strong>${viewState.chats.length} / ${enabled}</strong></article>
+      <article class="clan-admin-stat"><span>Пользовательские</span><strong>${userClans}</strong></article>
+      <article class="clan-admin-stat"><span>Корпоративные</span><strong>${corporateClans}</strong></article>
       <article class="clan-admin-stat"><span>Участники</span><strong>${members}</strong></article>
       <article class="clan-admin-stat"><span>Жалобы / сообщения</span><strong>${reports} / ${messages}</strong></article>
     </div>`;
   }
 
+  function creationPanel() {
+    const options = viewState.users.map(user => {
+      const membership = [
+        user.user_clan_name ? `польз.: ${user.user_clan_name}` : "",
+        user.corporate_clan_name ? `корп.: ${user.corporate_clan_name}` : ""
+      ].filter(Boolean).join(" · ");
+      return `<option value="${esc(user.user_key)}" data-user-clan="${esc(user.user_clan_name || "")}" data-corporate-clan="${esc(user.corporate_clan_name || "")}">${esc(user.name)}${user.username ? ` · @${esc(user.username)}` : ""}${membership ? ` · ${esc(membership)}` : ""}</option>`;
+    }).join("");
+    return `<section class="clan-admin-card clan-admin-create">
+      <div class="clan-admin-card-head"><div><h4>Создать новый клан</h4><small>Администратор сразу назначает старшего</small></div></div>
+      <form class="clan-admin-form" id="clanAdminCreateForm">
+        <label>Название<input name="name" maxlength="120" required placeholder="Название клана"></label>
+        <label>Категория<select name="clanType" data-clan-create-type><option value="user">Пользовательский</option><option value="corporate">Корпоративный</option></select></label>
+        <label>Старший<select name="leaderUserKey" data-clan-create-leader required>${options}</select></label>
+        <label>Начальный рейтинг<input name="ratingPoints" type="number" min="0" max="1000000000" value="0"></label>
+        <button class="clan-admin-button" type="submit">СОЗДАТЬ КЛАН</button>
+        <input type="hidden" name="reason" value="Создание клана через текущую админку BALI">
+      </form>
+      <div class="clan-admin-create-note" data-clan-create-note>Один пользователь может состоять максимум в одном пользовательском и одном корпоративном клане.</div>
+    </section>`;
+  }
+
   function clanList() {
     return `<aside class="clan-admin-list">
       <form class="clan-admin-list-head" id="clanAdminSearchForm"><strong>Кланы BALI PEOPLE</strong><input name="search" value="${esc(viewState.search)}" placeholder="Поиск клана"></form>
-      <div class="clan-admin-list-items">${viewState.chats.length ? viewState.chats.map(row => `<button type="button" class="clan-admin-clan ${row.clan_id === viewState.clanId ? "active" : ""}" data-admin-clan-id="${esc(row.clan_id)}"><strong>${esc(row.name)}</strong><small>${Number(row.rating_points || 0).toLocaleString("ru-RU")} рейтинга · ${row.member_count} участников</small>${row.open_report_count ? `<em>${row.open_report_count} новых жалоб</em>` : ""}</button>`).join("") : '<div class="clan-admin-empty">Кланы не найдены</div>'}</div>
+      <div class="clan-admin-list-items">${viewState.chats.length ? viewState.chats.map(row => `<button type="button" class="clan-admin-clan ${row.clan_id === viewState.clanId ? "active" : ""}" data-admin-clan-id="${esc(row.clan_id)}"><strong>${esc(row.name)}</strong><small>${esc(clanTypeName(row.clan_type))} · ${Number(row.rating_points || 0).toLocaleString("ru-RU")} рейтинга · ${row.member_count} участников</small>${row.open_report_count ? `<em>${row.open_report_count} новых жалоб</em>` : ""}</button>`).join("") : '<div class="clan-admin-empty">Кланы не найдены</div>'}</div>
     </aside>`;
   }
 
   function detailHeader() {
     const chat = viewState.detail.chat;
-    return `<div class="clan-admin-title"><div><span class="eyebrow">BALI PEOPLE · ${esc(chat.clan_type)}</span><h3>${esc(chat.clan_name)}</h3><p>ID: ${esc(chat.clan_id)} · лидер ${esc(chat.leader_user_key)}</p></div><div class="clan-admin-status"><span class="clan-admin-badge on">${Number(chat.rating_points || 0).toLocaleString("ru-RU")} очков</span><span class="clan-admin-badge ${chat.enabled ? "on" : "warn"}">${chat.enabled ? "Чат включён" : "Чат выключен"}</span><span class="clan-admin-badge ${chat.read_only ? "warn" : "on"}">${chat.read_only ? "Только чтение" : "Запись разрешена"}</span></div></div>`;
+    return `<div class="clan-admin-title"><div><span class="eyebrow">BALI PEOPLE · ${esc(clanTypeName(chat.clan_type))}</span><h3>${esc(chat.clan_name)}</h3><p>ID: ${esc(chat.clan_id)} · старший ${esc(chat.leader_user_key)}</p></div><div class="clan-admin-status"><span class="clan-admin-badge on">${Number(chat.rating_points || 0).toLocaleString("ru-RU")} очков</span><span class="clan-admin-badge ${chat.enabled ? "on" : "warn"}">${chat.enabled ? "Чат включён" : "Чат выключен"}</span><span class="clan-admin-badge ${chat.read_only ? "warn" : "on"}">${chat.read_only ? "Только чтение" : "Запись разрешена"}</span></div></div>`;
   }
 
   function tabs() {
@@ -167,7 +201,7 @@
     const rows = viewState.detail.members;
     return `<div class="clan-admin-grid">
       <section class="clan-admin-card"><div class="clan-admin-card-head"><h4>Состав клана</h4><small>${rows.length}</small></div><div class="clan-admin-table-wrap"><table class="clan-admin-table"><thead><tr><th>Участник</th><th>Роль</th><th>Статус</th></tr></thead><tbody>${rows.map(row => `<tr><td><strong>${esc(row.name)}</strong><br><small>@${esc(row.username || "—")} · ${esc(row.user_key)}</small></td><td>${esc(roleName(row.role))}</td><td>${esc(row.status)}</td></tr>`).join("")}</tbody></table></div></section>
-      <section class="clan-admin-card"><div class="clan-admin-card-head"><h4>Передать лидерство</h4></div><form class="clan-admin-form" id="clanAdminLeaderForm"><label>Новый лидер<select name="userKey">${rows.map(row => `<option value="${esc(row.user_key)}" ${row.user_key === viewState.detail.chat.leader_user_key ? "selected" : ""}>${esc(row.name)} · ${esc(roleName(row.role))}</option>`).join("")}</select></label><label>Причина<input name="reason" value="Решение администратора BALI"></label><button class="clan-admin-button" type="submit">НАЗНАЧИТЬ ЛИДЕРА</button></form></section>
+      <section class="clan-admin-card"><div class="clan-admin-card-head"><h4>Назначить старшего</h4></div><form class="clan-admin-form" id="clanAdminLeaderForm"><label>Новый старший<select name="userKey">${rows.map(row => `<option value="${esc(row.user_key)}" ${row.user_key === viewState.detail.chat.leader_user_key ? "selected" : ""}>${esc(row.name)} · ${esc(roleName(row.role))}</option>`).join("")}</select></label><label>Причина<input name="reason" value="Решение администратора BALI"></label><button class="clan-admin-button" type="submit">НАЗНАЧИТЬ СТАРШЕГО</button></form></section>
     </div>`;
   }
 
@@ -206,7 +240,7 @@
 
   async function refresh(root, message = "") {
     try {
-      await loadChats();
+      await Promise.all([loadChats(), loadUsers()]);
       if (viewState.tab === "system") await loadSystem();
       await loadDetail();
       await render(root);
@@ -214,6 +248,28 @@
     } catch (error) {
       root.innerHTML = `<div class="panel"><div class="empty">Ошибка кланов: ${esc(error.message)}</div></div>`;
     }
+  }
+
+  function syncCreateLeaderOptions(root) {
+    const form = root.querySelector("#clanAdminCreateForm");
+    if (!form) return;
+    const category = form.elements.clanType.value;
+    const leader = form.elements.leaderUserKey;
+    [...leader.options].forEach(option => {
+      const occupied = category === "corporate" ? option.dataset.corporateClan : option.dataset.userClan;
+      option.disabled = Boolean(occupied);
+    });
+    if (leader.selectedOptions[0]?.disabled) {
+      const available = [...leader.options].find(option => !option.disabled);
+      if (available) leader.value = available.value;
+    }
+    const availableCount = [...leader.options].filter(option => !option.disabled).length;
+    leader.disabled = availableCount === 0;
+    const note = form.parentElement.querySelector("[data-clan-create-note]");
+    if (note) note.textContent = availableCount
+      ? `Доступно кандидатов: ${availableCount}. Один пользователь может состоять максимум в одном клане каждой категории.`
+      : `Нет свободных кандидатов для категории «${clanTypeName(category)}».`;
+    form.querySelector('button[type="submit"]').disabled = availableCount === 0;
   }
 
   function bind(root) {
@@ -275,6 +331,18 @@
         viewState.messageSearch = String(data.get("search") || "");
         return render(root);
       }
+      if (form.id === "clanAdminCreateForm") {
+        const result = await api("/api/v1/admin/clans", json({
+          name:data.get("name"),
+          clanType:data.get("clanType"),
+          leaderUserKey:data.get("leaderUserKey"),
+          ratingPoints:Number(data.get("ratingPoints") || 0),
+          reason:data.get("reason")
+        }));
+        viewState.clanId = result.clan.id;
+        viewState.tab = "overview";
+        return refresh(root, "Клан создан, старший назначен");
+      }
       if (form.id === "clanAdminSettingsForm") {
         await api(`/api/v1/admin/clans/${encodeURIComponent(viewState.clanId)}/chat`, json({
           enabled:data.get("enabled") === "on",
@@ -309,16 +377,21 @@
         return refresh(root, "Объявление опубликовано");
       }
     };
+    root.onchange = event => {
+      if (event.target.matches("[data-clan-create-type]")) syncCreateLeaderOptions(root);
+    };
+    syncCreateLeaderOptions(root);
   }
 
   async function render(root, context) {
     if (context) {
       adminContext = context;
-      await loadChats();
+      await Promise.all([loadChats(), loadUsers()]);
       await loadDetail();
       if (viewState.tab === "system") await loadSystem();
     } else {
       if (!viewState.chats.length) await loadChats();
+      if (!viewState.users.length) await loadUsers();
       if (!viewState.detail && viewState.clanId) await loadDetail();
       if (viewState.tab === "system" && !viewState.limits.length) await loadSystem();
     }
@@ -330,7 +403,7 @@
       viewState.tab === "content" ? content() :
       viewState.tab === "reports" ? reports() : system()
     }</div></main>`;
-    root.innerHTML = `${stats()}<div class="clan-admin-layout">${clanList()}${detail}</div>`;
+    root.innerHTML = `${creationPanel()}${stats()}<div class="clan-admin-layout">${clanList()}${detail}</div>`;
     bind(root);
   }
 

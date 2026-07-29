@@ -13,7 +13,7 @@ const clans = fs.readFileSync("site/bali-people-clans-beta4.js", "utf8");
 const socialPage = fs.readFileSync("site/beta4-social-page.js", "utf8");
 const profileFallback = fs.readFileSync("site/people-profile-stability-beta4.js", "utf8");
 
-assert.ok(html.includes("bali-full-demo-8-stable26"), "Published page must use the latest build");
+assert.ok(html.includes("bali-full-demo-8-stable27"), "Published page must use the latest build");
 assert.ok(loader.includes("home-layout-final-beta4.js"), "The current home layout must load");
 assert.ok(loader.includes("bali-people-search-ranking-beta4.js"), "BALI People search must load");
 assert.ok(loader.includes("bali-people-status-sync-beta4.js"), "Purchased VIP must sync to public profiles");
@@ -39,6 +39,9 @@ assert.ok(venue.includes("Узнать подробнее о площадке"),
 assert.ok(venue.includes("Оставить отзыв"), "Home must expose feedback");
 assert.ok(clans.includes("data-people-mode=\"people\""), "BALI People must retain its people directory mode");
 assert.ok(clans.includes("data-people-mode=\"clan\""), "BALI People must add an integrated clan mode");
+assert.ok(clans.includes('data-clan-ranking-category="user"'), "User clans must have an independent competition");
+assert.ok(clans.includes('data-clan-ranking-category="corporate"'), "Corporate clans must have an independent competition");
+assert.ok(clans.includes("Пользовательские") && clans.includes("Корпоративные"), "Clan competition headings must use category names in plural");
 assert.ok(socialPage.includes("data-person-profile"), "BALI People cards must open a user profile");
 assert.ok(socialPage.includes("data-person-gift"), "BALI People cards must retain gift actions");
 assert.ok(!socialPage.includes("data-person-invite"), "BALI People must not offer event invitations");

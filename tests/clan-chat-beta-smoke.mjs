@@ -43,9 +43,12 @@ assert.equal(context.BaliClans.currentUser().name, "Николай");
 const clans = await api("/api/v1/clans");
 assert.equal(clans.clans.length, 2);
 assert.equal(clans.clans[0].role, "leader");
+assert.deepEqual(clans.clans.map(row => row.clan_type).sort(), ["corporate", "user"]);
 
 const ranking = await api("/api/v1/clans/ranking");
 assert.equal(ranking.clans.length, 10);
+assert.equal(ranking.categories.user.length, 5);
+assert.equal(ranking.categories.corporate.length, 5);
 assert.equal(ranking.clans[0].name, "JUNGLE SPIRIT");
 assert.equal(ranking.clans.find(row => row.id === "clan-night").isMember, true);
 assert.equal(ranking.clans.find(row => row.id === "clan-jungle-spirit").isMember, false);
@@ -78,6 +81,31 @@ const adminSession = await api("/api/v1/auth/admin/session");
 assert.equal(adminSession.admin.email, "beta@bali.test");
 const adminChats = await api("/api/v1/admin/chats?search=night%20legends");
 assert.equal(adminChats.chats.length, 1);
+const adminUsers = await api("/api/v1/admin/users");
+const freeUserSenior = adminUsers.users.find(row => !row.user_clan_name);
+assert.ok(freeUserSenior);
+const createdClan = await api("/api/v1/admin/clans", {
+  method:"POST",
+  body:JSON.stringify({
+    name:"SMOKE USER CLAN",
+    clanType:"user",
+    leaderUserKey:freeUserSenior.user_key,
+    ratingPoints:250,
+    reason:"Smoke create"
+  })
+});
+assert.equal(createdClan.clan.clan_type, "user");
+await assert.rejects(
+  api("/api/v1/admin/clans", {
+    method:"POST",
+    body:JSON.stringify({
+      name:"SMOKE DUPLICATE USER CLAN",
+      clanType:"user",
+      leaderUserKey:freeUserSenior.user_key
+    })
+  }),
+  error => error?.status === 409
+);
 
 await api("/api/v1/admin/clans/clan-night/chat", {
   method:"PATCH",
@@ -119,12 +147,15 @@ assert.match(loader, /bali-clans-demo-core-beta4\.js/);
 assert.match(loader, /bali-people-clans-beta4\.js/);
 assert.match(userModule, /data-people-mode="clan"/);
 assert.match(userModule, /data-people-mode="ranking"/);
+assert.match(userModule, /data-clan-ranking-category="user"/);
+assert.match(userModule, /data-clan-ranking-category="corporate"/);
 assert.match(userModule, /baliPeopleClanPane/);
 assert.match(userModule, /baliPeopleClanRankingPane/);
 assert.match(adminHtml, /data-view="clans"/);
 assert.match(adminHtml, /admin-clans-beta4\.js/);
 assert.match(adminModule, /BaliAdminViews\.clans/);
 assert.match(adminModule, /clanAdminRatingForm/);
+assert.match(adminModule, /clanAdminCreateForm/);
 assert.match(adminRuntime, /moduleSets\.clans=\[\]/);
 
 console.log("BALI People integrated clans user/admin smoke test passed");

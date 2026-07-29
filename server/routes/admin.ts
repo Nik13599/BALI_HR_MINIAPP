@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { many, one, transaction } from "../db.js";
@@ -22,6 +23,14 @@ function requireRole(...roles: string[]): RequestHandler {
     }
     next();
   };
+}
+
+function clanCategory(value: unknown): "user" | "corporate" {
+  const category = String(value || "").trim().toLowerCase();
+  if (category !== "user" && category !== "corporate") {
+    throw new ApiError(400, "clanType must be user or corporate", "validation_error");
+  }
+  return category;
 }
 
 async function clanChat(db: Queryable, clanId: string): Promise<any> {
@@ -69,6 +78,116 @@ export function createAdminRouter(db: Queryable): Router {
     );
     res.json({ permissions });
   }));
+
+  router.get("/users", asyncHandler(async (req, res) => {
+    const search = String(req.query.search || "").trim();
+    const users = await many<any>(
+      db,
+      `select u.user_key, u.name, u.username,
+              max(case when c.clan_type = 'user' and m.status = 'active' then c.name end) as user_clan_name,
+              max(case when c.clan_type = 'corporate' and m.status = 'active' then c.name end) as corporate_clan_name
+         from public.app_users u
+         left join public.clan_memberships m on m.user_key = u.user_key
+         left join public.clans c on c.id = m.clan_id
+        where u.account_status = 'active'
+          and ($1 = '' or lower(u.name) like '%' || lower($1) || '%'
+            or lower(u.username) like '%' || lower($1) || '%')
+        group by u.user_key, u.name, u.username
+        order by u.name, u.user_key
+        limit 200`,
+      [search]
+    );
+    res.json({ users });
+  }));
+
+  router.post(
+    "/clans",
+    requireRole("admin", "superadmin"),
+    asyncHandler(async (req, res) => {
+      const name = requiredText(req.body?.name, "name", 120);
+      const clanType = clanCategory(req.body?.clanType);
+      const leaderUserKey = identifier(req.body?.leaderUserKey, "leaderUserKey");
+      const ratingPoints = boundedInteger(req.body?.ratingPoints, 0, 0, 1_000_000_000);
+      const reason = optionalText(req.body?.reason, 1000);
+      const clanId = `clan-${randomUUID()}`;
+      const leader = await one<any>(
+        db,
+        `select user_key, name, username from public.app_users
+          where user_key = $1 and account_status = 'active'`,
+        [leaderUserKey]
+      );
+      if (!leader) throw new ApiError(404, "Active senior user was not found", "not_found");
+
+      const conflict = await one<any>(
+        db,
+        `select c.id, c.name
+           from public.clan_memberships m
+           join public.clans c on c.id = m.clan_id
+          where m.user_key = $1 and m.status = 'active' and c.clan_type = $2
+          limit 1`,
+        [leaderUserKey, clanType]
+      );
+      if (conflict) {
+        throw new ApiError(
+          409,
+          `The selected senior already belongs to a ${clanType} clan`,
+          "clan_category_membership_conflict",
+          { clanId: conflict.id, clanName: conflict.name, clanType }
+        );
+      }
+
+      let created: { clan: any; chat: any };
+      try {
+        created = await transaction(db, async client => {
+          const clan = await one<any>(
+            client,
+            `insert into public.clans(id, name, clan_type, leader_user_key, rating_points)
+             values ($1,$2,$3,$4,$5)
+             returning id, name, clan_type, leader_user_key, rating_points, status, created_at`,
+            [clanId, name, clanType, leaderUserKey, ratingPoints]
+          );
+          await client.query(
+            `insert into public.clan_memberships(clan_id, user_key, role, status, clan_type)
+             values ($1,$2,'leader','active',$3)`,
+            [clanId, leaderUserKey, clanType]
+          );
+          const chat = await one<any>(
+            client,
+            `insert into public.clan_chats(clan_id)
+             values ($1)
+             on conflict (clan_id) do update set clan_id = excluded.clan_id
+             returning id, clan_id, enabled, read_only`,
+            [clanId]
+          );
+          return { clan, chat };
+        });
+      } catch (error: any) {
+        if (error?.code === "23505") {
+          throw new ApiError(
+            409,
+            `The selected senior already belongs to a ${clanType} clan`,
+            "clan_category_membership_conflict"
+          );
+        }
+        throw error;
+      }
+
+      await adminAudit(db, req, {
+        permissionKey: "clan.create",
+        action: "clan.create",
+        targetType: "clan",
+        targetId: clanId,
+        clanId,
+        reason,
+        after: {
+          ...created.clan,
+          leaderName: leader.name,
+          leaderUserKey
+        }
+      });
+      res.status(201).json(created);
+    })
+  );
 
   router.get("/chats", asyncHandler(async (req, res) => {
     const search = String(req.query.search || "").trim();

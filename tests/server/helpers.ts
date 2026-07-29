@@ -113,7 +113,7 @@ create table events (
 create table clans (
   id text primary key,
   name text not null,
-  clan_type text not null default 'community',
+  clan_type text not null default 'user' check (clan_type in ('user', 'corporate')),
   leader_user_key text references app_users(user_key),
   status text not null default 'active',
   rating_points integer not null default 0 check (rating_points >= 0),
@@ -124,6 +124,7 @@ create table clan_memberships (
   id uuid primary key default gen_random_uuid(),
   clan_id text not null references clans(id) on delete cascade,
   user_key text not null references app_users(user_key) on delete cascade,
+  clan_type text not null default 'user' check (clan_type in ('user', 'corporate')),
   role text not null default 'member',
   status text not null default 'active',
   joined_at timestamptz not null default now(),
@@ -132,6 +133,8 @@ create table clan_memberships (
   updated_at timestamptz not null default now(),
   unique (clan_id, user_key)
 );
+create unique index clan_memberships_one_active_category
+  on clan_memberships(user_key, clan_type) where status = 'active';
 create table clan_chats (
   id uuid primary key default gen_random_uuid(),
   clan_id text not null unique references clans(id) on delete cascade,
@@ -426,15 +429,17 @@ export async function createClan(
   input: {
     id?: string;
     name?: string;
+    clanType?: "user" | "corporate";
     leaderUserKey: string;
     ratingPoints?: number;
     members?: Array<{ userKey: string; role?: string; status?: string }>;
   }
 ): Promise<{ clanId: string; chatId: string }> {
   const clanId = input.id || `clan-${randomUUID()}`;
+  const clanType = input.clanType || "user";
   await context.db.query(
-    `insert into clans(id, name, leader_user_key, rating_points) values ($1,$2,$3,$4)`,
-    [clanId, input.name || "BALI Clan", input.leaderUserKey, input.ratingPoints || 0]
+    `insert into clans(id, name, clan_type, leader_user_key, rating_points) values ($1,$2,$3,$4,$5)`,
+    [clanId, input.name || "BALI Clan", clanType, input.leaderUserKey, input.ratingPoints || 0]
   );
   const chat = await context.db.query(
     `insert into clan_chats(clan_id) values ($1) returning id`,
@@ -446,9 +451,9 @@ export async function createClan(
   }
   for (const member of rows) {
     await context.db.query(
-      `insert into clan_memberships(clan_id, user_key, role, status)
-       values ($1,$2,$3,$4)`,
-      [clanId, member.userKey, member.role || "member", member.status || "active"]
+      `insert into clan_memberships(clan_id, user_key, clan_type, role, status)
+       values ($1,$2,$3,$4,$5)`,
+      [clanId, member.userKey, clanType, member.role || "member", member.status || "active"]
     );
   }
   return { clanId, chatId: String(chat.rows[0].id) };

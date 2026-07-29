@@ -201,6 +201,21 @@ test("clan rating migration is additive, constrained, indexed, and reversible", 
   assert.doesNotMatch(up, /^\s*(?:begin|commit)\s*;/im);
 });
 
+test("clan category migration separates membership and ranking safely", async () => {
+  const [up, down] = await Promise.all([
+    readFile(path.resolve("migrations/003_clan_categories.up.sql"), "utf8"),
+    readFile(path.resolve("migrations/003_clan_categories.down.sql"), "utf8")
+  ]);
+  assert.match(up, /check \(clan_type in \('user', 'corporate'\)\)/i);
+  assert.match(up, /add column if not exists clan_type text/i);
+  assert.match(up, /clan_memberships_one_active_category/i);
+  assert.match(up, /where status = 'active'/i);
+  assert.match(up, /bali_set_membership_clan_type/i);
+  assert.match(up, /clans_category_rating_idx/i);
+  assert.match(down, /drop index if exists public\.clan_memberships_one_active_category/i);
+  assert.match(down, /drop column if exists clan_type/i);
+});
+
 test("demo route remains available outside staging and production", async () => {
   context = await createTestContext({ environment: "development" });
 

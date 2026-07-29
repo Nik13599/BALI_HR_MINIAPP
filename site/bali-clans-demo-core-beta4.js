@@ -22,11 +22,23 @@
     "restriction.manage"
   ];
   const USER_PERMISSIONS = PERMISSION_KEYS.filter(key => key !== "restriction.manage");
+  const CORPORATE_CLAN_IDS = new Set([
+    "clan-temple",
+    "clan-neon-dynasty",
+    "clan-night-orchids",
+    "clan-sunset-family",
+    "clan-monsoon"
+  ]);
   const eventImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='420'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1'%3E%3Cstop stop-color='%23130b05'/%3E%3Cstop offset='.55' stop-color='%23643a10'/%3E%3Cstop offset='1' stop-color='%23080604'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='420' fill='url(%23g)'/%3E%3Ccircle cx='620' cy='120' r='95' fill='%23f1b64b' opacity='.18'/%3E%3Cpath d='M0 350L170 190 300 330 465 155 800 360V420H0Z' fill='%23070504' opacity='.85'/%3E%3Ctext x='48' y='86' fill='%23f4c66c' font-family='serif' font-size='54'%3EBALI NIGHT%3C/text%3E%3C/svg%3E";
 
   const nowIso = (offsetMinutes = 0) => new Date(Date.now() + offsetMinutes * 60_000).toISOString();
   const clone = value => JSON.parse(JSON.stringify(value));
   const uid = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const clanCategory = (type, id = "") => (
+    type === "corporate" || type === "vip" || CORPORATE_CLAN_IDS.has(String(id))
+      ? "corporate"
+      : "user"
+  );
 
   function rankingClan(id, name, clanType, ratingPoints, leaderName, memberCount) {
     const leaderKey = `demo:${id}:leader`;
@@ -61,7 +73,7 @@
 
   function seed() {
     return {
-      version: 2,
+      version: 3,
       adminLoggedIn: true,
       currentUser: {
         id: USER_KEY,
@@ -116,7 +128,7 @@
         {
           id:"clan-night",
           name:"BALI NIGHT LEGENDS",
-          clan_type:"legend",
+          clan_type:"user",
           rating_points:12840,
           leader_user_key:USER_KEY,
           enabled:true,
@@ -246,7 +258,7 @@
         {
           id:"clan-temple",
           name:"GOLDEN TEMPLE",
-          clan_type:"vip",
+          clan_type:"corporate",
           rating_points:10920,
           leader_user_key:"tg:2001",
           enabled:true,
@@ -288,14 +300,14 @@
           restrictions:[],
           reports:[]
         },
-        rankingClan("clan-jungle-spirit", "JUNGLE SPIRIT", "community", 15640, "Maya Flame", 38),
-        rankingClan("clan-neon-dynasty", "NEON DYNASTY", "vip", 14310, "Neon Queen", 31),
-        rankingClan("clan-bali-wave", "BALI WAVE", "social", 11780, "Ocean Alex", 27),
-        rankingClan("clan-night-orchids", "NIGHT ORCHIDS", "community", 9650, "Lana Noir", 24),
-        rankingClan("clan-lava-tribe", "LAVA TRIBE", "legend", 8420, "Fire Keeper", 19),
-        rankingClan("clan-sunset-family", "SUNSET FAMILY", "social", 7310, "DJ Sunset", 17),
-        rankingClan("clan-temple-guard", "TEMPLE GUARD", "community", 6890, "Golden Boy", 15),
-        rankingClan("clan-monsoon", "MONSOON CREW", "social", 5240, "Rain Maker", 12)
+        rankingClan("clan-jungle-spirit", "JUNGLE SPIRIT", "user", 15640, "Maya Flame", 38),
+        rankingClan("clan-neon-dynasty", "NEON DYNASTY", "corporate", 14310, "Neon Queen", 31),
+        rankingClan("clan-bali-wave", "BALI WAVE", "user", 11780, "Ocean Alex", 27),
+        rankingClan("clan-night-orchids", "NIGHT ORCHIDS", "corporate", 9650, "Lana Noir", 24),
+        rankingClan("clan-lava-tribe", "LAVA TRIBE", "user", 8420, "Fire Keeper", 19),
+        rankingClan("clan-sunset-family", "SUNSET FAMILY", "corporate", 7310, "DJ Sunset", 17),
+        rankingClan("clan-temple-guard", "TEMPLE GUARD", "user", 6890, "Golden Boy", 15),
+        rankingClan("clan-monsoon", "MONSOON CREW", "corporate", 5240, "Rain Maker", 12)
       ]
     };
   }
@@ -330,10 +342,38 @@
     return state;
   }
 
+  function upgradeState(state) {
+    if (!state || !Array.isArray(state.clans)) return null;
+    state.version = 3;
+    state.clans.forEach(clan => {
+      clan.clan_type = clanCategory(clan.clan_type, clan.id);
+      clan.members = Array.isArray(clan.members) ? clan.members : [];
+      clan.members.forEach(member => { member.clan_type = clan.clan_type; });
+    });
+    const activeMemberships = new Set();
+    state.clans
+      .flatMap(clan => clan.members
+        .filter(member => member.status === "active")
+        .map(member => ({ clan, member })))
+      .forEach(({ clan, member }) => {
+        const key = `${member.user_key}:${clan.clan_type}`;
+        if (!activeMemberships.has(key)) {
+          activeMemberships.add(key);
+          return;
+        }
+        member.status = "left";
+      });
+    return state;
+  }
+
   function read() {
     try {
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (parsed?.version === 2 && Array.isArray(parsed.clans)) return syncActiveIdentity(parsed);
+      const upgraded = upgradeState(parsed);
+      if (upgraded) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(upgraded));
+        return syncActiveIdentity(upgraded);
+      }
     } catch {
       // Invalid beta data is replaced by a known fixture.
     }
@@ -428,7 +468,7 @@
 
   function clanBundle(clan) {
     return {
-      clan:{ id:clan.id, name:clan.name, role:clan.members.find(row => row.user_key === USER_KEY)?.role || "member" },
+      clan:{ id:clan.id, name:clan.name, clanType:clan.clan_type, role:clan.members.find(row => row.user_key === USER_KEY)?.role || "member" },
       chat:{
         id:`chat-${clan.id}`,
         enabled:clan.enabled,
@@ -503,6 +543,32 @@
     };
   }
 
+  function adminUsers(state) {
+    const users = new Map();
+    const ensure = source => {
+      const userKey = String(source.user_key || source.userKey || source.id || "");
+      if (!userKey) return null;
+      if (!users.has(userKey)) {
+        users.set(userKey, {
+          user_key:userKey,
+          name:String(source.name || "Пользователь BALI"),
+          username:String(source.username || "").replace(/^@/, ""),
+          user_clan_name:"",
+          corporate_clan_name:""
+        });
+      }
+      return users.get(userKey);
+    };
+    ensure(state.currentUser);
+    state.clans.forEach(clan => clan.members.forEach(member => {
+      const user = ensure(member);
+      if (!user || member.status !== "active") return;
+      if (clan.clan_type === "corporate") user.corporate_clan_name = clan.name;
+      else user.user_clan_name = clan.name;
+    }));
+    return [...users.values()].sort((left, right) => left.name.localeCompare(right.name, "ru"));
+  }
+
   function mutateMessage(state, clan, body, replyToId) {
     const message = {
       id:uid("msg"),
@@ -538,7 +604,7 @@
       };
     }
     if (pathname === "/api/v1/clans/ranking" && method === "GET") {
-      const clans = state.clans
+      const source = state.clans
         .map(clan => ({
           id:clan.id,
           name:clan.name,
@@ -547,11 +613,18 @@
           ratingPoints:Number(clan.rating_points || 0),
           memberCount:clan.members.filter(row => row.status === "active").length,
           isMember:clan.members.some(row => row.user_key === USER_KEY && row.status === "active")
-        }))
+        }));
+      const rankCategory = type => source
+        .filter(clan => clan.clanType === type)
         .sort((left, right) => right.ratingPoints - left.ratingPoints
           || right.memberCount - left.memberCount
-          || left.name.localeCompare(right.name, "ru"));
-      return { clans:clans.map((clan, index) => ({ ...clan, position:index + 1 })) };
+          || left.name.localeCompare(right.name, "ru"))
+        .map((clan, index) => ({ ...clan, position:index + 1 }));
+      const categories = {
+        user:rankCategory("user"),
+        corporate:rankCategory("corporate")
+      };
+      return { clans:[...categories.user, ...categories.corporate], categories };
     }
 
     const match = pathname.match(/^\/api\/v1\/clans\/([^/]+)\/(.+)$/);
@@ -745,6 +818,70 @@
 
     if (pathname === "/api/v1/admin/permissions" && method === "GET") {
       return { permissions:PERMISSION_KEYS.map(permission_key => ({ permission_key })) };
+    }
+    if (pathname === "/api/v1/admin/users" && method === "GET") {
+      const search = String(searchParams.get("search") || "").toLocaleLowerCase("ru");
+      return {
+        users:adminUsers(state).filter(user => !search
+          || user.name.toLocaleLowerCase("ru").includes(search)
+          || user.username.toLocaleLowerCase("ru").includes(search))
+      };
+    }
+    if (pathname === "/api/v1/admin/clans" && method === "POST") {
+      const name = String(body.name || "").trim();
+      const category = clanCategory(body.clanType);
+      const leaderUserKey = String(body.leaderUserKey || "");
+      const leader = adminUsers(state).find(user => user.user_key === leaderUserKey);
+      if (!name || name.length > 120) error("Название клана должно содержать от 1 до 120 символов");
+      if (!["user","corporate"].includes(String(body.clanType || ""))) {
+        error("Выберите пользовательский или корпоративный тип клана");
+      }
+      if (!leader) error("Старший клана не найден", 404);
+      const conflict = state.clans.find(clan => clan.clan_type === category
+        && clan.members.some(member => member.user_key === leaderUserKey && member.status === "active"));
+      if (conflict) error(`Пользователь уже состоит в клане категории «${category === "corporate" ? "Корпоративный" : "Пользовательский"}»`, 409);
+      const clan = {
+        id:uid("clan"),
+        name,
+        clan_type:category,
+        rating_points:Math.max(0, Number(body.ratingPoints || 0)),
+        leader_user_key:leaderUserKey,
+        enabled:true,
+        read_only:false,
+        own_delete_window_seconds:900,
+        unread_count:0,
+        notificationPreference:{ muted_until:null, announcements_only:false },
+        members:[{
+          user_key:leaderUserKey,
+          name:leader.name,
+          username:leader.username,
+          clan_type:category,
+          role:"leader",
+          status:"active"
+        }],
+        messages:[],
+        polls:[],
+        events:[],
+        announcements:[],
+        pins:[],
+        grants:[],
+        restrictions:[],
+        reports:[]
+      };
+      state.clans.push(clan);
+      addAudit(state, "clan.create", "clan", clan.id, String(body.reason || "Создание клана через админку BALI"));
+      write(state);
+      return {
+        clan:{
+          id:clan.id,
+          name:clan.name,
+          clan_type:clan.clan_type,
+          rating_points:clan.rating_points,
+          leader_user_key:clan.leader_user_key,
+          status:"active"
+        },
+        chat:{ id:`chat-${clan.id}`, clan_id:clan.id, enabled:true, read_only:false }
+      };
     }
     if (pathname === "/api/v1/admin/chats" && method === "GET") {
       const search = String(searchParams.get("search") || "").toLocaleLowerCase("ru");

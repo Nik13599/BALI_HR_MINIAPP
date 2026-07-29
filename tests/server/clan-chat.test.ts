@@ -86,6 +86,39 @@ test("an authenticated user can see the complete clan rating without opening pri
   assert.equal(privateChat.status, 403);
 });
 
+test("user and corporate clan competitions have independent positions", async () => {
+  const s = await setup();
+  await s.context.db.query(
+    `update clans set rating_points = 400 where id = $1`,
+    [s.clanId]
+  );
+  await createClan(s.context, {
+    id: "corporate-low",
+    name: "CORPORATE LOW",
+    clanType: "corporate",
+    leaderUserKey: `tg:${USERS.outsider.id}`,
+    ratingPoints: 50
+  });
+  await createClan(s.context, {
+    id: "corporate-high",
+    name: "CORPORATE HIGH",
+    clanType: "corporate",
+    leaderUserKey: `tg:${USERS.former.id}`,
+    ratingPoints: 900
+  });
+
+  const response = await s.member.get("/api/v1/clans/ranking");
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    response.body.categories.user.map((row: any) => [row.id, row.position]),
+    [[s.clanId, 1]]
+  );
+  assert.deepEqual(
+    response.body.categories.corporate.map((row: any) => [row.id, row.position]),
+    [["corporate-high", 1], ["corporate-low", 2]]
+  );
+});
+
 test("an active clan member can read the clan chat", async () => {
   const s = await setup();
   const response = await s.member.get(`/api/v1/clans/${s.clanId}/chat`);
@@ -351,6 +384,7 @@ test("unread counters are independent for two clan chats", async () => {
   const second = await createClan(context!, {
     id: "clan-second",
     name: "Second clan",
+    clanType: "corporate",
     leaderUserKey: `tg:${USERS.leader.id}`,
     members: [
       { userKey: `tg:${USERS.leader.id}`, role: "leader" },

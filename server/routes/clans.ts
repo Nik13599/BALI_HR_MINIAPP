@@ -186,20 +186,30 @@ export function createClanRouter(db: Queryable): Router {
             where user_key = $1 and status = 'active'
          ) mine on mine.clan_id = c.id
         where c.status = 'active'
-        order by c.rating_points desc, coalesce(members.member_count, 0) desc, c.name asc`,
+        order by c.clan_type, c.rating_points desc, coalesce(members.member_count, 0) desc, c.name asc`,
       [req.userPrincipal!.userKey]
     );
-    res.json({
-      clans: rows.map((row, index) => ({
+    const positions = { user: 0, corporate: 0 };
+    const clans = rows.map(row => {
+      const clanType = row.clan_type === "corporate" ? "corporate" : "user";
+      positions[clanType] += 1;
+      return {
         id: row.id,
         name: row.name,
-        clanType: row.clan_type,
+        clanType,
         leaderName: row.leader_name || "",
         ratingPoints: Number(row.rating_points || 0),
         memberCount: Number(row.member_count || 0),
         isMember: Boolean(row.is_member),
-        position: index + 1
-      }))
+        position: positions[clanType]
+      };
+    });
+    res.json({
+      clans,
+      categories: {
+        user: clans.filter(row => row.clanType === "user"),
+        corporate: clans.filter(row => row.clanType === "corporate")
+      }
     });
   }));
 
@@ -246,6 +256,7 @@ export function createClanRouter(db: Queryable): Router {
       clan: {
         id: req.permissionDecision!.membership!.clan_id,
         name: req.permissionDecision!.membership!.clan_name,
+        clanType: req.permissionDecision!.membership!.clan_type,
         role: req.permissionDecision!.membership!.role
       },
       chat: {
