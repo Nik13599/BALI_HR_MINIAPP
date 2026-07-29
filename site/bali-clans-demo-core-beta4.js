@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "bali_clan_chat_beta_v1";
+  const STORAGE_KEY = "bali_clans_integrated_demo_v1";
   const USER_KEY = "tg:1001";
   const ADMIN = { id:"admin-beta", email:"beta@bali.test", role:"superadmin", status:"active" };
   const PERMISSION_KEYS = [
@@ -259,16 +259,46 @@
     };
   }
 
+  function activeAppUser() {
+    const social = window.BaliBeta4Social?.profile?.();
+    const demo = window.BaliDemo?.activeUser?.();
+    const game = window.BaliBeta4Game?.profile?.();
+    const source = social || demo || game || {};
+    return {
+      id:USER_KEY,
+      userKey:USER_KEY,
+      telegramUserId:String(source.telegramId || demo?.telegramId || "1001"),
+      name:String(source.name || "Гость BALI"),
+      username:String(source.username || demo?.username || "").replace(/^@/, ""),
+      status:"active"
+    };
+  }
+
+  function syncActiveIdentity(state) {
+    const current = activeAppUser();
+    state.currentUser = current;
+    state.clans.forEach(clan => {
+      const member = clan.members.find(row => row.user_key === USER_KEY);
+      if (!member) return;
+      member.name = current.name;
+      member.username = current.username;
+      clan.messages
+        .filter(row => row.author_user_key === USER_KEY)
+        .forEach(row => { row.author_name = current.name; });
+    });
+    return state;
+  }
+
   function read() {
     try {
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (parsed?.version === 1 && Array.isArray(parsed.clans)) return parsed;
+      if (parsed?.version === 1 && Array.isArray(parsed.clans)) return syncActiveIdentity(parsed);
     } catch {
       // Invalid beta data is replaced by a known fixture.
     }
     const initial = seed();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-    return initial;
+    return syncActiveIdentity(initial);
   }
 
   function write(state) {
@@ -841,7 +871,7 @@
     return undefined;
   }
 
-  async function betaApi(path, options = {}) {
+  async function demoApi(path, options = {}) {
     const url = new URL(path, window.location.origin);
     const method = String(options.method || "GET").toUpperCase();
     const body = jsonBody(options);
@@ -874,13 +904,36 @@
     return `data:text/csv;charset=utf-8,${encodeURIComponent([header, ...rows].join("\n"))}`;
   }
 
-  window.BaliBetaApi = betaApi;
-  window.BaliClanBeta = {
-    api:betaApi,
+  async function api(path, options = {}) {
+    if (window.BALI_DEMO_ONLY || window.BALI_BROWSER_DEMO) return demoApi(path, options);
+    const response = await fetch(path, {
+      credentials:"include",
+      ...options,
+      headers:{
+        "Content-Type":"application/json",
+        ...(options.headers || {})
+      }
+    });
+    if (response.status === 204) return null;
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const problem = new Error(payload?.error?.message || payload.message || "Не удалось выполнить запрос");
+      problem.status = response.status;
+      throw problem;
+    }
+    return payload;
+  }
+
+  window.BaliClans = {
+    api,
+    demoApi,
+    storageKey:STORAGE_KEY,
     currentUser:() => clone(read().currentUser),
     reset,
     snapshot:() => clone(read()),
     credentials:{ email:ADMIN.email, password:"bali-beta-2026" }
   };
+  window.BaliBetaApi = demoApi;
+  window.BaliClanBeta = window.BaliClans;
   window.BaliAdminAuditHref = auditCsvHref();
 })();

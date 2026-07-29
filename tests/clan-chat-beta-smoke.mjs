@@ -22,18 +22,23 @@ const context = {
     }
   },
   localStorage,
+  BALI_DEMO_ONLY:true,
+  BaliDemo:{
+    activeUser:() => ({ name:"Николай", username:"@nikolay_bali", telegramId:910001 })
+  },
   location:{ origin:"https://beta.bali.test" },
   dispatchEvent:() => true
 };
 context.window = context;
 vm.createContext(context);
 
-const source = await readFile("site/clan-chat-beta-store.js", "utf8");
-vm.runInContext(source, context, { filename:"site/clan-chat-beta-store.js" });
+const source = await readFile("site/bali-clans-demo-core-beta4.js", "utf8");
+vm.runInContext(source, context, { filename:"site/bali-clans-demo-core-beta4.js" });
 
-const api = context.BaliBetaApi;
+const api = context.BaliClans.api;
 assert.equal(typeof api, "function");
-assert.equal(typeof context.BaliClanBeta.reset, "function");
+assert.equal(typeof context.BaliClans.reset, "function");
+assert.equal(context.BaliClans.currentUser().name, "Николай");
 
 const clans = await api("/api/v1/clans");
 assert.equal(clans.clans.length, 2);
@@ -80,18 +85,25 @@ assert.equal(updatedDetail.chat.own_delete_window_seconds, 120);
 const audit = await api("/api/v1/admin/audit?limit=500");
 assert.equal(audit.audit[0].action, "chat.settings.update");
 
-context.BaliClanBeta.reset();
+context.BaliClans.reset();
 const resetBundle = await api("/api/v1/clans/clan-night/chat");
 assert.equal(resetBundle.messages.length, 4);
 assert.equal(resetBundle.chat.readOnly, false);
 
-const [userHtml, adminHtml] = await Promise.all([
-  readFile("site/clan-chat-beta.html", "utf8"),
-  readFile("site/admin-clan-chat-beta.html", "utf8")
+const [loader, userModule, adminHtml, adminModule, adminRuntime] = await Promise.all([
+  readFile("site/beta4-square-loader.js", "utf8"),
+  readFile("site/bali-people-clans-beta4.js", "utf8"),
+  readFile("site/admin-beta4.html", "utf8"),
+  readFile("site/admin-clans-beta4.js", "utf8"),
+  readFile("site/admin-mobile-runtime.js", "utf8")
 ]);
-assert.match(userHtml, /BETA · TEST DATA/);
-assert.match(userHtml, /clan-chat-beta-store\.js/);
-assert.match(adminHtml, /BETA ADMIN/);
-assert.match(adminHtml, /admin-production\.js/);
+assert.match(loader, /bali-clans-demo-core-beta4\.js/);
+assert.match(loader, /bali-people-clans-beta4\.js/);
+assert.match(userModule, /data-people-mode="clan"/);
+assert.match(userModule, /baliPeopleClanPane/);
+assert.match(adminHtml, /data-view="clans"/);
+assert.match(adminHtml, /admin-clans-beta4\.js/);
+assert.match(adminModule, /BaliAdminViews\.clans/);
+assert.match(adminRuntime, /view!=="clans"/);
 
-console.log("BALI clan chat user/admin beta smoke test passed");
+console.log("BALI People integrated clans user/admin smoke test passed");

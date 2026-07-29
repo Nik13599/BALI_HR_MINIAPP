@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-full-demo-8-stable4";
+  const version = "bali-full-demo-8-clans-integrated1";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -37,6 +37,7 @@
     "night-crown-checkin-bridge-beta4.js",
     "night-crown-presence-fix-beta4.js",
     "beta4-social-core.js",
+    "bali-clans-demo-core-beta4.js",
     "full-demo-social-economy-beta4.js",
     "full-demo-people-upgrade-beta4.js",
     "bali-people-status-sync-beta4.js",
@@ -54,6 +55,7 @@
     "beta4-profile-booking.js",
     "beta4-loyalty-ui-stable.js",
     "beta4-social-page.js",
+    "bali-people-clans-beta4.js",
     "night-crown-beta4.js",
     "full-demo-nav-unlock-beta4.js",
     "beta4-qr-checkin.js"
