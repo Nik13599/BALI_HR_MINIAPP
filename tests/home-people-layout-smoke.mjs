@@ -11,7 +11,7 @@ const home = fs.readFileSync("site/home-layout-final-beta4.js", "utf8");
 const venue = fs.readFileSync("site/venue-reviews-user-beta4.js", "utf8");
 const clans = fs.readFileSync("site/bali-people-clans-beta4.js", "utf8");
 
-assert.ok(html.includes("bali-full-demo-8-stable24"), "Published page must use the latest build");
+assert.ok(html.includes("bali-full-demo-8-stable25"), "Published page must use the latest build");
 assert.ok(loader.includes("home-layout-final-beta4.js"), "The current home layout must load");
 assert.ok(loader.includes("bali-people-search-ranking-beta4.js"), "BALI People search must load");
 assert.ok(loader.includes("bali-people-status-sync-beta4.js"), "Purchased VIP must sync to public profiles");
