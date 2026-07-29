@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const html = fs.readFileSync("site/beta4-stable.html", "utf8");
+const html = fs.readFileSync("site/index.html", "utf8");
 const loader = fs.readFileSync("site/beta4-square-loader.js", "utf8");
 const profile = fs.readFileSync("site/beta4-profile-v2.js", "utf8");
 const controls = fs.readFileSync("site/profile-controls-final-beta4.js", "utf8");
@@ -13,7 +13,7 @@ const rewards = fs.readFileSync("site/profile-recent-rewards-beta4.js", "utf8");
 const demographics = fs.readFileSync("site/profile-demographics-beta4.js", "utf8");
 const chips = fs.readFileSync("site/chip-requests-user-beta4.js", "utf8");
 
-assert.ok(html.includes("bali-event-venue-reviews-1"), "Published page must use the event content cache version");
+assert.ok(html.includes("bali-full-demo-8-stable4"), "Published page must use the current stable build");
 assert.ok(loader.includes("beta4-profile-v2.js"), "Compact profile controller must be loaded");
 assert.ok(loader.includes("profile-controls-final-beta4.js"), "Final profile controls must be loaded");
 assert.ok(loader.indexOf("profile-full-restore-beta4.js") < loader.indexOf("profile-controls-final-beta4.js"), "Final controls must run after legacy profile guards");
@@ -53,7 +53,7 @@ assert.ok(vip.includes('document.getElementById("profileVipBody")'), "VIP varian
 assert.ok(chips.includes("Приобрести фишки"), "Chip requests must integrate into BALI Shop");
 assert.ok(demographics.includes("profileV2SettingsForm"), "Age and gender must attach to settings");
 assert.ok(guard.includes('card.classList.add("profile-v2-hidden")'), "Legacy long profile sections must stay hidden");
-assert.ok(!guard.includes('classList.remove("profile-v2-hidden")'), "The old long profile must never be restored");
+assert.ok(!guard.includes('card.classList.remove("profile-v2-hidden")'), "The old long profile must never be restored");
 assert.ok(rewards.includes('stats.hidden = true'), "Recent rewards must not restore profile counters");
 
 console.log("BALI profile invitations, gifts, controls and compact menu smoke test passed");

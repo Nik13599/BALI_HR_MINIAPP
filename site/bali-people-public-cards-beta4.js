@@ -61,8 +61,6 @@
     return { ...profile, active: true, status: profile.status === "closed" ? "chat" : profile.status };
   };
   social.visiblePeople = publicPeople;
-  social.incomingThumbs = () => publicPeople().filter(person => social.hasThumb(person.id, social.myId()));
-  social.connections = () => publicPeople().filter(person => social.isConnection(person.id));
 
   function rankingData(person) {
     const account = accountFor(person);
@@ -94,8 +92,6 @@
     const style = document.createElement("style");
     style.id = "baliPeoplePublicCardsStyle";
     style.textContent = `
-      .person-v2-photo.is-locked img,.person-v2-photo.is-locked .person-v2-placeholder{filter:none!important;transform:none!important}
-      .person-v2-lock{display:none!important}
       .person-v2-photo{cursor:pointer}
       .bali-people-public-note{margin:10px 0 0;padding:9px 11px;border:1px solid var(--line);border-radius:13px;color:var(--muted);font-size:8px;line-height:1.5}
       .bali-people-public-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:13px}
@@ -123,10 +119,6 @@
     const card = event.target.closest("[data-open-social-person]");
     if (card && !event.target.closest("button")) setTimeout(() => enhancePublicCard(card.dataset.openSocialPerson), 0);
   });
-  window.addEventListener("bali:social-changed", () => setTimeout(() => {
-    document.querySelectorAll(".person-v2-lock").forEach(node => node.remove());
-  }, 0));
-
   styles();
   window.dispatchEvent(new CustomEvent("bali:social-changed"));
 })();

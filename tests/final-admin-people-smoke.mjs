@@ -23,7 +23,7 @@ assert.ok(publicCards.includes("Текущий уровень"), "Public cards m
 assert.ok(crownWins.includes("МИСС BALI"), "Miss BALI win counts must be shown");
 assert.ok(crownWins.includes("МИСТЕР BALI"), "Mister BALI win counts must be shown");
 
-assert.ok(adminHtml.includes("STABLE 16"), "The final admin build must be opened");
+assert.ok(adminHtml.includes("FULL DEMO 8.5"), "The current final admin build must be opened");
 assert.ok(adminHtml.includes("admin-customer-dossier-beta4.js"), "The full user dossier must be globally loaded");
 assert.ok(adminHtml.includes("admin-user-card-links-beta4.js"), "User names must open the dossier across admin sections");
 assert.ok(adminHtml.includes("crown-win-cards-beta4.js"), "Admin dossiers must show crown wins");

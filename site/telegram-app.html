@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#090806">
+  <title>BALI — Кланы</title>
+  <link rel="stylesheet" href="/site/telegram-app.css?v=telegram-clan-chat-1">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script defer src="/site/clan-chat-app.js?v=telegram-clan-chat-1"></script>
+  <script defer src="/site/telegram-app.js?v=telegram-clan-chat-1"></script>
+</head>
+<body>
+  <section class="telegram-gate" id="telegramGate" aria-live="polite">
+    <div class="gate-emblem">B</div>
+    <p class="eyebrow">BALI NIGHTCLUB · TELEGRAM MINI APP</p>
+    <h1>Откройте приложение через Telegram</h1>
+    <p id="gateMessage">Вход в пользовательскую часть доступен только после подтверждения Telegram.</p>
+    <a class="primary-button" id="openTelegramButton" href="#" hidden>Открыть BALI в Telegram</a>
+  </section>
+
+  <div class="bali-app" id="baliApp" hidden>
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark">B</span>
+        <div><b>BALI</b><small>CLAN CLUB</small></div>
+      </div>
+      <div class="user-chip">
+        <span id="currentUserAvatar">B</span>
+        <div><b id="currentUserName">Гость BALI</b><small>Telegram подтверждён</small></div>
+      </div>
+      <button class="icon-button" id="logoutButton" type="button" aria-label="Выйти">↪</button>
+    </header>
+
+    <nav class="clan-switcher" id="clanSwitcher" aria-label="Ваши кланы"></nav>
+
+    <main class="clan-workspace">
+      <section class="clan-hero" id="clanHero">
+        <div>
+          <p class="eyebrow">ЗАКРЫТЫЙ ЧАТ</p>
+          <h1 id="clanTitle">Клан BALI</h1>
+          <p id="clanSubtitle">Только для действующих участников</p>
+        </div>
+        <div class="hero-actions">
+          <button class="notification-button" type="button" data-notification-settings aria-label="Настройки уведомлений">♩</button>
+          <span class="role-badge" id="clanRole">Участник</span>
+        </div>
+      </section>
+
+      <section class="chat-status" id="chatStatus" hidden></section>
+      <section class="pinned-strip" id="pinnedStrip" hidden></section>
+      <section class="clan-view" id="clanView" aria-live="polite">
+        <div class="loading-card">Загружаем закрытый чат…</div>
+      </section>
+    </main>
+
+    <form class="message-composer" id="messageComposer" hidden>
+      <div class="reply-preview" id="replyPreview" hidden>
+        <span id="replyPreviewText"></span>
+        <button type="button" data-cancel-reply>×</button>
+      </div>
+      <div class="composer-row">
+        <textarea name="body" maxlength="4000" rows="1" placeholder="Сообщение клану" required></textarea>
+        <button class="send-button" type="submit" aria-label="Отправить">➤</button>
+      </div>
+    </form>
+
+    <nav class="bottom-tabs" id="bottomTabs">
+      <button class="active" type="button" data-clan-tab="home"><i>⌂</i><span>Главная</span></button>
+      <button type="button" data-clan-tab="chat"><i>◫</i><span>Чат</span></button>
+      <button type="button" data-clan-tab="polls"><i>◉</i><span>Опросы</span></button>
+      <button type="button" data-clan-tab="events"><i>◇</i><span>События</span></button>
+      <button type="button" data-clan-tab="members"><i>♙</i><span>Участники</span></button>
+    </nav>
+  </div>
+
+  <dialog class="bali-dialog" id="actionDialog">
+    <form method="dialog" class="dialog-shell" id="actionDialogForm">
+      <header><div><p class="eyebrow" id="dialogEyebrow">КЛАН</p><h2 id="dialogTitle">Действие</h2></div><button value="cancel" type="submit">×</button></header>
+      <div id="dialogBody"></div>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status"></div>
+</body>
+</html>

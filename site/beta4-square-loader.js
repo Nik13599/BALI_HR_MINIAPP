@@ -85,6 +85,7 @@
     "profile-full-restore-beta4.js",
     "profile-controls-final-beta4.js",
     "full-demo-review-window-beta4.js",
+    "reviews-public-save-beta4.js",
     "venue-reviews-user-beta4.js",
     "people-profile-stability-beta4.js"
   ];

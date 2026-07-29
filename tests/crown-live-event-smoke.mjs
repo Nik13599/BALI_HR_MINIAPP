@@ -25,6 +25,6 @@ assert.ok(qr.includes("Уйти с мероприятия"), "The active event c
 assert.ok(qr.includes("!row.left_at"), "A left attendance must not be shown as active");
 assert.ok(presence.includes('row.presence_status !== "left"'), "Crown access must stop after leaving");
 assert.ok(qr.includes("setInterval(refreshHomeCard, 60000)"), "The active status must be rechecked while the app remains open");
-assert.ok(loader.includes("bali-final-fixes-2"), "The published user loader must use the final build version");
+assert.ok(loader.includes("bali-full-demo-8-stable4"), "The published user loader must use the current stable build");
 
 console.log("Permanent crown voting and active event leave smoke test passed");

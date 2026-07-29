@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const html = fs.readFileSync("site/beta4-stable.html", "utf8");
+const html = fs.readFileSync("site/index.html", "utf8");
 const loader = fs.readFileSync("site/beta4-square-loader.js", "utf8");
 const social = fs.readFileSync("site/beta4-social-page.js", "utf8");
 const people = fs.readFileSync("site/bali-people-search-ranking-beta4.js", "utf8");
@@ -14,7 +14,7 @@ const home = fs.readFileSync("site/home-layout-final-beta4.js", "utf8");
 const homeLinks = fs.readFileSync("site/beta4-home-links.js", "utf8");
 const venue = fs.readFileSync("site/venue-reviews-user-beta4.js", "utf8");
 
-assert.ok(html.includes("bali-event-venue-reviews-1"), "Published HTML must use the event content build");
+assert.ok(html.includes("bali-full-demo-8-stable4"), "Published HTML must use the current stable build");
 assert.ok(loader.includes("home-layout-final-beta4.js"), "The final user home layout must be loaded");
 assert.ok(loader.includes("bali-people-search-ranking-beta4.js"), "The safe discovery module must be loaded");
 assert.ok(loader.includes("bali-people-status-sync-beta4.js"), "Purchased VIP must sync into the public profile");

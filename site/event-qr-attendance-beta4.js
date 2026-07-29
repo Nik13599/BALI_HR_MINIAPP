@@ -203,7 +203,7 @@
     const rows = await listCheckins(eventId);
     const current = rows.find(row => !row.left_at && (!eventId || String(row.event_id) === String(eventId)) && String(row.user_key || "") === userKey);
     if (!current) return { ok:false, message:"Активное мероприятие не найдено" };
-    const next = { ...current, left_at:now(), presence_status:"left" };
+    const next = { ...current, left_at:now(), presence_status: "left" };
     const registry = localCheckins();
     registry[next.id || `checkin-${safeKey(next.event_id)}-${safeKey(userKey)}`] = next;
     write(CHECKIN_KEY, registry);

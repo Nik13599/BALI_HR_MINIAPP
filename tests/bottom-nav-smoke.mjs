@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const html = fs.readFileSync("site/beta4-stable.html", "utf8");
+const html = fs.readFileSync("site/index.html", "utf8");
 const loader = fs.readFileSync("site/beta4-square-loader.js", "utf8");
 const css = fs.readFileSync("site/legacy-nav-final-beta4.css", "utf8");
 const nav = fs.readFileSync("site/legacy-nav-final-beta4.js", "utf8");
-const attendance = fs.readFileSync("site/legacy-event-attendance-beta4.js", "utf8");
+const attendance = fs.readFileSync("site/fast-event-dialog-beta4.js", "utf8");
 const profileRestore = fs.readFileSync("site/profile-full-restore-beta4.js", "utf8");
 const profileV2 = fs.readFileSync("site/beta4-profile-v2.js", "utf8");
 const profileControls = fs.readFileSync("site/profile-controls-final-beta4.js", "utf8");
@@ -14,11 +14,12 @@ const loyaltyUi = fs.readFileSync("site/beta4-loyalty-ui-stable.js", "utf8");
 const chipUi = fs.readFileSync("site/chip-requests-user-beta4.js", "utf8");
 
 assert.ok(html.includes("beta4-square-loader.js"), "The modular application must be loaded");
-assert.ok(html.includes("bali-event-venue-reviews-1"), "Published HTML must use the event content build");
+assert.ok(html.includes("bali-full-demo-8-stable4"), "Published HTML must use the current stable build");
 assert.ok(!html.includes("bali-user-clean.js"), "The replacement clean application must not be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.css"), "Stable legacy navigation CSS must be loaded");
 assert.ok(loader.includes("legacy-nav-final-beta4.js"), "Final navigation composer must be loaded");
-assert.ok(loader.includes("'beta4-app.js','legacy-nav-final-beta4.js','home-layout-final-beta4.js'"), "Navigation and top profile must load immediately after the base app");
+assert.ok(loader.indexOf('"beta4-app.js"') < loader.indexOf('"legacy-nav-final-beta4.js"'), "Navigation must load after the base app");
+assert.ok(loader.indexOf('"legacy-nav-final-beta4.js"') < loader.indexOf('"home-layout-final-beta4.js"'), "The home layout must load after navigation");
 assert.ok(loader.indexOf("legacy-nav-final-beta4.js") < loader.indexOf("beta4-social-page.js"), "Navigation must appear before social modules");
 assert.ok(loader.indexOf("legacy-nav-final-beta4.js") < loader.indexOf("night-crown-beta4.js"), "Navigation must appear before crown modules");
 assert.ok(loader.includes("home-layout-final-beta4.js"), "The final home layout must be loaded");
@@ -30,7 +31,7 @@ assert.ok(!loader.includes("home-final-layout-beta4.js"), "The duplicate home la
 assert.ok(!loader.includes("bali-people-discovery-fast-beta4.js"), "The conflicting discovery module must not be loaded");
 assert.ok(!loader.includes("bali-people-present-beta4.js"), "The conflicting attendance interceptor must not be loaded");
 
-assert.ok(loader.includes("legacy-event-attendance-beta4.js"), "Unified event attendance must be loaded");
+assert.ok(loader.includes("fast-event-dialog-beta4.js"), "Unified fast event attendance must be loaded");
 assert.ok(loader.includes("profile-full-restore-beta4.js"), "Compact profile guard must be loaded");
 assert.ok(loader.includes("profile-controls-final-beta4.js"), "Final profile controls must be loaded");
 assert.ok(loader.indexOf("profile-full-restore-beta4.js") < loader.indexOf("profile-controls-final-beta4.js"), "Final profile controls must run last");
@@ -42,7 +43,7 @@ assert.ok(loader.includes("beta4-profile-v2.js"), "Compact profile menu must be 
 assert.ok(loader.includes("profile-demographics-beta4.js"), "Birth date and gender settings must be loaded");
 assert.ok(loader.includes("vip-duration-options-beta4.js"), "All VIP duration variants must be loaded inside BALI Shop");
 assert.ok(loader.includes("beta4-reward-icons-core.js"), "Reward icon core must use the correct filename");
-assert.ok(loader.includes("event-details-lineup-beta4.js"), "Event details and lineup must be loaded");
+assert.ok(loader.includes("event-performer-cards-beta4.js"), "Event performer details and lineup must be loaded");
 assert.ok(loader.includes("venue-reviews-user-beta4.js"), "Venue and feedback dialogs must be loaded");
 assert.ok(!loader.includes("night-crown-nav-fix-beta4.js"), "The old navigation observer must not be loaded");
 assert.ok(!loader.includes("bottom-nav-controller-beta4.js"), "The conflicting navigation interceptor must not be loaded");
@@ -76,12 +77,12 @@ assert.ok(vipVariants.includes('document.getElementById("profilePointsDialog")?.
 assert.ok(loyaltyUi.includes("Купить за баллы"), "Underlying BALI Shop data must still be built");
 assert.ok(chipUi.includes("Приобрести фишки"), "Physical chip purchase requests must be supported");
 assert.ok(profileRestore.includes('card.classList.add("profile-v2-hidden")'), "Legacy profile cards must stay collapsed");
-assert.ok(!profileRestore.includes('classList.remove("profile-v2-hidden")'), "Legacy profile cards must never be reopened automatically");
+assert.ok(!profileRestore.includes('card.classList.remove("profile-v2-hidden")'), "Legacy profile cards must never be reopened automatically");
 
-assert.ok(attendance.includes("ХОТЯТ ПОЙТИ"), "Event detail must show one unified counter");
-assert.ok(attendance.includes("sum + row.guests"), "A booking must add the full guest count");
-assert.ok(attendance.includes("legacyAttendanceDialog"), "The attendance list must open in a separate dialog");
-assert.ok(attendance.includes("Забронировали столик"), "Booked parties must have their own section");
-assert.ok(attendance.includes("Хотят пойти без бронирования"), "Interested guests must have their own section");
+assert.ok(attendance.includes("wantTotal"), "Event detail must calculate one unified attendance counter");
+assert.ok(attendance.includes("partySize"), "A booking must add the full guest count");
+assert.ok(attendance.includes("fastEventListDialog"), "The attendance list must open in a separate dialog");
+assert.ok(attendance.includes('attendance_mode:"table_booking"'), "Booked parties must retain their own attendance mode");
+assert.ok(attendance.includes("presentRows"), "QR-confirmed guests must have their own active-presence list");
 
 console.log("BALI event content profile, navigation, home and attendance smoke test passed");

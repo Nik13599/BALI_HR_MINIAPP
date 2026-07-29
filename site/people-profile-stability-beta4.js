@@ -51,10 +51,18 @@
 
   function canSee(person, field) {
     if (peopleApi?.canSee) return peopleApi.canSee(person, field);
-    if (field === "photo") return person.showPhoto === true || social.isConnection?.(person.id);
-    if (field === "phone") return person.sharePhone === true;
-    if (field === "telegram") return person.shareTelegram === true;
-    if (field === "age") return person.shareAge === true;
+    const legacy = {
+      photo: person.showPhoto,
+      phone: person.sharePhone,
+      telegram: person.shareTelegram,
+      age: person.shareAge,
+      instagram: person.shareInstagram,
+    };
+    const mode = person?.privacy?.[field]
+      || person?.[`privacy${field.charAt(0).toUpperCase()}${field.slice(1)}`]
+      || (legacy[field] === true ? "public" : "private");
+    if (mode === "public") return true;
+    if (mode === "vip") return Boolean(game?.vip?.());
     return false;
   }
 
@@ -71,8 +79,7 @@
     const rank = ranking.find(row => String(row.id || row.userKey || "") === String(person.id || person.userKey || ""));
     const photoVisible = canSee(person, "photo");
     const photo = person.photo || person.avatar || "";
-    const mine = social.hasThumb?.(social.myId(), person.id);
-    const instagramVisible = peopleApi?.viewerHasVip?.() || person.shareInstagram === true;
+    const instagramVisible = canSee(person, "instagram");
 
     body.innerHTML = `
       <div class="person-v2-photo ${photoVisible ? "" : "is-locked"}">
@@ -96,7 +103,6 @@
       <div class="person-v2-actions">
         <button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(person.id)}">＋</button>
         <button type="button" title="Подарок" data-person-gift="${esc(person.id)}">🎁</button>
-        <button type="button" title="Лайк" class="${mine ? "active" : ""}" data-person-thumb="${esc(person.id)}">👍</button>
       </div>`;
 
     if (!dialog.open) {

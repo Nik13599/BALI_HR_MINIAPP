@@ -36,7 +36,7 @@
       .person-v2>.person-v2-body{min-width:0;padding:9px 10px 9px 2px!important}
       .person-v2>.person-v2-body h3{font-size:12px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .person-v2>.person-v2-body p{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;font-size:8px!important}
-      .person-v2>.person-v2-body .person-v2-actions{grid-template-columns:repeat(3,40px)!important;justify-content:start;margin-top:7px!important}
+      .person-v2>.person-v2-body .person-v2-actions{grid-template-columns:repeat(2,40px)!important;justify-content:start;margin-top:7px!important}
       .person-v2>.person-v2-body .person-v2-actions button{min-height:32px!important;font-size:15px!important}
       .people-demographic-meta{display:block;margin-top:4px;color:#c9d0cc;font-size:8px}
       .people-rank-badge,.people-status-chip{display:inline-flex;align-items:center;min-height:22px;margin:6px 5px 0 0;padding:0 7px;border:1px solid rgba(200,255,61,.25);border-radius:999px;background:rgba(200,255,61,.07);color:var(--lime);font-size:7px;font-weight:900}
