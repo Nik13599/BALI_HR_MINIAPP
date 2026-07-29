@@ -1,0 +1,80 @@
+.beta-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: max(8px, env(safe-area-inset-top)) 14px 8px;
+  border-bottom: 1px solid rgba(238, 181, 74, .32);
+  background: rgba(20, 12, 5, .96);
+  color: #f6d58e;
+  font: 800 11px/1.2 Inter, system-ui, sans-serif;
+  letter-spacing: .08em;
+  backdrop-filter: blur(18px);
+}
+
+.beta-toolbar strong {
+  padding: 5px 8px;
+  border: 1px solid #e9b449;
+  border-radius: 999px;
+  color: #080604;
+  background: #e9b449;
+  white-space: nowrap;
+}
+
+.beta-toolbar span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: #b7aa99;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.beta-toolbar a,
+.beta-toolbar button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(238, 181, 74, .34);
+  border-radius: 9px;
+  color: #f4ce7c;
+  background: #15100b;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.beta-toolbar button:hover,
+.beta-toolbar a:hover {
+  border-color: #e9b449;
+}
+
+.beta-notice {
+  margin: 10px 14px 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(238, 181, 74, .22);
+  border-radius: 12px;
+  color: #b7aa99;
+  background: rgba(233, 180, 73, .06);
+  font: 600 11px/1.45 Inter, system-ui, sans-serif;
+}
+
+@media (max-width: 620px) {
+  .beta-toolbar {
+    gap: 6px;
+    padding-inline: 8px;
+  }
+
+  .beta-toolbar span {
+    display: none;
+  }
+
+  .beta-toolbar a,
+  .beta-toolbar button {
+    padding-inline: 8px;
+    font-size: 9px;
+  }
+}

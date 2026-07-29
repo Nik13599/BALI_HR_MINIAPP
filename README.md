@@ -7,6 +7,17 @@
 
 Демо не является источником production-авторизации или production-данных.
 
+## Clan Chat Beta
+
+Для проверки интерфейсов без production-секретов предусмотрены две отдельные статические страницы:
+
+- `site/clan-chat-beta.html` — пользовательский клановый чат;
+- `site/admin-clan-chat-beta.html` — beta-админка.
+
+Обе страницы используют одно тестовое хранилище текущего браузера. Изменения user/admin синхронизируются между вкладками, а кнопка сброса возвращает исходные кланы, сообщения, опросы, события, права, жалобы, аудит и лимиты. Тестовый вход в beta-админку: `beta@bali.test` / `bali-beta-2026`.
+
+Beta явно помечена `TEST DATA`, не отправляет запросы в production API и не создаёт Telegram-сессию. Production-маршруты `/app` и `/admin` по-прежнему требуют серверную проверку и не используют этот адаптер.
+
 ## Production-маршруты
 
 - `/app` — пользовательское Telegram Mini App;
@@ -68,4 +79,4 @@ migrations/001_telegram_auth_clan_chat.down.sql
 npm run check
 ```
 
-Команда запускает линтер, typecheck, 64 серверных security/integration-теста, 8 существующих smoke-тестов демо и production build. CI также выполняет аудит production-зависимостей.
+Команда запускает линтер, typecheck, 64 серверных security/integration-теста, 9 smoke-тестов demo/beta и production build. CI также выполняет аудит production-зависимостей.

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090806">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>BALI Beta Admin — Clan Control</title>
+  <link rel="stylesheet" href="./admin-production.css?v=clan-chat-beta-1">
+  <link rel="stylesheet" href="./clan-chat-beta.css?v=clan-chat-beta-1">
+  <style>
+    .admin-beta-page .beta-toolbar{position:relative}
+    .admin-beta-page .admin-login{min-height:calc(100dvh - 46px)}
+    .admin-beta-page .admin-app{min-height:calc(100dvh - 46px)}
+  </style>
+  <script defer src="./clan-chat-beta-store.js?v=clan-chat-beta-1"></script>
+  <script defer src="./admin-production.js?v=clan-chat-beta-1"></script>
+  <script defer src="./admin-clan-chat-beta-boot.js?v=clan-chat-beta-1"></script>
+</head>
+<body class="admin-beta-page">
+  <header class="beta-toolbar">
+    <strong>BETA ADMIN</strong>
+    <span>Вход: beta@bali.test · пароль: bali-beta-2026</span>
+    <a href="./clan-chat-beta.html?v=clan-chat-beta-1" target="_blank" rel="noopener">Пользователь ↗</a>
+    <button type="button" data-beta-reset>Сбросить данные</button>
+  </header>
+
+  <section class="admin-login" id="adminLogin">
+    <form id="adminLoginForm">
+      <span class="admin-logo">B</span>
+      <p class="eyebrow">BALI BETA CONTROL CENTER</p>
+      <h1>Тестовый вход</h1>
+      <p>Используйте <b>beta@bali.test</b> и пароль <b>bali-beta-2026</b>. Это изолированные тестовые данные без доступа к production.</p>
+      <label>Email<input name="email" type="email" autocomplete="username" value="beta@bali.test" required></label>
+      <label>Пароль<input name="password" type="password" autocomplete="current-password" value="bali-beta-2026" minlength="12" required></label>
+      <button type="submit">Войти в beta-админку</button>
+      <small id="adminLoginError"></small>
+    </form>
+  </section>
+
+  <div class="admin-app" id="adminApp" hidden>
+    <header class="admin-header">
+      <div class="admin-brand"><span>B</span><div><b>BALI BETA CONTROL</b><small>CLAN CHAT · TEST DATA</small></div></div>
+      <nav>
+        <button class="active" type="button" data-admin-view="chats">Чаты</button>
+        <button type="button" data-admin-view="audit">Аудит</button>
+        <button type="button" data-admin-view="limits">Лимиты</button>
+      </nav>
+      <div class="admin-account"><span id="adminEmail"></span><button id="adminLogout" type="button">Выйти</button></div>
+    </header>
+
+    <main class="admin-layout">
+      <aside class="chat-sidebar" id="chatSidebar">
+        <header><h2>Кланы</h2><input id="chatSearch" type="search" placeholder="Поиск клана"></header>
+        <div id="chatList"></div>
+      </aside>
+      <section class="admin-content" id="adminContent">
+        <div class="admin-empty">Выберите клановый чат.</div>
+      </section>
+    </main>
+  </div>
+  <dialog id="adminDialog"><form method="dialog" id="adminDialogForm"><header><h2 id="adminDialogTitle">Действие</h2><button value="cancel">×</button></header><div id="adminDialogBody"></div></form></dialog>
+  <div class="admin-toast" id="adminToast"></div>
+</body>
+</html>
