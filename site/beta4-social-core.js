@@ -2,7 +2,16 @@
   if (window.BaliBeta4Social || !window.BaliBeta4Game) return;
   const game = window.BaliBeta4Game;
   const KEYS = { profile:"bali_social_profile_v1", people:"bali_social_people_v1", requests:"bali_social_requests_v1", gifts:"bali_social_gifts_v1", giftCatalog:"bali_social_gift_catalog_v1" };
-  const STATUSES = [["party","Ищу компанию на вечеринку"],["table","Ищу компанию для бронирования столика"],["chat","Открыт(а) к общению"],["closed","Не знакомлюсь"]];
+  const LEGACY_STATUSES = {
+    party:"Ищу компанию на вечеринку",
+    table:"Ищу компанию для бронирования столика",
+    chat:"Открыт(а) к общению",
+    closed:"Не знакомлюсь"
+  };
+  const statusText = value => {
+    const text = String(value || "").trim();
+    return (LEGACY_STATUSES[text] || text).slice(0, 80);
+  };
   const DEFAULT_GIFT_CATALOG = [{id:"rose",icon:"🌹",name:"Роза",stars:25,active:true},{id:"cocktail",icon:"🍸",name:"Коктейль",stars:50,active:true},{id:"disco",icon:"🪩",name:"Диско-шар",stars:100,active:true},{id:"crown",icon:"👑",name:"VIP-корона",stars:250,active:true}];
   const GIFT_CATALOG = DEFAULT_GIFT_CATALOG.map(item=>({...item}));
   const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
@@ -14,11 +23,11 @@
   const now=()=>new Date().toISOString(),uid=p=>`${p}-${crypto.randomUUID?.()||Date.now()}`,base=()=>game.profile(),myId=()=>String(base().id||base().userKey||base().code);
   const dateAt=(date,time="00:00")=>{const value=new Date(`${String(date||"").slice(0,10)}T${time||"00:00"}:00`);return Number.isNaN(value.getTime())?null:value};
   function eventEndAt(event={}){const startDate=event.event_date||event.eventDate||"",startTime=event.event_time||event.eventTime||"23:00",endTime=event.event_end_time||event.eventEndTime||event.end_time||"06:00";let endDate=event.event_end_date||event.eventEndDate||event.end_date||startDate;if(!event.event_end_date&&!event.eventEndDate&&!event.end_date&&endTime<=startTime){const date=dateAt(startDate,"12:00");if(date){date.setDate(date.getDate()+1);endDate=date.toISOString().slice(0,10)}}return dateAt(endDate,endTime)?.toISOString()||""}
-  function profile(){const p=base(),saved=read(KEYS.profile,{});return{id:myId(),name:p.name||"Гость BALI",username:p.username||"",photo:saved.photo||p.avatar||"",cropX:Number(saved.cropX??50),cropY:Number(saved.cropY??40),status:saved.status||"closed",bio:saved.bio||"",active:saved.active===true,shareTelegram:false,...saved}}
+  function profile(){const p=base(),saved=read(KEYS.profile,{});return{id:myId(),name:p.name||"Гость BALI",username:p.username||"",photo:saved.photo||p.avatar||"",cropX:Number(saved.cropX??50),cropY:Number(saved.cropY??40),status:statusText(saved.status),bio:saved.bio||"",active:saved.active===true,shareTelegram:false,...saved,status:statusText(saved.status)}}
   function cleanPeople(rows){return(rows||[]).filter(item=>item&&item.id&&!String(item.id).startsWith("demo-"))}
-  function saveProfile(patch={}){const next={...profile(),...patch,id:myId(),updatedAt:now()};write(KEYS.profile,next);const rows=cleanPeople(read(KEYS.people,[])).filter(x=>x.id!==next.id);rows.unshift(next);write(KEYS.people,rows);return next}
+  function saveProfile(patch={}){const clean={...patch};if(Object.prototype.hasOwnProperty.call(clean,"status"))clean.status=statusText(clean.status);const next={...profile(),...clean,id:myId(),updatedAt:now()};write(KEYS.profile,next);const rows=cleanPeople(read(KEYS.people,[])).filter(x=>x.id!==next.id);rows.unshift(next);write(KEYS.people,rows);return next}
   function people(){const me=profile(),rows=cleanPeople(read(KEYS.people,[]));return[me,...rows.filter(x=>x.id!==me.id)]}
-  function visiblePeople(){return people().filter(x=>x.id!==myId()&&x.active===true&&x.status!=="closed")}
+  function visiblePeople(){return people().filter(x=>x.id!==myId()&&x.active===true)}
   const requests=()=>read(KEYS.requests,[]);
   function requestEndAt(item){return item.eventEndAt||eventEndAt({event_date:item.eventDate,event_time:item.eventTime,event_end_date:item.eventEndDate,event_end_time:item.eventEndTime})}
   function isRequestActive(item){const end=requestEndAt(item);return Boolean(end&&new Date(end).getTime()>Date.now())}
@@ -31,5 +40,5 @@
   function adminGift(targetId,giftId,note="Подарок от BALI"){const gift=GIFT_CATALOG.find(x=>x.id===giftId&&x.active!==false),target=people().find(x=>String(x.id)===String(targetId));if(!gift||!target)return{ok:false,message:"Пользователь или подарок не найден"};const item={id:uid("gift"),fromId:"bali-admin",fromName:"BALI Night Club",toId:String(targetId),toName:target.name,giftId,giftName:gift.name,icon:gift.icon,stars:gift.stars,pointsCost:0,currency:"admin_gift",source:"admin_gift",note:String(note||""),createdAt:now()};const rows=gifts();rows.unshift(item);write(KEYS.gifts,rows.slice(0,1000));return{ok:true,item}}
   function removeGift(id){const rows=gifts(),item=rows.find(x=>x.id===id);if(!item)return{ok:false,message:"Подарок не найден"};write(KEYS.gifts,rows.filter(x=>x.id!==id));return{ok:true,item}}
   window.addEventListener("storage",event=>{if(event.key===KEYS.giftCatalog){syncGiftCatalog();window.dispatchEvent(new CustomEvent("bali:social-changed",{detail:{key:KEYS.giftCatalog}}))}});
-  window.BaliBeta4Social={KEYS,STATUSES,DEFAULT_GIFT_CATALOG,GIFT_CATALOG,saveGiftCatalog,profile,saveProfile,people,visiblePeople,requests,sendRequest,respond,eventEndAt,requestEndAt,isRequestActive,activeIncomingRequests,gifts,incomingGifts,recordGift,adminGift,removeGift,myId};
+  window.BaliBeta4Social={KEYS,LEGACY_STATUSES,statusText,DEFAULT_GIFT_CATALOG,GIFT_CATALOG,saveGiftCatalog,profile,saveProfile,people,visiblePeople,requests,sendRequest,respond,eventEndAt,requestEndAt,isRequestActive,activeIncomingRequests,gifts,incomingGifts,recordGift,adminGift,removeGift,myId};
 })();

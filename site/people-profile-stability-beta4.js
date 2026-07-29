@@ -90,6 +90,7 @@
       <h2>${esc(person.name || "Пользователь BALI")}</h2>
       <p>${esc(person.bio || "Пользователь сообщества BALI")}</p>
       <section class="people-detail-section"><h3>Профиль BALI</h3><div class="people-detail-list">
+        <div class="people-detail-row"><span>Статус пользователя</span><strong>${esc(social.statusText?.(person.status) || person.status || "Не указан")}</strong></div>
         <div class="people-detail-row"><span>Уровень</span><strong>${esc(statusLabel(person, account))}</strong></div>
         <div class="people-detail-row"><span>Место в рейтинге</span><strong>${rank?.position ? `#${Number(rank.position)}` : "—"}</strong></div>
         <div class="people-detail-row"><span>Посещения</span><strong>${Number(visits.length || account.visits || 0)}</strong></div>

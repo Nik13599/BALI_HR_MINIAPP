@@ -1,7 +1,7 @@
 (() => {
   if (window.__BALI_FULL_DEMO_DATA_UPGRADE__) return;
   window.__BALI_FULL_DEMO_DATA_UPGRADE__ = true;
-  const VERSION = "3";
+  const VERSION = "4";
   const KEY = "bali_full_demo_data_upgrade_v2";
   if (localStorage.getItem(KEY) === VERSION) return;
   const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
@@ -10,8 +10,16 @@
     "bali-user-nikolay":"@nikolay_bali","bali-user-anna":"@anna_moroz","bali-user-maxim":"@max_orlov","bali-user-sofia":"@sofia_wave",
     "bali-user-artem":"@art_levin","bali-user-daria":"@daria_night","bali-user-alex":"@alex_green","bali-user-mila":"@mila_ray"
   };
+  const legacyStatuses = {
+    party:"Ищу компанию на вечеринку",
+    table:"Ищу компанию для бронирования столика",
+    chat:"Открыт(а) к общению",
+    closed:"Не знакомлюсь"
+  };
+  const statusText = person => String(person.statusLabel || legacyStatuses[person.status] || person.status || "").trim().slice(0, 80);
   const people = read("bali_social_people_v1", []).map((person,index) => ({
     ...person,
+    status:statusText(person),
     username:person.username || usernames[person.id] || "",
     shareTelegram:person.shareTelegram ?? (index % 3 !== 2),
     sharePhone:person.sharePhone ?? (index % 4 === 0),
@@ -21,7 +29,7 @@
   write("bali_social_people_v1", people);
   const active = read("bali_social_profile_v1", {});
   const activePerson = people.find(person => String(person.id) === String(active.id)) || active;
-  write("bali_social_profile_v1", { ...activePerson, ...active, username:active.username || activePerson.username || "", shareTelegram:active.shareTelegram ?? activePerson.shareTelegram ?? true, sharePhone:active.sharePhone ?? activePerson.sharePhone ?? false, shareAge:active.shareAge ?? activePerson.shareAge ?? true, showPhoto:active.showPhoto ?? activePerson.showPhoto ?? true });
+  write("bali_social_profile_v1", { ...activePerson, ...active, status:statusText({ ...activePerson, ...active }), username:active.username || activePerson.username || "", shareTelegram:active.shareTelegram ?? activePerson.shareTelegram ?? true, sharePhone:active.sharePhone ?? activePerson.sharePhone ?? false, shareAge:active.shareAge ?? activePerson.shareAge ?? true, showPhoto:active.showPhoto ?? activePerson.showPhoto ?? true });
 
   const users = read("bali_app_users_v1", {});
   Object.keys(users).forEach(id => { users[id] = { ...users[id], username:users[id].username || usernames[id] || "" }; });

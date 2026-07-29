@@ -39,7 +39,7 @@
         name: previous.name || account.name || "Гость BALI",
         photo: previous.photo || account.avatar || account.photo || "",
         bio: previous.bio || account.bio || "Пользователь BALI",
-        status: previous.status === "closed" ? "chat" : (previous.status || "chat"),
+        status: social.statusText?.(previous.status || account.status) || previous.status || account.status || "",
         active: true,
         username: "",
         telegram: "",
@@ -49,7 +49,7 @@
     return [...map.values()].filter(person => String(person.id) !== me).map(person => ({
       ...person,
       active: true,
-      status: person.status === "closed" ? "chat" : (person.status || "chat"),
+      status: social.statusText?.(person.status) || person.status || "",
       username: "",
       telegram: "",
       phone: ""
@@ -58,7 +58,7 @@
 
   social.profile = () => {
     const profile = originalProfile();
-    return { ...profile, active: true, status: profile.status === "closed" ? "chat" : profile.status };
+    return { ...profile, active: true, status: social.statusText?.(profile.status) || profile.status || "" };
   };
   social.visiblePeople = publicPeople;
 

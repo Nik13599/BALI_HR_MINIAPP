@@ -14,7 +14,7 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
   })[char]);
   const initials = name => String(name || "B").trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
-  const statusName = id => social.STATUSES.find(row => row[0] === id)?.[1] || "Открыт(а) к общению";
+  const statusName = value => social.statusText?.(value) || String(value || "").trim() || "Статус не указан";
   const eventLabel = event => {
     const date = event?.event_date ? new Date(`${event.event_date}T12:00:00`).toLocaleDateString("ru-RU", { day:"2-digit", month:"short" }) : "";
     return `${event?.title || "Мероприятие BALI"}${date ? ` · ${date}` : ""}${event?.event_time ? ` · ${event.event_time}` : ""}`;
@@ -45,6 +45,7 @@
       .person-v2-lock{position:absolute;inset:0;display:grid;place-items:center;padding:18px;text-align:center;color:#fff;font-size:9px;line-height:1.5;background:#0004}
       .person-v2-status{position:absolute;left:8px;right:8px;bottom:8px;padding:6px 8px;border-radius:999px;background:#080a0acc;color:#fff;font-size:8px;text-align:center}
       .person-v2-body{padding:10px}.person-v2-body h3{margin:0 0 4px;font-size:13px}.person-v2-body p{margin:0;color:var(--muted);font-size:9px;line-height:1.4}
+      .person-v2-custom-status{margin:0 0 5px;color:var(--lime);font-size:8px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}
       .person-v2-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:9px}.person-v2-actions button{min-height:38px;padding:0;border-radius:11px;font-size:18px}
       .social-v2-dialog{width:min(520px,calc(100% - 16px));max-height:94dvh;padding:0;border:1px solid var(--line);border-radius:23px;background:#0c0f0e;color:#fff;overflow:hidden}.social-v2-dialog::backdrop{background:#000d;backdrop-filter:blur(5px)}
       .social-v2-sheet{max-height:94dvh;overflow:auto}.social-v2-head{display:flex;justify-content:space-between;align-items:center;padding:15px;border-bottom:1px solid var(--line)}
@@ -115,7 +116,7 @@
   }
 
   function card(person) {
-    return `<article class="person-v2" data-open-social-person="${esc(person.id)}">${photo(person)}<div class="person-v2-body"><h3>${esc(person.name)}</h3><p>${esc(person.bio || statusName(person.status))}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(person.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(person.id)}">🎁</button></div></div></article>`;
+    return `<article class="person-v2" data-open-social-person="${esc(person.id)}">${photo(person)}<div class="person-v2-body"><h3>${esc(person.name)}</h3><div class="person-v2-custom-status">${esc(statusName(person.status))}</div><p>${esc(person.bio || "Пользователь сообщества BALI")}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(person.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(person.id)}">🎁</button></div></div></article>`;
   }
 
   function dateAt(date, time = "00:00") {
@@ -165,8 +166,8 @@
     if (!root) return;
     document.querySelectorAll("[data-social-v2-tab]").forEach(button => button.classList.toggle("active", button.dataset.socialV2Tab === tab));
     const me = social.profile();
-    if (!me.active || me.status === "closed") {
-      root.innerHTML = '<div class="social-v2-empty">Включите BALI PEOPLE в настройках профиля и выберите статус.</div>';
+    if (!me.active) {
+      root.innerHTML = '<div class="social-v2-empty">Включите показ профиля в BALI PEOPLE в настройках.</div>';
       return;
     }
     let rows = social.visiblePeople();
@@ -187,7 +188,7 @@
     const personRow = person(id);
     if (!personRow) return;
     activePerson = personRow.id;
-    document.getElementById("socialPersonBody").innerHTML = `${photo(personRow)}<h2>${esc(personRow.name)}</h2><p>${esc(personRow.bio || statusName(personRow.status))}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(personRow.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(personRow.id)}">🎁</button></div>`;
+    document.getElementById("socialPersonBody").innerHTML = `${photo(personRow)}<h2>${esc(personRow.name)}</h2><div class="person-v2-custom-status">${esc(statusName(personRow.status))}</div><p>${esc(personRow.bio || "Пользователь сообщества BALI")}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(personRow.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(personRow.id)}">🎁</button></div>`;
     document.getElementById("socialPersonDialog").showModal();
   }
 

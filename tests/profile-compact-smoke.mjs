@@ -23,10 +23,14 @@ assert.ok(profile.includes("data-open-profile-gifts"), "Gifts must open from the
 assert.ok(profile.includes("data-profile-invite-response"), "Invitation response controls must exist");
 assert.ok(profile.includes("profileVipBody"), "VIP variants must render inside BALI Shop");
 assert.ok(profile.includes("stats.hidden = true"), "Legacy profile counters must stay hidden");
+assert.ok(profile.includes('<input name="socialStatus" maxlength="80"'), "Users must enter their own BALI People status");
+assert.ok(!profile.includes('<select name="socialStatus"'), "BALI People status must not use a predefined selector");
 assert.ok(controls.includes("[data-open-profile-settings],[data-open-profile-history]"), "Only settings and history controls may remain");
 
 assert.ok(socialCore.includes("eventEndAt"), "Invitations must retain their event expiry");
 assert.ok(socialCore.includes("incomingGifts"), "Incoming gifts must be available");
+assert.ok(socialCore.includes("statusText"), "Custom status text must be normalized and preserved");
+assert.ok(!socialCore.includes('x.status!==\"closed\"'), "Profile visibility must not depend on a legacy status value");
 assert.ok(vip.includes('document.getElementById("profileVipBody")'), "VIP variants must attach to BALI Shop");
 assert.ok(chips.includes("Приобрести фишки"), "Chip requests must integrate into BALI Shop");
 assert.ok(demographics.includes("profileV2SettingsForm"), "Age and gender must attach to profile settings");
