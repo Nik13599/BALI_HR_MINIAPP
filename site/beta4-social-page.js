@@ -33,7 +33,7 @@
     const style = document.createElement("style");
     style.id = "socialV2Style";
     style.textContent = `
-      .social-tabs-v2{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+      .social-tabs-v2{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:12px}
       .social-tabs-v2 button{min-height:42px;padding:0 6px;border:1px solid var(--line);border-radius:13px;background:#ffffff08;color:var(--muted);font-size:8px;line-height:1.2}
       .social-tabs-v2 button.active{background:var(--lime);color:#090b08}
       .people-v2-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -45,7 +45,7 @@
       .person-v2-lock{position:absolute;inset:0;display:grid;place-items:center;padding:18px;text-align:center;color:#fff;font-size:9px;line-height:1.5;background:#0004}
       .person-v2-status{position:absolute;left:8px;right:8px;bottom:8px;padding:6px 8px;border-radius:999px;background:#080a0acc;color:#fff;font-size:8px;text-align:center}
       .person-v2-body{padding:10px}.person-v2-body h3{margin:0 0 4px;font-size:13px}.person-v2-body p{margin:0;color:var(--muted);font-size:9px;line-height:1.4}
-      .person-v2-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}.person-v2-actions button{min-height:38px;padding:0;border-radius:11px;font-size:18px}.person-v2-actions button.active{background:var(--lime);color:#090b08}
+      .person-v2-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:9px}.person-v2-actions button{min-height:38px;padding:0;border-radius:11px;font-size:18px}
       .social-v2-dialog{width:min(520px,calc(100% - 16px));max-height:94dvh;padding:0;border:1px solid var(--line);border-radius:23px;background:#0c0f0e;color:#fff;overflow:hidden}.social-v2-dialog::backdrop{background:#000d;backdrop-filter:blur(5px)}
       .social-v2-sheet{max-height:94dvh;overflow:auto}.social-v2-head{display:flex;justify-content:space-between;align-items:center;padding:15px;border-bottom:1px solid var(--line)}
       .social-v2-close{width:41px;height:41px;border:1px solid var(--line);border-radius:50%;background:#ffffff08;color:#fff;font-size:23px}
@@ -70,7 +70,6 @@
           <div class="social-tabs-v2">
             <button class="active" data-social-v2-tab="all">Все</button>
             <button data-social-v2-tab="inside">Пришёл на мероприятие</button>
-            <button data-social-v2-tab="thumbs">👍 Лайки</button>
           </div>
           <div id="socialV2Content"></div>
         </div></section>`);
@@ -111,13 +110,12 @@
   }
 
   function photo(person) {
-    const connected = social.isConnection(person.id);
-    return `<div class="person-v2-photo ${connected ? "" : "is-locked"}">${person.photo ? `<img src="${esc(person.photo)}" alt="${esc(person.name)}" style="object-position:${Number(person.cropX ?? 50)}% ${Number(person.cropY ?? 40)}%">` : `<div class="person-v2-placeholder">${esc(initials(person.name))}</div>`}${connected ? "" : '<div class="person-v2-lock">Фото откроется полностью при взаимном 👍</div>'}<span class="person-v2-status">${esc(statusName(person.status))}</span></div>`;
+    const visible = person.privacy?.photo === "public" || person.privacyPhoto === "public" || person.showPhoto === true;
+    return `<div class="person-v2-photo ${visible ? "" : "is-locked"}">${person.photo ? `<img src="${esc(person.photo)}" alt="${esc(person.name)}" style="object-position:${Number(person.cropX ?? 50)}% ${Number(person.cropY ?? 40)}%">` : `<div class="person-v2-placeholder">${esc(initials(person.name))}</div>`}${visible ? "" : '<div class="person-v2-lock">Фото скрыто настройками конфиденциальности</div>'}<span class="person-v2-status">${esc(statusName(person.status))}</span></div>`;
   }
 
   function card(person) {
-    const mine = social.hasThumb(social.myId(), person.id);
-    return `<article class="person-v2" data-open-social-person="${esc(person.id)}">${photo(person)}<div class="person-v2-body"><h3>${esc(person.name)}</h3><p>${esc(person.bio || statusName(person.status))}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(person.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(person.id)}">🎁</button><button type="button" title="Палец вверх" class="${mine ? "active" : ""}" data-person-thumb="${esc(person.id)}">👍</button></div></div></article>`;
+    return `<article class="person-v2" data-open-social-person="${esc(person.id)}">${photo(person)}<div class="person-v2-body"><h3>${esc(person.name)}</h3><p>${esc(person.bio || statusName(person.status))}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(person.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(person.id)}">🎁</button></div></div></article>`;
   }
 
   function dateAt(date, time = "00:00") {
@@ -176,10 +174,9 @@
       const ids = await insideIds();
       rows = rows.filter(person => ids.has(String(person.id)) || (person.telegramId && ids.has(`tg:${person.telegramId}`)) || (person.userKey && ids.has(String(person.userKey))));
     }
-    if (tab === "thumbs") rows = social.incomingThumbs();
     root.innerHTML = rows.length
       ? `<div class="people-v2-grid">${rows.map(card).join("")}</div>`
-      : `<div class="social-v2-empty">${tab === "inside" ? "Пока никто не подтвердил вход на активное мероприятие через QR-код." : tab === "thumbs" ? "Никто ещё не поставил вам 👍." : "Пользователей пока нет."}</div>`;
+      : `<div class="social-v2-empty">${tab === "inside" ? "Пока никто не подтвердил вход на активное мероприятие через QR-код." : "Пользователей пока нет."}</div>`;
   }
 
   function person(id) {
@@ -190,7 +187,7 @@
     const personRow = person(id);
     if (!personRow) return;
     activePerson = personRow.id;
-    document.getElementById("socialPersonBody").innerHTML = `${photo(personRow)}<h2>${esc(personRow.name)}</h2><p>${esc(personRow.bio || statusName(personRow.status))}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(personRow.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(personRow.id)}">🎁</button><button type="button" class="${social.hasThumb(social.myId(), personRow.id) ? "active" : ""}" data-person-thumb="${esc(personRow.id)}">👍</button></div>`;
+    document.getElementById("socialPersonBody").innerHTML = `${photo(personRow)}<h2>${esc(personRow.name)}</h2><p>${esc(personRow.bio || statusName(personRow.status))}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(personRow.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(personRow.id)}">🎁</button></div>`;
     document.getElementById("socialPersonDialog").showModal();
   }
 
@@ -211,13 +208,6 @@
     activePerson = id || activePerson;
     renderGiftCatalog();
     document.getElementById("socialGiftV2").showModal();
-  }
-
-  function thumb(id) {
-    const result = social.toggleThumb(id);
-    toast(result.connected ? "Взаимный 👍 — фото открыто" : "Отметка 👍 сохранена");
-    render();
-    if (document.getElementById("socialPersonDialog")?.open) openPerson(id);
   }
 
   async function sendGift(giftId) {
@@ -261,8 +251,6 @@
     if (invite) { event.preventDefault(); event.stopPropagation(); return openInvite(invite.dataset.personInvite); }
     const gift = event.target.closest("[data-person-gift]");
     if (gift) { event.preventDefault(); event.stopPropagation(); return openGift(gift.dataset.personGift); }
-    const like = event.target.closest("[data-person-thumb]");
-    if (like) { event.preventDefault(); event.stopPropagation(); return thumb(like.dataset.personThumb); }
     const send = event.target.closest("[data-send-social-invite]");
     if (send) {
       const selectedEvent = events.find(row => String(row.id) === String(document.getElementById("socialInviteEvent").value));

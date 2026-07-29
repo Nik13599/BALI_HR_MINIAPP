@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server/index.js",
     "migrate": "tsx scripts/migrate.ts",
-    "lint": "eslint server tests/server scripts site/telegram-app.js site/clan-chat-app.js site/admin-production.js",
+    "lint": "eslint server tests/server scripts site/telegram-app.js site/clan-chat-app.js site/admin-production.js site/bali-clans-demo-core-beta4.js site/bali-people-clans-beta4.js site/admin-clans-beta4.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:server": "node --import tsx --test --test-concurrency=1 tests/server/auth.test.ts tests/server/clan-chat.test.ts tests/server/admin.test.ts tests/server/privacy-migration.test.ts",
     "test:demo": "node scripts/run-demo-tests.mjs",

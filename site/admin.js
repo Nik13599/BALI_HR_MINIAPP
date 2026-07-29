@@ -53,6 +53,8 @@ $("#adminNav").addEventListener("click", (event) => {
 });
 
 $("#primaryAction").addEventListener("click", () => {
+  const custom = window.BaliAdminViews?.[state.view];
+  if (custom?.onPrimary) return custom.onPrimary({ state, setView, render, toast, esc });
   if (state.view === "dashboard") return setView("bookings", true);
   if (state.view === "settings") return window.open("./supabase-schema.sql", "_blank");
   const type = state.view === "hall" ? "hall_tables" : state.view === "menu" ? "menu_items" : state.view;
@@ -66,13 +68,18 @@ function setView(view, openNew = false) {
 }
 
 async function render() {
-  $("#pageTitle").textContent = titles[state.view];
+  const custom = window.BaliAdminViews?.[state.view];
+  $("#pageTitle").textContent = custom?.title || titles[state.view] || state.view;
   const action = $("#primaryAction");
-  action.style.display = "inline-flex";
-  action.textContent = ({ dashboard: "Новая бронь", menu: "Добавить позицию", events: "Добавить афишу", hall: "Добавить стол", bookings: "Новая бронь", customers: "Добавить клиента", settings: "Открыть SQL" })[state.view];
+  action.style.display = custom?.primaryAction === false ? "none" : "inline-flex";
+  action.textContent = custom?.primaryLabel || ({ dashboard: "Новая бронь", menu: "Добавить позицию", events: "Добавить афишу", hall: "Добавить стол", bookings: "Новая бронь", customers: "Добавить клиента", settings: "Открыть SQL" })[state.view];
   const content = $("#content");
   content.innerHTML = '<div class="empty">Загрузка…</div>';
   try {
+    if (custom?.render) {
+      await custom.render(content, { state, setView, render, toast, esc });
+      return;
+    }
     if (state.view === "dashboard") await renderDashboard(content);
     if (state.view === "menu") await renderMenu(content);
     if (state.view === "events") await renderEvents(content);

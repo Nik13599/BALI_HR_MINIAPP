@@ -71,12 +71,19 @@
     const keys = identityKeys(person);
     return Object.values(read("bali_event_checkins_v1", {})).filter(row => keys.has(String(row.user_key || ""))).sort((a,b)=>String(b.checked_in_at||"").localeCompare(String(a.checked_in_at||"")));
   }
+  function privacyMode(person, field) {
+    const direct = person?.privacy?.[field] || person?.[`privacy${field[0].toUpperCase()}${field.slice(1)}`];
+    if (["public","vip","private"].includes(direct)) return direct;
+    if (field === "phone") return person.sharePhone === true ? "public" : "private";
+    if (field === "telegram") return person.shareTelegram === true ? "public" : "private";
+    if (field === "age") return person.shareAge === true ? "public" : "private";
+    if (field === "photo") return person.showPhoto === true ? "public" : "private";
+    return "private";
+  }
   function canSee(person, field) {
-    if (viewerHasVip()) return true;
-    if (field === "phone") return person.sharePhone === true;
-    if (field === "telegram") return person.shareTelegram === true;
-    if (field === "age") return person.shareAge === true;
-    if (field === "photo") return person.showPhoto === true || social.isConnection?.(person.id);
+    const mode = privacyMode(person, field);
+    if (mode === "public") return true;
+    if (mode === "vip") return viewerHasVip();
     return false;
   }
 
@@ -114,7 +121,7 @@
     else if (!photo.querySelector(".person-v2-lock")) photo.insertAdjacentHTML("beforeend", '<div class="person-v2-lock">Фото скрыто настройками конфиденциальности</div>');
     let badges = body.querySelector(".people-public-badges");
     if (!badges) { badges = document.createElement("div"); badges.className = "people-public-badges"; body.querySelector(".person-v2-actions")?.insertAdjacentElement("beforebegin", badges); }
-    badges.innerHTML = `${vip ? `<span class="vip">${esc(vip.plan?.name || vip.planId || "VIP")}</span>` : ""}${viewerHasVip() ? `<span>${Number(account.balance || 0)} баллов</span>` : ""}${rewards.length ? `<span>🏆 ${rewards.length}</span>` : ""}`;
+    badges.innerHTML = `${vip ? `<span class="vip">${esc(vip.plan?.name || vip.planId || "VIP")}</span>` : ""}${canSee(person,"points") ? `<span>${Number(account.balance || 0)} баллов</span>` : ""}${rewards.length ? `<span>🏆 ${rewards.length}</span>` : ""}`;
     let mini = body.querySelector(".people-reward-mini");
     if (rewards.length) {
       if (!mini) { mini = document.createElement("div"); mini.className = "people-reward-mini"; badges.insertAdjacentElement("afterend", mini); }
@@ -168,16 +175,17 @@
     body.querySelector("#fullPeopleDetails")?.remove();
     let crown = { miss:0, mister:0 };
     try { crown = await window.BaliCrownWinCards?.winCounts?.(person) || crown; } catch {}
-    body.insertAdjacentHTML("beforeend", `<div id="fullPeopleDetails"><section class="people-detail-section"><h3>О пользователе</h3><div class="people-detail-list"><div class="people-detail-row"><span>Статус</span><strong>${esc(vip?.plan?.name || game.levelFor(Number(account.xp || 0)).current.name)}</strong></div>${canSee(person,"age") && ageFor(person) ? `<div class="people-detail-row"><span>Возраст</span><strong>${ageFor(person)} лет</strong></div>` : ""}${canSee(person,"telegram") && person.username ? `<div class="people-detail-row"><span>Telegram</span><strong>${esc(person.username)}</strong></div>` : ""}${canSee(person,"phone") && person.phone ? `<div class="people-detail-row"><span>Телефон</span><strong>${esc(person.phone)}</strong></div>` : ""}${viewerHasVip() ? `<div class="people-detail-row"><span>BALI-баллы</span><strong>${Number(account.balance || 0)}</strong></div>` : ""}</div></section><section class="people-detail-section"><h3>Награды и победы</h3><div class="people-detail-list">${rewards.map(row => `<div class="people-detail-row"><span>${esc(row.reward?.icon || "🏆")} ${esc(row.reward?.title || "Награда BALI")}</span><strong>${esc(fmt(row.earnedAt))}</strong></div>`).join("") || '<div class="people-detail-row"><span>Награды</span><strong>Пока нет</strong></div>'}${crown.miss ? `<div class="people-detail-row"><span>👑 Королева BALI</span><strong>${crown.miss}×</strong></div>` : ""}${crown.mister ? `<div class="people-detail-row"><span>👑 Король BALI</span><strong>${crown.mister}×</strong></div>` : ""}</div></section><section class="people-detail-section"><h3>История посещений</h3><div class="people-detail-list">${visits.slice(0,20).map(row => `<div class="people-detail-row"><span>${esc(row.event_title || "Мероприятие BALI")}</span><strong>${esc(fmt(row.checked_in_at))}</strong></div>`).join("") || '<div class="people-detail-row"><span>Посещений пока нет</span><strong>—</strong></div>'}</div></section></div>`);
+    body.insertAdjacentHTML("beforeend", `<div id="fullPeopleDetails"><section class="people-detail-section"><h3>О пользователе</h3><div class="people-detail-list"><div class="people-detail-row"><span>Статус</span><strong>${esc(vip?.plan?.name || game.levelFor(Number(account.xp || 0)).current.name)}</strong></div>${canSee(person,"age") && ageFor(person) ? `<div class="people-detail-row"><span>Возраст</span><strong>${ageFor(person)} лет</strong></div>` : ""}${canSee(person,"telegram") && person.username ? `<div class="people-detail-row"><span>Telegram</span><strong>${esc(person.username)}</strong></div>` : ""}${canSee(person,"phone") && person.phone ? `<div class="people-detail-row"><span>Телефон</span><strong>${esc(person.phone)}</strong></div>` : ""}${canSee(person,"points") ? `<div class="people-detail-row"><span>BALI-баллы</span><strong>${Number(account.balance || 0)}</strong></div>` : ""}</div></section><section class="people-detail-section"><h3>Награды и победы</h3><div class="people-detail-list">${rewards.map(row => `<div class="people-detail-row"><span>${esc(row.reward?.icon || "🏆")} ${esc(row.reward?.title || "Награда BALI")}</span><strong>${esc(fmt(row.earnedAt))}</strong></div>`).join("") || '<div class="people-detail-row"><span>Награды</span><strong>Пока нет</strong></div>'}${crown.miss ? `<div class="people-detail-row"><span>👑 Королева BALI</span><strong>${crown.miss}×</strong></div>` : ""}${crown.mister ? `<div class="people-detail-row"><span>👑 Король BALI</span><strong>${crown.mister}×</strong></div>` : ""}</div></section><section class="people-detail-section"><h3>История посещений</h3><div class="people-detail-list">${visits.slice(0,20).map(row => `<div class="people-detail-row"><span>${esc(row.event_title || "Мероприятие BALI")}</span><strong>${esc(fmt(row.checked_in_at))}</strong></div>`).join("") || '<div class="people-detail-row"><span>Посещений пока нет</span><strong>—</strong></div>'}</div></section></div>`);
   }
 
   function injectPrivacySettings() {
     const form = document.getElementById("profileV2SettingsForm");
-    if (!form || form.querySelector('[name="shareAge"]')) return;
+    if (!form || form.querySelector('[name="privacyAge"]')) return;
     const person = social.profile();
     const submit = form.querySelector("button[type=submit]");
     const wrapper = document.createElement("div");
-    wrapper.innerHTML = `${viewerHasVip() ? '<div class="privacy-vip-note">Ваш VIP-статус открывает полные публичные данные других участников BALI People.</div>' : ""}<label class="profile-v2-switch"><span>Показывать мой возраст</span><input name="shareAge" type="checkbox" ${person.shareAge ? "checked" : ""}></label><label class="profile-v2-switch"><span>Показывать фото без размытия</span><input name="showPhoto" type="checkbox" ${person.showPhoto ? "checked" : ""}></label>`;
+    const options = selected => [["public","Видно всем"],["vip","Видно VIP-пользователям"],["private","Скрыто от всех"]].map(([value,label]) => `<option value="${value}" ${selected === value ? "selected" : ""}>${label}</option>`).join("");
+    wrapper.innerHTML = `${viewerHasVip() ? '<div class="privacy-vip-note">VIP не обходит конфиденциальность: он видит только поля с режимом «Видно VIP-пользователям».</div>' : ""}<label><span>Кому виден мой возраст</span><select name="privacyAge">${options(privacyMode(person,"age"))}</select></label><label><span>Кому видно моё фото</span><select name="privacyPhoto">${options(privacyMode(person,"photo"))}</select></label><label><span>Кому видны мои BALI-баллы</span><select name="privacyPoints">${options(privacyMode(person,"points"))}</select></label>`;
     while (wrapper.firstChild) submit?.insertAdjacentElement("beforebegin", wrapper.firstChild);
   }
 
@@ -232,7 +240,8 @@
   }, true);
   document.addEventListener("submit", event => {
     if (event.target.id !== "profileV2SettingsForm") return;
-    social.saveProfile({ shareAge:Boolean(event.target.elements.shareAge?.checked), showPhoto:Boolean(event.target.elements.showPhoto?.checked) });
+    const profile = social.profile();
+    social.saveProfile({ privacy:{ ...(profile.privacy || {}), age:event.target.elements.privacyAge?.value || "private", photo:event.target.elements.privacyPhoto?.value || "private", points:event.target.elements.privacyPoints?.value || "private" } });
   }, true);
   document.addEventListener("input", event => {
     if (["baliPeopleNameSearch","baliPeopleAgeMin","baliPeopleAgeMax"].includes(event.target.id)) requestAnimationFrame(filterByExtendedSearch);

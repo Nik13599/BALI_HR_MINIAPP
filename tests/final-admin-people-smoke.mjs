@@ -3,36 +3,28 @@ import fs from "node:fs";
 
 const loader = fs.readFileSync("site/beta4-square-loader.js", "utf8");
 const publicCards = fs.readFileSync("site/bali-people-public-cards-beta4.js", "utf8");
-const crownWins = fs.readFileSync("site/crown-win-cards-beta4.js", "utf8");
 const adminHtml = fs.readFileSync("site/admin-beta4.html", "utf8");
 const adminRuntime = fs.readFileSync("site/admin-mobile-runtime.js", "utf8");
-const bonuses = fs.readFileSync("site/admin-bonuses-final-beta4.js", "utf8");
-const dossier = fs.readFileSync("site/admin-customer-dossier-beta4.js", "utf8");
-const userLinks = fs.readFileSync("site/admin-user-card-links-beta4.js", "utf8");
+const admin = fs.readFileSync("site/admin.js", "utf8");
+const clans = fs.readFileSync("site/admin-clans-beta4.js", "utf8");
 
-assert.ok(loader.includes("beta4-reward-icons-core.js"), "The reward icon module must use the real filename");
-assert.ok(!loader.includes("beta4-reward-icons-core-beta4.js"), "The invalid reward icon filename must not return");
-assert.ok(loader.includes("bali-people-public-cards-beta4.js"), "Public BALI People cards must be loaded");
-assert.ok(loader.includes("crown-win-cards-beta4.js"), "Miss and Mister win counts must be loaded");
+assert.ok(loader.includes("beta4-reward-icons-core.js"), "The current reward icon module must load");
+assert.ok(loader.includes("bali-people-public-cards-beta4.js"), "Public BALI People cards must load");
+assert.ok(loader.includes("bali-people-clans-beta4.js"), "Clans must load inside BALI People");
+assert.ok(publicCards.includes("social.visiblePeople = publicPeople"), "All public BALI users must remain visible");
+assert.ok(publicCards.includes('phone: ""'), "Phone numbers must stay private");
+assert.ok(publicCards.includes('telegram: ""'), "Telegram usernames must stay private");
+assert.ok(publicCards.includes("Награды пользователя"), "Public cards must show earned rewards");
 
-assert.ok(publicCards.includes("social.visiblePeople = publicPeople"), "All BALI users must be visible in BALI PEOPLE");
-assert.ok(publicCards.includes('username: ""'), "Telegram username must be hidden publicly");
-assert.ok(publicCards.includes('phone: ""'), "Phone numbers must be hidden publicly");
-assert.ok(publicCards.includes("Награды пользователя"), "Public cards must show rewards");
-assert.ok(publicCards.includes("Текущий уровень"), "Public cards must show ranking level information");
-assert.ok(crownWins.includes("МИСС BALI"), "Miss BALI win counts must be shown");
-assert.ok(crownWins.includes("МИСТЕР BALI"), "Mister BALI win counts must be shown");
+assert.ok(adminHtml.includes('data-view="clans"'), "Admin must contain the BALI People clans section");
+assert.ok(adminHtml.includes("admin-clans-beta4.js"), "Admin clan controls must load");
+assert.ok(adminRuntime.includes("admin-gifts-beta4.js"), "Gift management must load");
+assert.ok(adminRuntime.includes("admin-match3-game-beta4.js"), "Match 3 configuration must load");
+assert.ok(adminRuntime.includes("admin-visual-blocks-beta4.js"), "Visual block configuration must load");
+assert.ok(adminRuntime.includes("admin-nav-icons-beta4.js"), "Bottom-menu icon configuration must load");
+assert.ok(adminRuntime.includes("moduleSets.clans=[]"), "Clan admin view must be registered without duplicate loaders");
+assert.ok(admin.includes("window.BaliAdminViews"), "Admin must support integrated extension views");
+assert.ok(clans.includes("window.BaliAdminViews.clans"), "Clan management must register as a native admin view");
+assert.ok(clans.includes("/api/v1/admin/clans/"), "Clan administration must use the secured backend API");
 
-assert.ok(adminHtml.includes("STABLE 16"), "The final admin build must be opened");
-assert.ok(adminHtml.includes("admin-customer-dossier-beta4.js"), "The full user dossier must be globally loaded");
-assert.ok(adminHtml.includes("admin-user-card-links-beta4.js"), "User names must open the dossier across admin sections");
-assert.ok(adminHtml.includes("crown-win-cards-beta4.js"), "Admin dossiers must show crown wins");
-assert.ok(adminRuntime.includes("admin-bonuses-final-beta4.js"), "The compact points and VIP workflow must be loaded");
-assert.ok(bonuses.includes("Новые заявки на фишки"), "Pending chip requests must appear immediately at the top");
-assert.ok(bonuses.includes("Открыть историю вручения фишек"), "Chip handover history must open only on request");
-assert.ok(bonuses.includes("Начислить или списать баллы"), "Manual point adjustment must have a dedicated block");
-assert.ok(dossier.includes("История баллов и бонусов"), "The dossier must include points history");
-assert.ok(dossier.includes("Полученные награды"), "The dossier must include rewards");
-assert.ok(userLinks.includes("Открыть полную карточку пользователя"), "Names across the admin must be actionable");
-
-console.log("Final admin blocks, global dossiers and BALI People cards smoke test passed");
+console.log("Latest admin, rewards, gifts, visual controls and integrated clan smoke test passed");

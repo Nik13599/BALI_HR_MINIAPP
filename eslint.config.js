@@ -10,7 +10,10 @@ export default [
       "site/*.js",
       "!site/telegram-app.js",
       "!site/clan-chat-app.js",
-      "!site/admin-production.js"
+      "!site/admin-production.js",
+      "!site/bali-clans-demo-core-beta4.js",
+      "!site/bali-people-clans-beta4.js",
+      "!site/admin-clans-beta4.js"
     ]
   },
   js.configs.recommended,
@@ -27,7 +30,14 @@ export default [
     }
   },
   {
-    files: ["site/telegram-app.js", "site/clan-chat-app.js", "site/admin-production.js"],
+    files: [
+      "site/telegram-app.js",
+      "site/clan-chat-app.js",
+      "site/admin-production.js",
+      "site/bali-clans-demo-core-beta4.js",
+      "site/bali-people-clans-beta4.js",
+      "site/admin-clans-beta4.js"
+    ],
     languageOptions: { ecmaVersion: 2022, globals: globals.browser },
     rules: {
       "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]

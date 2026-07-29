@@ -33,10 +33,6 @@
   }
 
   function decorate() {
-    document.querySelectorAll("[data-person-thumb]").forEach(button => {
-      if (button.textContent !== "❤️") button.textContent = "❤️";
-      if (button.title !== "Поставить сердечко") button.title = "Поставить сердечко";
-    });
     document.querySelectorAll("[data-send-social-gift]").forEach(button => {
       const id = button.dataset.sendSocialGift;
       const small = button.querySelector("small");
