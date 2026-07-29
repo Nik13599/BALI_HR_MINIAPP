@@ -1,7 +1,7 @@
 (() => {
   if (window.__BALI_FULL_DEMO_DATA_UPGRADE__) return;
   window.__BALI_FULL_DEMO_DATA_UPGRADE__ = true;
-  const VERSION = "2";
+  const VERSION = "3";
   const KEY = "bali_full_demo_data_upgrade_v2";
   if (localStorage.getItem(KEY) === VERSION) return;
   const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
@@ -34,6 +34,42 @@
     return { ...row, telegram:row.telegram || person?.username || "" };
   });
   write("bali_customers_v2", customers);
+  const rewardDefaults = {
+    "reward-demo-regular":{amount:250,repeatable:false,mode:"first"},
+    "reward-demo-crown":{amount:500,repeatable:true,mode:"each",title:"Участник BALI Match",description:"Войти в TOP 10 недельного рейтинга игры",conditionType:"ranking",threshold:10},
+    "reward-demo-dance":{amount:1000,repeatable:false,mode:"first"},
+    "reward-demo-legend":{amount:1000,repeatable:false,mode:"first"},
+    "reward-demo-company":{amount:350,repeatable:true,mode:"each"},
+    "reward-demo-vip":{amount:600,repeatable:false,mode:"first",deduct:true},
+    "reward-demo-social":{amount:450,repeatable:true,mode:"first",conditionType:"referrals",threshold:3}
+  };
+  const rewards = read("bali_beta4_custom_rewards_v1", []).map(row => {
+    const preset = rewardDefaults[row.id];
+    if (!preset || row.awardPointsEnabled !== undefined) return row;
+    return {
+      ...row,
+      title:preset.title || row.title,
+      description:preset.description || row.description,
+      conditionType:preset.conditionType || row.conditionType,
+      threshold:preset.threshold || row.threshold,
+      repeatable:preset.repeatable,
+      awardPointsEnabled:true,
+      pointsRewardAmount:preset.amount,
+      pointsRewardType:"points",
+      awardPointsMode:preset.mode,
+      deductPointsOnRevoke:preset.deduct === true,
+      pointsHistoryComment:`Награда: ${preset.title || row.title}`
+    };
+  });
+  write("bali_beta4_custom_rewards_v1", rewards);
+  write("bali_beta4_reward_grants_v1", read("bali_beta4_reward_grants_v1", []).map(row => row.pointsStatus ? row : {
+    ...row,
+    pointsConfiguredAmount:0,
+    pointsPlanned:0,
+    pointsAwarded:0,
+    pointsType:"points",
+    pointsStatus:"not_applicable"
+  }));
   localStorage.setItem(KEY, VERSION);
   window.dispatchEvent(new CustomEvent("bali:social-changed"));
   window.dispatchEvent(new CustomEvent("bali:app-users-changed"));

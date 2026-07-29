@@ -61,6 +61,7 @@ jobs:
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
+            site/admin-venue-reviews-beta4.js
             site/admin-mobile-runtime.js
             site/admin-night-crown-bootstrap-beta4.js
             site/match3-game-core-beta4.js
@@ -68,8 +69,22 @@ jobs:
             site/match3-game-beta4.css
             site/admin-match3-game-beta4.js
             site/admin-match3-game-beta4.css
+            site/bali-temple-theme-beta4.css
+            site/admin-bali-temple-theme-beta4.css
+            site/bali-visual-blocks-beta4.css
+            site/bali-visual-blocks-core-beta4.js
+            site/admin-visual-blocks-beta4.js
             site/nav-icons-core-beta4.js
             site/admin-nav-icons-beta4.js
+            site/assets/bali-temple/hero-stone-face.webp
+            site/assets/bali-temple/gold-bear.webp
+            site/assets/bali-temple/bronze-statues.webp
+            site/assets/bali-temple/nav-home.svg
+            site/assets/bali-temple/nav-events.svg
+            site/assets/bali-temple/nav-menu.svg
+            site/assets/bali-temple/nav-people.svg
+            site/assets/bali-temple/nav-game.svg
+            site/assets/bali-temple/nav-profile.svg
             site/assets/match3/background.webp
             site/assets/match3/headphones.webp
             site/assets/match3/martini.webp
@@ -82,6 +97,7 @@ jobs:
             site/assets/match3/reward.webp
             site/home-community-copy-beta4.js
             site/home-design-core-beta4.js
+            site/admin-home-design-beta4.js
             site/demo-data-consistency-beta4.js
             site/profile-recent-rewards-beta4.js
             site/full-demo-nav-unlock-beta4.js
@@ -109,15 +125,19 @@ jobs:
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
+            site/admin-venue-reviews-beta4.js
             site/admin-mobile-runtime.js
             site/admin-night-crown-bootstrap-beta4.js
             site/match3-game-core-beta4.js
             site/match3-game-ui-beta4.js
             site/admin-match3-game-beta4.js
+            site/bali-visual-blocks-core-beta4.js
+            site/admin-visual-blocks-beta4.js
             site/nav-icons-core-beta4.js
             site/admin-nav-icons-beta4.js
             site/home-community-copy-beta4.js
             site/home-design-core-beta4.js
+            site/admin-home-design-beta4.js
             site/demo-data-consistency-beta4.js
             site/profile-recent-rewards-beta4.js
             site/full-demo-nav-unlock-beta4.js
@@ -142,6 +162,7 @@ jobs:
           grep -Fq "admin-beta4.html?v=$version" site/admin.html
           grep -Fq "admin-beta4.html?v=$version" site/browser-admin.html
           grep -Fq "admin-booking-edit-beta4.js?v=$version" site/admin-beta4.html
+          grep -Fq "admin-booking-manager-beta4.js?v=$version" site/admin-beta4.html
           grep -q 'full-menu-catalog-beta4.js' site/beta4-square-loader.js
           grep -q 'demo-data-consistency-beta4.js' site/beta4-square-loader.js
           grep -q 'demo-data-consistency-beta4.js' site/admin-beta4.html
@@ -150,12 +171,18 @@ jobs:
           grep -q 'match3-game-ui-beta4.js' site/beta4-square-loader.js
           grep -q 'match3-game-core-beta4.js' site/admin-beta4.html
           grep -q 'admin-match3-game-beta4.js' site/admin-beta4.html
+          grep -q 'bali-temple-theme-beta4.css' site/beta4-square-loader.js
+          grep -q 'admin-bali-temple-theme-beta4.css' site/admin-beta4.html
+          grep -q 'bali-visual-blocks-beta4.css' site/beta4-square-loader.js
+          grep -q 'bali-visual-blocks-core-beta4.js' site/beta4-square-loader.js
+          grep -q 'bali:profile-v2-mounted' site/beta4-profile-v2.js
+          grep -Fq 'moduleSets.reviews=["admin-venue-reviews-beta4.js"]' site/admin-mobile-runtime.js
           grep -Fq 'crown:["points-core.js","beta4-game.js","beta4-loyalty-core.js","match3-game-core-beta4.js","admin-match3-game-beta4.js"]' site/admin-mobile-runtime.js
           grep -q 'nav-icons-core-beta4.js' site/beta4-square-loader.js
           grep -q 'telegram-fullscreen-beta4.js' site/index.html
           grep -q 'requestFullscreen' site/telegram-fullscreen-beta4.js
           grep -q 'contentSafeAreaInset' site/telegram-fullscreen-beta4.js
-          grep -Fq 'settings:["home-design-core-beta4.js","admin-home-design-upload-fix-beta4.js","admin-home-design-beta4.js","nav-icons-core-beta4.js","admin-nav-icons-beta4.js"]' site/admin-mobile-runtime.js
+          grep -Fq 'settings:["home-design-core-beta4.js","admin-home-design-upload-fix-beta4.js","admin-home-design-beta4.js","nav-icons-core-beta4.js","admin-nav-icons-beta4.js","bali-visual-blocks-core-beta4.js","admin-visual-blocks-beta4.js"]' site/admin-mobile-runtime.js
           grep -q 'event-performer-cards-beta4.js' site/beta4-square-loader.js
           grep -q 'performer-socials' site/event-performer-cards-beta4.js
           grep -q 'dj_photo_url' site/admin-event-performer-fields-beta4.js
@@ -271,6 +298,36 @@ jobs:
             setItem:(key,value) => memory.set(key,String(value)),
             removeItem:key => memory.delete(key)
           };
+          global.document = {
+            querySelectorAll:() => [],
+            addEventListener:() => {},
+            documentElement:{ dataset:{} }
+          };
+          global.CustomEvent = class { constructor(type,init){ this.type=type; this.detail=init?.detail; } };
+          global.dispatchEvent = () => {};
+          global.addEventListener = () => {};
+          global.requestAnimationFrame = fn => fn();
+          global.setInterval = () => 0;
+          global.clearInterval = () => {};
+          require('./site/bali-visual-blocks-core-beta4.js');
+          const blocks = global.BaliVisualBlocks;
+          if (!blocks || blocks.BLOCKS.length < 25) throw new Error("Expected the full visual block registry");
+          if (!blocks.BLOCKS.every(block => block.width && block.height && block.defaultTitle)) throw new Error("Visual block dimensions or default titles are missing");
+          blocks.updateBlock("events.header", { title:"Новая афиша", image:"custom.webp" });
+          if (blocks.read()["events.header"].title !== "Новая афиша") throw new Error("Visual block update was not saved");
+          blocks.resetBlock("events.header");
+          if (blocks.read()["events.header"].title !== "") throw new Error("Per-block visual reset failed");
+          console.log(`Validated ${blocks.BLOCKS.length} configurable visual blocks`);
+          NODE
+
+          node <<'NODE'
+          const memory = new Map();
+          global.window = global;
+          global.localStorage = {
+            getItem:key => memory.has(key) ? memory.get(key) : null,
+            setItem:(key,value) => memory.set(key,String(value)),
+            removeItem:key => memory.delete(key)
+          };
           global.CustomEvent = class { constructor(type,init){ this.type=type; this.detail=init?.detail; } };
           global.dispatchEvent = () => {};
           global.addEventListener = () => {};
@@ -301,11 +358,11 @@ jobs:
           require('./site/nav-icons-core-beta4.js');
           const icons = global.BaliNavIcons;
           if (!icons || icons.read().length !== 6) throw new Error("Expected six configurable navigation icons");
-          if (!icons.item("crown").image.includes("triangle.webp")) throw new Error("Match-3 default icon is missing");
-          icons.write(icons.read().map(row => row.page === "home" ? {...row,iconText:"H",image:"custom.webp"} : row));
-          if (icons.item("home").image !== "custom.webp") throw new Error("Navigation icon update was not saved");
+          if (!icons.item("crown").image.includes("nav-game.svg")) throw new Error("Match-3 default icon is missing");
+          icons.write(icons.read().map(row => row.page === "home" ? {...row,label:"Старт",iconText:"H",image:"custom.webp"} : row));
+          if (icons.item("home").image !== "custom.webp" || icons.item("home").label !== "Старт") throw new Error("Navigation icon or label update was not saved");
           icons.resetPage("home");
-          if (icons.item("home").iconText !== "⌂" || icons.item("home").image) throw new Error("Per-icon reset failed");
+          if (icons.item("home").label !== "Главная" || icons.item("home").iconText !== "⌂" || !icons.item("home").image.includes("nav-home.svg")) throw new Error("Per-icon reset failed");
           icons.write([]);
           if (icons.read().length !== 6) throw new Error("Navigation icon normalization failed");
           console.log("Validated configurable navigation icons and resets");

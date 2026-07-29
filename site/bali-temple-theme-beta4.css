@@ -1,0 +1,829 @@
+:root{
+  color-scheme:dark;
+  --background-primary:#050606;
+  --background-secondary:#080a08;
+  --surface:#10120f;
+  --surface-elevated:#161815;
+  --surface-hover:#1c1f1a;
+  --surface-active:#252720;
+  --border:rgba(215,173,104,.18);
+  --border-active:rgba(228,193,125,.48);
+  --text-primary:#f0ece4;
+  --text-secondary:#aaa59b;
+  --accent-green:#18532a;
+  --accent-gold:#d7ad68;
+  --accent-bronze:#94663a;
+  --accent-lava:#f04a15;
+  --success:#4d8f5c;
+  --warning:#d49744;
+  --error:#c01d20;
+  --available:#4d8f5c;
+  --occupied:#a81418;
+  --reserved:#d49744;
+  --selected:#f04a15;
+  --vip:#d7ad68;
+  --disabled:#57554f;
+  --shadow-sm:0 6px 18px rgba(0,0,0,.24);
+  --shadow-md:0 16px 36px rgba(0,0,0,.38);
+  --shadow-lg:0 28px 72px rgba(0,0,0,.56);
+  --radius-sm:10px;
+  --radius-md:16px;
+  --radius-lg:24px;
+  --spacing-xs:6px;
+  --spacing-sm:10px;
+  --spacing-md:16px;
+  --spacing-lg:24px;
+  --bg:var(--background-primary);
+  --panel:var(--surface);
+  --panel2:var(--surface-elevated);
+  --line:var(--border);
+  --text:var(--text-primary);
+  --muted:var(--text-secondary);
+  --lime:var(--accent-gold);
+  --gold:var(--accent-gold);
+  --red:var(--error);
+}
+
+html,
+body{
+  background:
+    radial-gradient(circle at 88% 8%,rgba(24,83,42,.22),transparent 34%),
+    radial-gradient(circle at 5% 92%,rgba(116,80,47,.12),transparent 32%),
+    var(--background-primary);
+  color:var(--text-primary);
+}
+
+button,
+a,
+input,
+select,
+textarea{
+  -webkit-tap-highlight-color:transparent;
+}
+
+button,
+a,
+.event,
+.compact-event,
+.menu-item,
+.rank-row,
+.social-person-tile,
+.person-v2{
+  transition:
+    border-color .16s ease,
+    background-color .16s ease,
+    box-shadow .16s ease,
+    filter .16s ease,
+    transform .16s ease;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+  outline:2px solid var(--accent-gold);
+  outline-offset:3px;
+}
+
+.top{
+  border-color:var(--border);
+  background:
+    linear-gradient(180deg,rgba(5,6,6,.98),rgba(8,10,8,.95)),
+    url("./assets/bali-temple/hero-stone-face.webp") 84% 32%/420px auto no-repeat;
+  box-shadow:var(--shadow-sm);
+}
+
+.top .brand{
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  cursor:pointer;
+  box-shadow:none;
+}
+
+.logo{
+  border:1px solid var(--border-active);
+  background:
+    radial-gradient(circle at 42% 35%,rgba(228,193,125,.22),transparent 34%),
+    linear-gradient(145deg,#252720,#0b0d0b);
+  color:var(--accent-gold);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.62),
+    0 0 18px rgba(240,74,21,.1);
+}
+
+.brand small,
+.head .count,
+.muted{
+  color:var(--text-secondary);
+}
+
+.top-action{
+  border-color:var(--border);
+  background:rgba(22,24,21,.84);
+  color:var(--accent-gold);
+}
+
+.top-action:hover,
+.top-action:active{
+  border-color:var(--border-active);
+  background:var(--surface-hover);
+}
+
+.page{
+  scrollbar-color:var(--accent-bronze) transparent;
+}
+
+.eyebrow,
+.card-head button,
+.event-body small,
+.menu-item strong,
+.rank-row b,
+.avatar-label,
+.wallet strong,
+.ledger-row b,
+.achievement b,
+.booking-layout-fullscreen-head span{
+  color:var(--accent-gold);
+}
+
+.hero{
+  min-height:300px;
+  border-color:rgba(215,173,104,.3);
+  background:
+    linear-gradient(90deg,rgba(5,6,6,.96) 0%,rgba(5,6,6,.78) 46%,rgba(5,6,6,.18) 100%),
+    linear-gradient(0deg,rgba(5,6,6,.84) 0%,transparent 60%),
+    url("./assets/bali-temple/hero-stone-face.webp") 68% center/cover no-repeat;
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.5),
+    var(--shadow-md);
+}
+
+.hero:after{
+  display:none;
+}
+
+.hero h1 em{
+  color:var(--accent-gold);
+  text-shadow:0 0 20px rgba(240,74,21,.2);
+}
+
+.hero p{
+  color:#c9c2b7;
+}
+
+.pills span{
+  border-color:rgba(215,173,104,.24);
+  background:rgba(5,6,6,.56);
+  color:#d6cec1;
+  backdrop-filter:blur(8px);
+}
+
+.primary,
+.secondary,
+.danger{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.primary{
+  border:1px solid rgba(228,193,125,.42);
+  background:linear-gradient(145deg,#c3974f,#94663a);
+  color:#090806;
+  box-shadow:
+    inset 0 1px 0 rgba(255,244,211,.28),
+    0 10px 24px rgba(0,0,0,.22);
+}
+
+.primary:hover,
+.primary:active{
+  filter:brightness(1.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255,244,211,.34),
+    0 12px 28px rgba(0,0,0,.3);
+}
+
+.secondary,
+.ghost{
+  border-color:var(--border);
+  background:linear-gradient(145deg,rgba(37,39,32,.84),rgba(16,18,15,.92));
+  color:var(--text-primary);
+}
+
+.secondary:hover,
+.secondary:active,
+.ghost:hover,
+.ghost:active{
+  border-color:var(--border-active);
+  background:var(--surface-hover);
+}
+
+.danger{
+  border-color:rgba(192,29,32,.42);
+  background:rgba(168,20,24,.15);
+  color:#ed9f96;
+}
+
+.card,
+.event,
+.menu-item,
+.podium article,
+.rank-row,
+.stats article,
+.achievement,
+.social-card,
+.social-person-tile,
+.social-request,
+.social-gift,
+.social-empty,
+.social-v2-empty,
+.person-v2{
+  border-color:var(--border);
+  background:
+    linear-gradient(145deg,rgba(28,31,26,.92),rgba(11,13,11,.97));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025),
+    var(--shadow-sm);
+}
+
+.card:hover,
+.event:hover,
+.compact-event:hover,
+.menu-item:hover,
+.social-person-tile:hover,
+.person-v2:hover{
+  border-color:rgba(215,173,104,.32);
+}
+
+.compact-event,
+.ledger-row{
+  border-color:rgba(215,173,104,.14);
+  background:rgba(5,6,6,.44);
+}
+
+.compact-event img,
+.event-media,
+.placeholder,
+.social-photo{
+  background:
+    radial-gradient(circle at 52% 30%,rgba(148,102,58,.18),transparent 34%),
+    linear-gradient(145deg,#161815,#080a08);
+}
+
+.compact-event button,
+.icon-btn{
+  border-color:var(--border);
+  background:var(--surface-elevated);
+  color:var(--accent-gold);
+}
+
+.event{
+  box-shadow:var(--shadow-md);
+}
+
+.tabs button,
+.social-tabs button,
+.social-tabs-v2 button,
+.match3-tabs button{
+  border-color:var(--border);
+  background:rgba(16,18,15,.86);
+  color:var(--text-secondary);
+}
+
+.tabs button.active,
+.social-tabs button.active,
+.social-tabs-v2 button.active,
+.match3-tabs button.active{
+  border-color:var(--border-active);
+  background:rgba(148,102,58,.3);
+  color:var(--accent-gold);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.34);
+}
+
+.rank-row.me,
+.social-person-tile.matched,
+.achievement.earned{
+  border-color:rgba(215,173,104,.46);
+  background:
+    linear-gradient(145deg,rgba(148,102,58,.19),rgba(16,18,15,.95));
+}
+
+.avatar,
+.match3-rank-avatar,
+.person-v2-placeholder,
+.social-photo-placeholder{
+  background:
+    radial-gradient(circle at 38% 28%,rgba(228,193,125,.2),transparent 28%),
+    linear-gradient(145deg,#252720,#0b0d0b);
+  color:var(--accent-gold);
+}
+
+.podium article:first-child{
+  border-color:rgba(215,173,104,.54);
+  box-shadow:0 16px 36px rgba(0,0,0,.34);
+}
+
+.podium b,
+.vip-plan strong,
+.vip-active{
+  color:var(--accent-gold);
+}
+
+.profile-hero{
+  position:relative;
+  overflow:hidden;
+  border-color:rgba(215,173,104,.34);
+  background:
+    linear-gradient(90deg,rgba(8,10,8,.98) 0%,rgba(8,10,8,.86) 58%,rgba(8,10,8,.28) 100%),
+    url("./assets/bali-temple/bronze-statues.webp") 92% 25%/50% auto no-repeat;
+  box-shadow:var(--shadow-md);
+}
+
+.profile-hero>*{
+  position:relative;
+  z-index:1;
+}
+
+.profile-avatar{
+  border:2px solid rgba(215,173,104,.5);
+  box-shadow:0 0 0 4px rgba(5,6,6,.72);
+}
+
+.progress{
+  background:rgba(255,255,255,.06);
+}
+
+.progress i,
+.match3-progress i{
+  background:linear-gradient(90deg,var(--accent-bronze),var(--accent-gold),var(--accent-lava));
+  box-shadow:0 0 12px rgba(240,74,21,.22);
+}
+
+.wallet{
+  border-color:rgba(215,173,104,.38);
+  background:
+    radial-gradient(circle at 95% 12%,rgba(240,74,21,.12),transparent 28%),
+    linear-gradient(145deg,rgba(148,102,58,.2),rgba(16,18,15,.97));
+  box-shadow:var(--shadow-md);
+}
+
+[data-screen="home"] .event-checkin-card,
+[data-screen="home"] .event-checkin-card.active-event{
+  border-color:rgba(215,173,104,.34);
+  background:
+    radial-gradient(circle at 92% 0,rgba(24,83,42,.16),transparent 38%),
+    linear-gradient(145deg,rgba(28,31,26,.96),rgba(8,10,8,.98));
+  box-shadow:var(--shadow-md);
+}
+
+[data-screen="home"] .event-checkin-card:after,
+[data-screen="home"] .event-checkin-card.active-event:after{
+  display:none;
+}
+
+[data-screen="home"] .event-live-badge{
+  border-color:rgba(215,173,104,.32);
+  background:rgba(148,102,58,.14);
+  color:var(--accent-gold);
+}
+
+[data-screen="home"] .event-live-badge:before{
+  background:var(--success);
+  box-shadow:0 0 12px rgba(77,143,92,.48);
+}
+
+[data-screen="home"] .event-active-until{
+  border-color:var(--border);
+  background:rgba(5,6,6,.42);
+}
+
+[data-screen="home"] .event-leave-button{
+  border-color:rgba(192,29,32,.38)!important;
+  background:rgba(168,20,24,.12)!important;
+  color:#e9a39b!important;
+}
+
+.ledger-icon{
+  background:rgba(148,102,58,.22);
+  color:var(--accent-gold);
+}
+
+.vip-plan{
+  position:relative;
+  overflow:hidden;
+  border-color:rgba(215,173,104,.36);
+  background:
+    linear-gradient(90deg,rgba(8,10,8,.97),rgba(8,10,8,.86) 62%,rgba(8,10,8,.38)),
+    url("./assets/bali-temple/gold-bear.webp") 104% center/48% auto no-repeat;
+  box-shadow:var(--shadow-sm);
+}
+
+.vip-plan>*{
+  position:relative;
+  z-index:1;
+}
+
+.vip-active,
+.social-vip-note,
+.privilege{
+  border-color:rgba(215,173,104,.34);
+  background:rgba(148,102,58,.13);
+}
+
+.profile-form input,
+.booking input,
+.booking select,
+.booking textarea,
+.social-profile-settings input,
+.social-profile-settings select,
+.social-profile-settings textarea{
+  border-color:var(--border);
+  background:rgba(5,6,6,.64);
+  color:var(--text-primary);
+}
+
+.profile-form input:focus,
+.booking input:focus,
+.booking select:focus,
+.booking textarea:focus,
+.social-profile-settings input:focus,
+.social-profile-settings select:focus,
+.social-profile-settings textarea:focus{
+  border-color:var(--border-active);
+  box-shadow:0 0 0 3px rgba(148,102,58,.14);
+}
+
+.dialog,
+.social-dialog,
+.social-v2-dialog,
+.match3-finish{
+  border-color:rgba(215,173,104,.34);
+  background:
+    radial-gradient(circle at 95% 0,rgba(24,83,42,.18),transparent 26%),
+    var(--surface);
+  color:var(--text-primary);
+  box-shadow:var(--shadow-lg);
+}
+
+.dialog::backdrop,
+.social-dialog::backdrop,
+.social-v2-dialog::backdrop,
+.match3-finish::backdrop{
+  background:rgba(2,3,2,.88);
+  backdrop-filter:blur(5px);
+}
+
+.close,
+.social-v2-close{
+  border-color:var(--border);
+  background:var(--surface-elevated);
+  color:var(--accent-gold);
+}
+
+.club-links a,
+.home-social-links .social-instagram,
+.home-social-links .social-tiktok,
+.home-social-links .social-telegram,
+.home-map-links .yandex-map-button,
+.home-contact-links .contact-phone,
+.home-contact-links .contact-manager{
+  border-color:var(--border)!important;
+  background:
+    linear-gradient(145deg,rgba(28,31,26,.94),rgba(11,13,11,.97))!important;
+  color:var(--text-primary)!important;
+  box-shadow:var(--shadow-sm)!important;
+}
+
+.club-links a:hover{
+  border-color:var(--border-active)!important;
+}
+
+.club-links i,
+.home-social-links a i,
+.home-contact-links a i,
+.home-map-links .yandex-map-icon{
+  border:1px solid rgba(215,173,104,.24)!important;
+  background:rgba(148,102,58,.16)!important;
+  color:var(--accent-gold)!important;
+}
+
+.club-links small,
+.home-map-links .yandex-map-button small{
+  color:var(--text-secondary)!important;
+}
+
+.home-map-links .yandex-map-button b{
+  color:var(--accent-lava)!important;
+}
+
+.person-v2-photo,
+.social-photo{
+  background:
+    linear-gradient(180deg,transparent 56%,rgba(5,6,6,.74)),
+    linear-gradient(145deg,#161815,#080a08);
+}
+
+.person-v2-status,
+.social-status,
+.blur-lock{
+  border-color:rgba(215,173,104,.28);
+  background:rgba(5,6,6,.84);
+  color:var(--accent-gold);
+}
+
+.person-v2-actions button{
+  border-color:var(--border);
+  background:var(--surface-elevated);
+  color:var(--text-secondary);
+}
+
+.person-v2-actions button.active{
+  border-color:var(--border-active);
+  background:rgba(148,102,58,.28);
+  color:var(--accent-gold);
+}
+
+.match3-scene{
+  --match3-pink:var(--accent-gold);
+  --match3-violet:var(--accent-bronze);
+  --match3-blue:#4d8f5c;
+  --match3-gold:var(--accent-gold);
+  background-color:var(--background-primary);
+  background-image:
+    linear-gradient(180deg,rgba(5,6,6,.48),rgba(5,6,6,.92)),
+    url("./assets/bali-temple/hero-stone-face.webp");
+}
+
+.match3-topbar,
+.match3-panel,
+.match3-metric,
+.match3-booster,
+.match3-reward-card,
+.match3-rank-row{
+  border-color:var(--border);
+  background:rgba(8,10,8,.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.025),
+    var(--shadow-sm);
+}
+
+.match3-brand small,
+.match3-week span,
+.match3-metric span,
+.match3-panel-head span,
+.match3-message,
+.match3-rank-row p,
+.match3-reward-card p,
+.match3-earned p,
+.match3-empty{
+  color:var(--text-secondary);
+}
+
+.match3-brand h2 em,
+.match3-week b,
+.match3-metric.accent strong,
+.match3-panel-head b,
+.match3-booster strong,
+.match3-reward-card strong,
+.match3-admin-rank>strong{
+  color:var(--accent-gold);
+  text-shadow:none;
+}
+
+.match3-panel.neon{
+  border-color:rgba(215,173,104,.38);
+  box-shadow:
+    inset 0 0 34px rgba(148,102,58,.04),
+    var(--shadow-md);
+}
+
+.match3-board{
+  border-color:rgba(215,173,104,.46);
+  background:rgba(3,4,3,.92);
+  box-shadow:
+    inset 0 0 30px rgba(148,102,58,.12),
+    0 0 0 1px rgba(0,0,0,.7),
+    var(--shadow-md);
+}
+
+.match3-cell{
+  background:#080a08;
+  box-shadow:inset 0 0 0 1px rgba(215,173,104,.12);
+}
+
+.match3-cell img[src*="assets/match3/"]{
+  filter:saturate(.78) sepia(.12);
+}
+
+.match3-cell.selected{
+  box-shadow:
+    0 0 0 2px var(--accent-gold),
+    0 0 20px rgba(240,74,21,.5);
+}
+
+.match3-booster.active,
+.match3-rank-row.me,
+.match3-reward-card.me,
+.match3-earned{
+  border-color:rgba(215,173,104,.5);
+  background:rgba(148,102,58,.18);
+  box-shadow:none;
+}
+
+.booking-layout-expand{
+  border-color:rgba(215,173,104,.34);
+  background:rgba(148,102,58,.16);
+  color:var(--accent-gold);
+}
+
+.booking-layout-scroll,
+.booking-layout-map,
+.booking-layout-fullscreen,
+.booking-layout-fullscreen-stage{
+  background-color:var(--background-primary);
+}
+
+.booking-map-table{
+  border-color:var(--available);
+  background:rgba(6,20,11,.96);
+  color:var(--text-primary);
+}
+
+.booking-map-table.vip{
+  border-color:var(--vip);
+  background:rgba(37,30,17,.96);
+  color:#f2d794;
+}
+
+.booking-map-table:disabled{
+  border-color:var(--occupied);
+  background:rgba(48,12,12,.96);
+  color:#efaaa1;
+}
+
+.booking-map-table.selected{
+  border-color:var(--accent-gold);
+  background:var(--accent-lava);
+  color:#120704;
+  box-shadow:
+    0 0 0 4px rgba(240,74,21,.2),
+    var(--shadow-sm);
+}
+
+.booking-layout-legend i{
+  background:var(--available);
+}
+
+.booking-layout-legend i.busy{
+  background:var(--occupied);
+}
+
+.booking-layout-legend i.vip{
+  background:var(--vip);
+}
+
+.booking-layout-selected{
+  border-color:var(--border);
+  background:rgba(148,102,58,.1);
+  color:var(--text-secondary);
+}
+
+.booking-layout-selected strong{
+  color:var(--accent-gold);
+}
+
+.nav{
+  border-color:var(--border);
+  background:
+    linear-gradient(180deg,rgba(11,13,11,.97),rgba(5,6,6,.995));
+  box-shadow:0 -16px 36px rgba(0,0,0,.42);
+}
+
+.nav button{
+  color:var(--text-secondary);
+}
+
+.nav button i{
+  border:1px solid transparent;
+}
+
+.nav button.active{
+  background:rgba(148,102,58,.18);
+  color:var(--accent-gold);
+}
+
+.shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i.nav-icon-image{
+  width:30px!important;
+  height:30px!important;
+  padding:5px!important;
+  border:1px solid rgba(215,173,104,.18)!important;
+  border-radius:10px!important;
+  background:
+    radial-gradient(circle at 40% 28%,rgba(228,193,125,.12),transparent 32%),
+    #11130f!important;
+}
+
+.shell>nav.nav[data-navigation-ready="true"]>button[data-page].active>i.nav-icon-image{
+  border-color:rgba(228,193,125,.44)!important;
+  background:rgba(148,102,58,.22)!important;
+  box-shadow:0 0 16px rgba(240,74,21,.12);
+}
+
+.shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i.nav-icon-image>img{
+  border-radius:0!important;
+}
+
+.bali-today-label{
+  background:var(--accent-lava);
+  color:#140704;
+}
+
+.compact-event.bali-today,
+.event.bali-today{
+  border-color:var(--accent-lava)!important;
+  box-shadow:
+    0 0 0 1px rgba(240,74,21,.18),
+    var(--shadow-md)!important;
+}
+
+#eventDialogDate.bali-today-date{
+  color:var(--accent-lava)!important;
+}
+
+.hall-layout{
+  background-color:#11130f!important;
+  box-shadow:inset 0 0 60px rgba(0,0,0,.42);
+}
+
+.hall-layout .table-node{
+  border-color:#173e24;
+  background:var(--available);
+  color:#061008;
+}
+
+.hall-layout .table-node.booked{
+  border-color:#641012;
+  background:var(--occupied);
+  color:#f3d5d0;
+}
+
+.hall-layout .table-node.vip{
+  border-color:#755126;
+  background:var(--vip);
+  color:#241706;
+}
+
+.toast{
+  border-color:var(--border-active);
+  background:var(--surface-elevated);
+  color:var(--text-primary);
+  box-shadow:var(--shadow-md);
+}
+
+body>div[style*="z-index:99999"]{
+  border-color:rgba(215,173,104,.45)!important;
+  background:rgba(5,6,6,.9)!important;
+  color:var(--accent-gold)!important;
+}
+
+@media(max-width:520px){
+  .hero{
+    min-height:290px;
+    background:
+      linear-gradient(90deg,rgba(5,6,6,.97) 0%,rgba(5,6,6,.76) 56%,rgba(5,6,6,.28) 100%),
+      linear-gradient(0deg,rgba(5,6,6,.86) 0%,transparent 62%),
+      url("./assets/bali-temple/hero-stone-face.webp") 64% center/cover no-repeat;
+  }
+
+  .profile-hero{
+    background:
+      linear-gradient(90deg,rgba(8,10,8,.98),rgba(8,10,8,.84) 68%,rgba(8,10,8,.3)),
+      url("./assets/bali-temple/bronze-statues.webp") 112% 22%/62% auto no-repeat;
+  }
+}
+
+@media(max-width:370px){
+  .hero{
+    min-height:280px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,
+  *::before,
+  *::after{
+    scroll-behavior:auto!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
+
+@media(prefers-contrast:more){
+  :root{
+    --border:rgba(228,193,125,.42);
+    --border-active:rgba(228,193,125,.78);
+    --text-secondary:#cbc5ba;
+  }
+}

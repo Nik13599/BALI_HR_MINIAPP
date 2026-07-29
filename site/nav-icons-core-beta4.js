@@ -3,12 +3,12 @@
 
   const KEY = "bali_nav_icons_v1";
   const DEFAULTS = [
-    { page: "home", label: "Главная", iconText: "⌂", image: "" },
-    { page: "events", label: "Афиши", iconText: "◫", image: "" },
-    { page: "menu", label: "Меню", iconText: "◇", image: "" },
-    { page: "dating", label: "BALI PEOPLE", iconText: "🌴", image: "" },
-    { page: "crown", label: "Игра", iconText: "", image: "./assets/match3/triangle.webp" },
-    { page: "profile", label: "Профиль", iconText: "◎", image: "" },
+    { page: "home", label: "Главная", iconText: "⌂", image: "./assets/bali-temple/nav-home.svg" },
+    { page: "events", label: "Афиши", iconText: "◫", image: "./assets/bali-temple/nav-events.svg" },
+    { page: "menu", label: "Меню", iconText: "◇", image: "./assets/bali-temple/nav-menu.svg" },
+    { page: "dating", label: "BALI PEOPLE", iconText: "●", image: "./assets/bali-temple/nav-people.svg" },
+    { page: "crown", label: "Игра", iconText: "◆", image: "./assets/bali-temple/nav-game.svg" },
+    { page: "profile", label: "Профиль", iconText: "◎", image: "./assets/bali-temple/nav-profile.svg" },
   ];
 
   const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -18,6 +18,7 @@
       const row = saved.get(fallback.page) || {};
       return {
         ...fallback,
+        label: String(row.label ?? fallback.label).trim().slice(0, 24) || fallback.label,
         iconText: String(row.iconText ?? fallback.iconText).slice(0, 12),
         image: String(row.image ?? fallback.image).trim(),
       };
@@ -73,6 +74,12 @@
       button.prepend(icon);
     }
     icon.setAttribute("aria-hidden", "true");
+    let label = button.querySelector("span");
+    if (!label) {
+      label = document.createElement("span");
+      button.appendChild(label);
+    }
+    label.textContent = row.label;
     if (!row.image) {
       renderFallback(icon, row);
       return;

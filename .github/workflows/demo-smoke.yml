@@ -35,10 +35,14 @@ on:
       - "site/crown-win-cards-beta4.js"
       - "site/beta4-home-links.js"
       - "site/beta4-home-design.js"
+      - "site/admin-home-design-beta4.js"
       - "site/home-layout-final-beta4.js"
       - "site/admin-beta4.html"
       - "site/admin-beta4-categories.html"
       - "site/admin-mobile-runtime.js"
+      - "site/bali-visual-blocks-*.js"
+      - "site/bali-visual-blocks-*.css"
+      - "site/admin-visual-blocks-beta4.js"
       - "site/admin-booking-manager-beta4.js"
       - "site/admin-bonuses-final-beta4.js"
       - "site/admin-customer-dossier-beta4.js"
@@ -99,7 +103,10 @@ jobs:
           node --check site/bali-people-crown-frame-beta4.js
           node --check site/beta4-home-links.js
           node --check site/beta4-home-design.js
+          node --check site/admin-home-design-beta4.js
           node --check site/home-layout-final-beta4.js
+          node --check site/bali-visual-blocks-core-beta4.js
+          node --check site/admin-visual-blocks-beta4.js
           node --check site/admin-booking-manager-beta4.js
           node --check site/admin-bonuses-final-beta4.js
           node --check site/admin-customer-dossier-beta4.js
@@ -118,5 +125,7 @@ jobs:
         run: node tests/final-admin-people-smoke.mjs
       - name: Run final home and discovery layout smoke test
         run: node tests/home-people-layout-smoke.mjs
+      - name: Run visual block customization smoke test
+        run: node tests/visual-blocks-smoke.mjs
       - name: Run event lineup venue and reviews smoke test
         run: node tests/event-venue-reviews-smoke.mjs

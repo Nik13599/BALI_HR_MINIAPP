@@ -52,7 +52,7 @@
       event.preventDefault();
       const data = Object.fromEntries(new FormData(event.currentTarget).entries());
       points.write(points.keys.settings, { referral: Math.max(0, Number(data.referral || 0)), attendance: Math.max(0, Number(data.attendance || 0)), eventShare: Math.max(0, Number(data.eventShare || 0)) });
-      toast("Правила BALI-Баллов сохранены"); render();
+      toast("Правила BALI-Баллов сохранены"); window.render?.();
     });
     $("#visitCodeForm").addEventListener("submit", (event) => {
       event.preventDefault();
@@ -63,16 +63,16 @@
       rows.unshift({ code, eventId: selected?.id || "", eventTitle: selected?.title || "Посещение BALI", eventDate: selected?.event_date || "", amount: Math.max(0, Number(data.amount || rules.attendance)), createdAt: new Date().toISOString(), usedAt: null });
       points.write(points.keys.visits, rows.slice(0, 100));
       navigator.clipboard?.writeText(code);
-      toast(`Код ${code} создан и скопирован`); render();
+      toast(`Код ${code} создан и скопирован`); window.render?.();
     });
     root.addEventListener("click", async (event) => {
       const copy = event.target.closest("[data-copy-visit]");
       if (copy) { await navigator.clipboard.writeText(copy.dataset.copyVisit); toast("Код скопирован"); }
     });
-    $("#clearVisitCodes").addEventListener("click", () => { if (confirm("Удалить все коды посещения?")) { points.write(points.keys.visits, []); render(); } });
+    $("#clearVisitCodes").addEventListener("click", () => { if (confirm("Удалить все коды посещения?")) { points.write(points.keys.visits, []); window.render?.(); } });
     $("#resetPointsDemo").addEventListener("click", () => {
       if (!confirm("Сбросить тестовый баланс и историю начислений?")) return;
-      const current = points.profile(); points.write(points.keys.profile, { ...current, balance: 0 }); points.write(points.keys.ledger, []); points.write(points.keys.actions, {}); toast("Тестовые баллы сброшены"); render();
+      const current = points.profile(); points.write(points.keys.profile, { ...current, balance: 0 }); points.write(points.keys.ledger, []); points.write(points.keys.actions, {}); toast("Тестовые баллы сброшены"); window.render?.();
     });
   }
 
@@ -85,5 +85,5 @@
   renderHall = async function(root) { await baseHall(root); const layout = $("#hallLayout", root); if (layout?.classList.contains("has-background")) layout.style.backgroundSize = "auto, auto, contain"; };
   const baseRender = render;
   render = async function() { if (state.view !== "bonuses") return baseRender(); $("#pageTitle").textContent = "BALI-Баллы"; $("#primaryAction").style.display = "none"; await renderPointsAdmin($("#content")); };
-  window.addEventListener("storage", (event) => { if (Object.values(points.keys).includes(event.key) && state.view === "bonuses") render(); });
+  window.addEventListener("storage", (event) => { if (Object.values(points.keys).includes(event.key) && state.view === "bonuses") window.render?.(); });
 })();
