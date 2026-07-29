@@ -1,0 +1,42 @@
+{
+  "name": "bali-hr-miniapp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch server/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server/index.js",
+    "migrate": "tsx scripts/migrate.ts",
+    "lint": "eslint server tests/server scripts site/telegram-app.js site/clan-chat-app.js site/admin-production.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:server": "node --import tsx --test --test-concurrency=1 tests/server/auth.test.ts tests/server/clan-chat.test.ts tests/server/admin.test.ts tests/server/privacy-migration.test.ts",
+    "test:demo": "node scripts/run-demo-tests.mjs",
+    "test": "npm run test:server && npm run test:demo",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.5",
+    "@types/pg": "^8.11.10",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^10.8.0",
+    "globals": "^17.8.0",
+    "pg-mem": "^3.0.5",
+    "supertest": "^7.0.0",
+    "tsx": "^4.23.1",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.65.0"
+  }
+}
