@@ -6,7 +6,7 @@ const loader = fs.readFileSync("site/beta4-square-loader.js", "utf8");
 const css = fs.readFileSync("site/legacy-nav-final-beta4.css", "utf8");
 const nav = fs.readFileSync("site/legacy-nav-final-beta4.js", "utf8");
 
-assert.ok(html.includes("beta4-square-loader.js?v=bali-full-demo-8-stable25"), "Published page must load the latest application build");
+assert.ok(html.includes("beta4-square-loader.js?v=bali-full-demo-8-stable26"), "Published page must load the latest application build");
 assert.ok(loader.includes("legacy-nav-final-beta4.css"), "Stable bottom navigation styles must load");
 assert.ok(loader.includes("legacy-nav-final-beta4.js"), "Stable bottom navigation must load");
 assert.ok(loader.indexOf("legacy-nav-final-beta4.js") < loader.indexOf("beta4-social-page.js"), "Navigation must mount before BALI People");

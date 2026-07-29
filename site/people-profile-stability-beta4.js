@@ -101,9 +101,8 @@
         ${instagramVisible && person.instagram ? `<div class="people-detail-row"><span>Instagram</span><strong>${esc(person.instagram)}</strong></div>` : ""}
       </div></section>
       ${rewards.length ? `<section class="people-detail-section"><h3>Награды</h3><div class="people-detail-list">${rewards.slice(0,20).map(row => `<div class="people-detail-row"><span>${esc(row.reward?.icon || "🏆")} ${esc(row.reward?.title || "Награда BALI")}</span><strong>${esc(fmt(row.earnedAt))}</strong></div>`).join("")}</div></section>` : ""}
-      <div class="person-v2-actions">
-        <button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(person.id)}">＋</button>
-        <button type="button" title="Подарок" data-person-gift="${esc(person.id)}">🎁</button>
+      <div class="person-v2-actions one-action">
+        <button type="button" title="Подарить подарок" data-person-gift="${esc(person.id)}">🎁 Подарить подарок</button>
       </div>`;
 
     if (!dialog.open) {

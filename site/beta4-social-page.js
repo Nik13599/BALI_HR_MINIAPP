@@ -8,17 +8,12 @@
   const attendance = window.BaliEventQrAttendance;
   let tab = "all";
   let activePerson = "";
-  let events = [];
 
   const esc = (value = "") => String(value).replace(/[&<>'"]/g, char => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
   })[char]);
   const initials = name => String(name || "B").trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
   const statusName = value => social.statusText?.(value) || String(value || "").trim() || "Статус не указан";
-  const eventLabel = event => {
-    const date = event?.event_date ? new Date(`${event.event_date}T12:00:00`).toLocaleDateString("ru-RU", { day:"2-digit", month:"short" }) : "";
-    return `${event?.title || "Мероприятие BALI"}${date ? ` · ${date}` : ""}${event?.event_time ? ` · ${event.event_time}` : ""}`;
-  };
   const toast = message => {
     const node = document.getElementById("toast");
     if (!node) return;
@@ -47,12 +42,12 @@
       .person-v2-body{padding:10px}.person-v2-body h3{margin:0 0 4px;font-size:13px}.person-v2-body p{margin:0;color:var(--muted);font-size:9px;line-height:1.4}
       .person-v2-custom-status{margin:0 0 5px;color:var(--lime);font-size:8px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}
       .person-v2-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:9px}.person-v2-actions button{min-height:38px;padding:0;border-radius:11px;font-size:18px}
+      .person-v2-actions.one-action{grid-template-columns:1fr}.person-v2-actions.one-action button{font-size:11px;font-weight:900}
       .social-v2-dialog{width:min(520px,calc(100% - 16px));max-height:94dvh;padding:0;border:1px solid var(--line);border-radius:23px;background:#0c0f0e;color:#fff;overflow:hidden}.social-v2-dialog::backdrop{background:#000d;backdrop-filter:blur(5px)}
       .social-v2-sheet{max-height:94dvh;overflow:auto}.social-v2-head{display:flex;justify-content:space-between;align-items:center;padding:15px;border-bottom:1px solid var(--line)}
       .social-v2-close{width:41px;height:41px;border:1px solid var(--line);border-radius:50%;background:#ffffff08;color:#fff;font-size:23px}
       .social-v2-profile{padding:14px}.social-v2-profile .person-v2-photo{border-radius:18px}.social-v2-profile h2{margin:12px 0 5px}.social-v2-profile>p{color:var(--muted);font-size:10px;line-height:1.55}.social-v2-profile .person-v2-actions{margin-top:13px}
-      .social-v2-options{display:grid;gap:9px;padding:14px}.social-v2-options select{width:100%;min-height:50px;padding:0 11px;border:1px solid var(--line);border-radius:13px;background:#171b19;color:#fff}
-      .social-invite-note{padding:11px;border:1px solid var(--line);border-radius:13px;background:#ffffff05;color:var(--muted);font-size:9px;line-height:1.5}
+      .social-v2-options{display:grid;gap:9px;padding:14px}
       .social-v2-gifts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.social-v2-gifts button{display:grid;gap:4px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#ffffff08;color:#fff}.social-v2-gifts i{font-style:normal;font-size:28px}
       .social-v2-empty{padding:28px 14px;border:1px dashed var(--line);border-radius:18px;color:var(--muted);text-align:center;font-size:10px;line-height:1.6}
       @media(max-width:360px){.people-v2-grid{grid-template-columns:1fr}}
@@ -94,7 +89,6 @@
     }
     document.body.insertAdjacentHTML("beforeend", `
       <dialog class="social-v2-dialog" id="socialPersonDialog"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Профиль</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-profile" id="socialPersonBody"></div></div></dialog>
-      <dialog class="social-v2-dialog" id="socialInviteV2"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Пригласить на мероприятие</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-options"><div class="social-invite-note">Выберите ближайшее активное мероприятие. Приглашение исчезнет после его завершения.</div><select id="socialInviteEvent"></select><button class="primary full" id="socialInviteSubmit" data-send-social-invite="event">Пригласить на мероприятие</button></div></div></dialog>
       <dialog class="social-v2-dialog" id="socialGiftV2"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Подарок</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-options"><div class="social-v2-gifts">${social.GIFT_CATALOG.filter(gift => gift.active !== false).map(gift => `<button type="button" data-send-social-gift="${esc(gift.id)}"><i>${esc(gift.icon)}</i><strong>${esc(gift.name)}</strong><small>B ${Number(gift.stars || 0)}</small></button>`).join("")}</div></div></div></dialog>`);
     renderGiftCatalog();
   }
@@ -116,7 +110,7 @@
   }
 
   function card(person) {
-    return `<article class="person-v2" data-open-social-person="${esc(person.id)}">${photo(person)}<div class="person-v2-body"><h3>${esc(person.name)}</h3><div class="person-v2-custom-status">${esc(statusName(person.status))}</div><p>${esc(person.bio || "Пользователь сообщества BALI")}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(person.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(person.id)}">🎁</button></div></div></article>`;
+    return `<article class="person-v2" data-open-social-person="${esc(person.id)}">${photo(person)}<div class="person-v2-body"><h3>${esc(person.name)}</h3><div class="person-v2-custom-status">${esc(statusName(person.status))}</div><p>${esc(person.bio || "Пользователь сообщества BALI")}</p><div class="person-v2-actions"><button type="button" title="Смотреть профиль" aria-label="Смотреть профиль" data-person-profile="${esc(person.id)}">👤</button><button type="button" title="Подарить подарок" aria-label="Подарить подарок" data-person-gift="${esc(person.id)}">🎁</button></div></div></article>`;
   }
 
   function dateAt(date, time = "00:00") {
@@ -188,21 +182,8 @@
     const personRow = person(id);
     if (!personRow) return;
     activePerson = personRow.id;
-    document.getElementById("socialPersonBody").innerHTML = `${photo(personRow)}<h2>${esc(personRow.name)}</h2><div class="person-v2-custom-status">${esc(statusName(personRow.status))}</div><p>${esc(personRow.bio || "Пользователь сообщества BALI")}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(personRow.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(personRow.id)}">🎁</button></div>`;
+    document.getElementById("socialPersonBody").innerHTML = `${photo(personRow)}<h2>${esc(personRow.name)}</h2><div class="person-v2-custom-status">${esc(statusName(personRow.status))}</div><p>${esc(personRow.bio || "Пользователь сообщества BALI")}</p><div class="person-v2-actions one-action"><button type="button" title="Подарить подарок" data-person-gift="${esc(personRow.id)}">🎁 Подарить подарок</button></div>`;
     document.getElementById("socialPersonDialog").showModal();
-  }
-
-  async function openInvite(id) {
-    activePerson = id || activePerson;
-    const all = await store.list("events");
-    events = all.filter(item => item.active !== false && social.eventEndAt(item) && new Date(social.eventEndAt(item)).getTime() > Date.now())
-      .sort((a, b) => `${a.event_date || ""}T${a.event_time || ""}`.localeCompare(`${b.event_date || ""}T${b.event_time || ""}`));
-    const select = document.getElementById("socialInviteEvent");
-    const submit = document.getElementById("socialInviteSubmit");
-    select.innerHTML = events.length ? events.map(event => `<option value="${esc(event.id)}">${esc(eventLabel(event))}</option>`).join("") : '<option value="">Нет доступных мероприятий</option>';
-    select.disabled = !events.length;
-    submit.disabled = !events.length;
-    document.getElementById("socialInviteV2").showModal();
   }
 
   function openGift(id) {
@@ -248,17 +229,10 @@
     }
     const open = event.target.closest("[data-open-social-person]");
     if (open && !event.target.closest("button")) return openPerson(open.dataset.openSocialPerson);
-    const invite = event.target.closest("[data-person-invite]");
-    if (invite) { event.preventDefault(); event.stopPropagation(); return openInvite(invite.dataset.personInvite); }
+    const profile = event.target.closest("[data-person-profile]");
+    if (profile) { event.preventDefault(); event.stopPropagation(); return openPerson(profile.dataset.personProfile); }
     const gift = event.target.closest("[data-person-gift]");
     if (gift) { event.preventDefault(); event.stopPropagation(); return openGift(gift.dataset.personGift); }
-    const send = event.target.closest("[data-send-social-invite]");
-    if (send) {
-      const selectedEvent = events.find(row => String(row.id) === String(document.getElementById("socialInviteEvent").value));
-      const result = social.sendRequest(activePerson, "event", selectedEvent);
-      toast(result.ok ? "Приглашение отправлено" : result.message);
-      if (result.ok) document.getElementById("socialInviteV2").close();
-    }
     const sendGiftButton = event.target.closest("[data-send-social-gift]");
     if (sendGiftButton) return sendGift(sendGiftButton.dataset.sendSocialGift);
     if (event.target.closest("[data-social-v2-close]")) event.target.closest("dialog")?.close();
