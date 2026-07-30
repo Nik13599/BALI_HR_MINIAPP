@@ -26,6 +26,7 @@
     qr: `${HOME_ICON}qr-code.svg`,
     map: `${HOME_ICON}map-pin.svg`,
     contact: `${HOME_ICON}headphones.svg`,
+    phone: `${HOME_ICON}phone.svg`,
     arrow: `${HOME_ICON}arrow-up-right.svg`
   };
   const LIST_META = {
@@ -303,6 +304,8 @@
 
   function renderBottom(design) {
     const contacts = design.contacts || {};
+    const phoneText = contacts.phone?.subtitle || window.BALI_CONFIG?.venuePhone || "+375 29 670-03-00";
+    const phoneHref = String(window.BALI_CONFIG?.venuePhone || phoneText).replace(/[^+\d]/g, "");
     return `<section class="bali-home-bottom-grid">
       <a class="bali-home-bottom-card bali-home-reference-map" href="https://yandex.by/maps/?text=%D0%9A%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%2013%20%D0%9C%D0%B8%D0%BD%D1%81%D0%BA" target="_blank" rel="noopener noreferrer">
         <h3 class="bali-home-section-label">КАК НАС НАЙТИ</h3>
@@ -314,6 +317,12 @@
         <h3 class="bali-home-section-label">СВЯЗАТЬСЯ С BALI</h3>
         ${iconHtml("contact", "bali-home-link-icon")}
         <span><strong>${esc(contacts.manager?.title || "Связаться с менеджером")}</strong><small>${esc(contacts.manager?.subtitle || "Личный чат в Telegram")}</small></span>
+        <img src="${esc(ICONS.arrow)}" alt="">
+      </a>
+      <a class="bali-home-bottom-card bali-home-reference-phone" href="tel:${esc(phoneHref)}">
+        <h3 class="bali-home-section-label">ТЕЛЕФОН</h3>
+        ${iconHtml("phone", "bali-home-link-icon")}
+        <span><strong>${esc(contacts.phone?.title || "Позвонить")}</strong><small>${esc(phoneText)}</small></span>
         <img src="${esc(ICONS.arrow)}" alt="">
       </a>
     </section>`;
@@ -399,7 +408,11 @@
     if (!eventId) return;
     window.BaliFastEventDialog?.openEvent?.(eventId);
     if (booking) {
-      setTimeout(() => document.getElementById("bookingForm")?.scrollIntoView({ behavior:"smooth", block:"start" }), 180);
+      setTimeout(() => window.BaliFastEventVisuals?.renderHallMap?.(), 40);
+      setTimeout(() => {
+        window.BaliFastEventVisuals?.renderHallMap?.();
+        document.getElementById("bookingForm")?.scrollIntoView({ behavior:"smooth", block:"start" });
+      }, 180);
     }
   }
 
@@ -440,6 +453,7 @@
     ${renderSocial(design)}
     ${renderBottom(design)}`;
     inner.classList.add("bali-home-reference-active");
+    inner.querySelector(":scope > #clubLinks")?.remove();
     applyBrand(design);
     window.BaliVisualBlocks?.applyAll?.();
     return true;

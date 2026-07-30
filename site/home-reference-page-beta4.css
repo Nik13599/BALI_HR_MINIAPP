@@ -504,6 +504,10 @@
   width:14px;
   filter:invert(80%) sepia(98%) saturate(1248%) hue-rotate(28deg) brightness(103%);
 }
+.bali-home-reference-phone{
+  grid-column:1/-1;
+  min-height:82px;
+}
 .bali-home-list-dialog{
   width:min(560px,calc(100% - 20px));
   max-height:82dvh;
@@ -793,6 +797,9 @@
   .bali-home-social-grid,
   .bali-home-bottom-grid{
     grid-template-columns:1fr;
+  }
+  .bali-home-reference-phone{
+    grid-column:1;
   }
   .top{
     min-height:70px;

@@ -43,6 +43,10 @@
   function sync() {
     const inner = document.querySelector('[data-screen="home"] .inner');
     if (!inner) return false;
+    if (inner.classList.contains("bali-home-reference-active") || inner.querySelector(":scope > .bali-home-reference")) {
+      inner.querySelector(":scope > #clubLinks")?.remove();
+      return true;
+    }
     let card = document.getElementById("clubLinks");
     if (!card) {
       card = document.createElement("section");
