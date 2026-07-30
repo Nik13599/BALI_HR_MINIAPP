@@ -12,7 +12,7 @@
         button.disabled = false;
         button.classList.remove("navigation-loading");
         button.setAttribute("aria-busy", "false");
-        button.removeAttribute("title");
+        button.title = button.dataset.navPurpose || button.getAttribute("aria-label") || "";
       }
     });
     const nav = document.querySelector(".shell > nav.nav");

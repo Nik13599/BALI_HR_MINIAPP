@@ -22,6 +22,33 @@
       events: { title: "Смотреть афиши", icon: "" },
       profile: { title: "Мой профиль", icon: "" }
     },
+    controls: {
+      arrowIcon: ""
+    },
+    stats: {
+      points: { title: "Баллы", icon: "" },
+      vip: { title: "VIP статус", icon: "" },
+      game: { title: "Рейтинг в игре", icon: "" },
+      rank: { title: "Общий рейтинг", subtitle: "Минск", icon: "" },
+      notice: { title: "Уведомления", subtitle: "подарки и приглашения", icon: "" }
+    },
+    event: {
+      empty: "Ближайшие события скоро появятся",
+      kicker: "БЛИЖАЙШЕЕ СОБЫТИЕ",
+      allEvents: "Посмотреть все мероприятия",
+      participants: "участников",
+      friends: "друзей",
+      clans: "клана",
+      join: "Я иду",
+      book: "Забронировать",
+      people: "Посмотреть людей и кланы",
+      participantsIcon: "",
+      friendsIcon: "",
+      clansIcon: "",
+      joinIcon: "",
+      bookIcon: "",
+      peopleIcon: ""
+    },
     checkin: {
       eyebrow: "Я УЖЕ В BALI",
       title: "Подтвердить вход",
@@ -32,25 +59,37 @@
       backgroundImage: "",
       align: "left"
     },
+    booking: {
+      title: "Ближайшее бронирование",
+      empty: "У вас пока нет активной брони",
+      choose: "Выбрать",
+      open: "Открыть",
+      icon: ""
+    },
     upcoming: { title: "Три ближайших события", button: "Все афиши", backgroundColor: "#111413", backgroundImage: "", align: "left" },
     about: {
+      heading: "О ЗАВЕДЕНИИ",
       title: "О клубе",
       text: "BALI — ночной клуб с большими экранами, танцполом, контактным баром, кальянами и комфортными столами.",
+      icon: "",
       backgroundColor: "#111413",
       backgroundImage: "",
       align: "left"
+    },
+    social: {
+      heading: "СОЦСЕТИ"
     },
     contacts: {
       title: "Связаться с BALI",
       backgroundColor: "#111413",
       backgroundImage: "",
       align: "left",
-      instagram: { title: "Instagram", subtitle: "Новости и атмосфера", icon: "" },
-      telegram: { title: "Telegram", subtitle: "Канал клуба", icon: "" },
-      tiktok: { title: "TikTok", subtitle: "Видео из BALI", icon: "" },
-      manager: { title: "Связаться с менеджером", subtitle: "Личный чат в Telegram", icon: "" },
-      phone: { title: "Позвонить", subtitle: "+375 29 670-03-00", icon: "" },
-      map: { title: "Как добраться", subtitle: "Яндекс Карты", icon: "" }
+      instagram: { heading: "", title: "Instagram", subtitle: "Новости и атмосфера", href: "https://www.instagram.com/bali.minsk/", icon: "" },
+      telegram: { heading: "", title: "Telegram", subtitle: "Канал клуба", href: "https://t.me/bali_minsk", icon: "" },
+      tiktok: { heading: "", title: "TikTok", subtitle: "Видео из BALI", href: "https://www.tiktok.com/", icon: "" },
+      manager: { heading: "СВЯЗАТЬСЯ С BALI", title: "Связаться с менеджером", subtitle: "Личный чат в Telegram", href: "https://t.me/bali_minsk", icon: "" },
+      phone: { heading: "ТЕЛЕФОН", title: "Позвонить", subtitle: "+375 29 670-03-00", href: "+375296700300", icon: "" },
+      map: { heading: "КАК НАС НАЙТИ", title: "Как добраться", subtitle: "Яндекс Карты", href: "https://yandex.by/maps/?text=%D0%9A%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%2013%20%D0%9C%D0%B8%D0%BD%D1%81%D0%BA", icon: "" }
     }
   };
   const clone = value => JSON.parse(JSON.stringify(value));

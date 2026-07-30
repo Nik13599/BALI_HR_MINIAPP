@@ -5,6 +5,8 @@ const loader = fs.readFileSync("site/beta4-square-loader.js", "utf8");
 const page = fs.readFileSync("site/home-reference-page-beta4.js", "utf8");
 const styles = fs.readFileSync("site/home-reference-page-beta4.css", "utf8");
 const homeDesign = fs.readFileSync("site/home-design-core-beta4.js", "utf8");
+const adminHomeDesign = fs.readFileSync("site/admin-home-design-beta4.js", "utf8");
+const adminRuntime = fs.readFileSync("site/admin-mobile-runtime.js", "utf8");
 const visualBlocks = fs.readFileSync("site/bali-visual-blocks-core-beta4.js", "utf8");
 const homeLinks = fs.readFileSync("site/beta4-home-links.js", "utf8");
 
@@ -33,6 +35,15 @@ assert.ok(page.includes("building-2.svg"), "The venue block must use a dedicated
 assert.ok(page.includes("assets/home-icons/"), "Reference cards must use the dedicated outline icon set");
 assert.ok(page.includes("qr-code.svg"), "The check-in panel must show a real QR icon");
 assert.ok(homeDesign.includes("ЕДИНОЕ ПРИЛОЖЕНИЕ БАЛИ"), "The reset state must match the selected visual target");
+assert.ok(homeDesign.includes('event: {') && homeDesign.includes('booking: {') && homeDesign.includes('stats: {'), "Every visible home section must have editable defaults");
+assert.ok(homeDesign.includes('heading: "СОЦСЕТИ"') && homeDesign.includes('heading: "О ЗАВЕДЕНИИ"'), "Every visible home block heading must have a reset value");
+assert.ok(page.includes("eventUi.participantsIcon") && page.includes("config.notice?.icon"), "Event and metric icons must use admin-configurable sources");
+assert.ok(page.includes("contacts.map?.heading") && page.includes("contacts.phone?.href"), "Bottom headings and actions must use admin-configurable content");
+assert.ok(adminHomeDesign.includes("Полная настройка главного экрана"), "Admin must expose a complete home customization panel");
+assert.ok(adminRuntime.includes("home-customization-2"), "Admin customization modules must use the current asset revision");
+assert.ok(adminHomeDesign.includes('data-home-image="stats.${key}.icon"'), "Admin must upload a custom icon for every metric");
+assert.ok(adminHomeDesign.includes("event.peopleIcon") && adminHomeDesign.includes("controls.arrowIcon"), "Admin must edit all featured-event and transition icons");
+assert.ok(adminHomeDesign.includes("booking.icon") && adminHomeDesign.includes("social.heading"), "Admin must edit booking and social blocks");
 assert.ok(visualBlocks.includes('selector: ".bali-home-reference-hero"'), "Admin hero controls must target the new home");
 assert.ok(visualBlocks.includes('selector: ".bali-home-reference-event"'), "Admin event controls must target the new home");
 assert.ok(visualBlocks.includes(".bali-home-reference-about"), "Admin venue block controls must target the restored venue block");

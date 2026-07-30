@@ -22,12 +22,14 @@
 
   function panel() {
     return `<section class="panel admin-nav-icons"><div class="panel-head"><div><h3>Значки нижнего меню приложения</h3><small>Главная, афиши, меню, BALI PEOPLE, игра и профиль</small></div><span class="count">6 КНОПОК</span></div><div class="panel-body">
-      <div class="admin-nav-icons-note">Исходный размер каждого значка: <strong>256 × 256 px</strong>. Можно менять название кнопки, указать URL, загрузить PNG/JPG/WEBP или оставить изображение пустым и использовать символ/эмодзи.</div>
+      <div class="admin-nav-icons-note">Исходный размер каждого значка: <strong>256 × 256 px</strong>. Для каждой кнопки можно менять название, понятное описание, акцентный цвет и изображение. Кнопки по умолчанию: Главная, Афиша, Меню, BALI PEOPLE, Игра и Профиль.</div>
       <form id="adminNavIconsForm">
         <div class="admin-nav-icons-grid">${api.read().map((row) => `<article class="admin-nav-icon-card" data-nav-icon-row="${esc(row.page)}">
           <div class="admin-nav-icon-preview" data-nav-icon-preview>${preview(row)}</div>
           <div class="admin-nav-icon-fields"><h4>${esc(row.label)}</h4><div class="admin-nav-icon-size">256 × 256 px</div>
             <label><span>Название кнопки</span><input data-nav-icon-field="label" maxlength="24" value="${esc(row.label)}"></label>
+            <label><span>Понятное назначение</span><input data-nav-icon-field="description" maxlength="80" value="${esc(row.description || "")}" placeholder="Например: События клуба"></label>
+            <label><span>Акцент активной кнопки</span><input data-nav-icon-field="accent" type="color" value="${esc(row.accent || "#c8ff3d")}"></label>
             <label><span>Символ или эмодзи</span><input data-nav-icon-field="iconText" maxlength="12" value="${esc(row.iconText)}"></label>
             <label><span>URL изображения</span><input data-nav-icon-field="image" value="${esc(row.image)}" placeholder="https://… или ./assets/icon.webp"></label>
           </div>
@@ -56,6 +58,8 @@
       return {
         page: card.dataset.navIconRow,
         label: card.querySelector('[data-nav-icon-field="label"]').value.trim() || fallback.label,
+        description: card.querySelector('[data-nav-icon-field="description"]').value.trim() || fallback.description,
+        accent: card.querySelector('[data-nav-icon-field="accent"]').value || fallback.accent,
         iconText: card.querySelector('[data-nav-icon-field="iconText"]').value.trim(),
         image: card.querySelector('[data-nav-icon-field="image"]').value.trim(),
       };

@@ -3,12 +3,12 @@
 
   const KEY = "bali_nav_icons_v1";
   const DEFAULTS = [
-    { page: "home", label: "Главная", iconText: "⌂", image: "/site/assets/bali-temple/nav-home.svg" },
-    { page: "events", label: "Афиши", iconText: "◫", image: "/site/assets/bali-temple/nav-events.svg" },
-    { page: "menu", label: "Меню", iconText: "◇", image: "/site/assets/bali-temple/nav-menu.svg" },
-    { page: "dating", label: "BALI PEOPLE", iconText: "●", image: "/site/assets/bali-temple/nav-people.svg" },
-    { page: "crown", label: "Игра", iconText: "◆", image: "/site/assets/bali-temple/nav-game.svg" },
-    { page: "profile", label: "Профиль", iconText: "◎", image: "/site/assets/bali-temple/nav-profile.svg" },
+    { page: "home", label: "Главная", description: "Главный экран", accent: "#c8ff3d", iconText: "⌂", image: "/site/assets/bali-temple/nav-home.svg" },
+    { page: "events", label: "Афиша", description: "События клуба", accent: "#c8ff3d", iconText: "◫", image: "/site/assets/bali-temple/nav-events.svg" },
+    { page: "menu", label: "Меню", description: "Бар, кухня и кальяны", accent: "#c8ff3d", iconText: "◇", image: "/site/assets/bali-temple/nav-menu.svg" },
+    { page: "dating", label: "BALI PEOPLE", description: "Люди и кланы", accent: "#c8ff3d", iconText: "●", image: "/site/assets/bali-temple/nav-people.svg" },
+    { page: "crown", label: "Игра", description: "Игра «Три в ряд»", accent: "#c8ff3d", iconText: "◆", image: "/site/assets/bali-temple/nav-game.svg" },
+    { page: "profile", label: "Профиль", description: "Настройки профиля", accent: "#c8ff3d", iconText: "◎", image: "/site/assets/bali-temple/nav-profile.svg" },
   ];
 
   const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -23,6 +23,8 @@
           ...fallback,
           page,
           label: String(row.label || fallback.label || page),
+          description: String(row.description || fallback.description || ""),
+          accent: String(row.accent || fallback.accent || "#c8ff3d"),
           iconText: String(fallback.iconText || "•"),
           image: String(row.icon_url || fallback.image || ""),
         };
@@ -37,6 +39,8 @@
       return {
         ...fallback,
         label: String(row.label ?? fallback.label).trim().slice(0, 24) || fallback.label,
+        description: String(row.description ?? fallback.description).trim().slice(0, 80) || fallback.description,
+        accent: /^#[0-9a-f]{6}$/i.test(String(row.accent || "")) ? String(row.accent) : fallback.accent,
         iconText: String(row.iconText ?? fallback.iconText).slice(0, 12),
         image: String(row.image ?? fallback.image).trim(),
       };
@@ -102,6 +106,11 @@
       button.appendChild(label);
     }
     label.textContent = row.label;
+    const purpose = row.description || row.label;
+    button.setAttribute("aria-label", `${row.label}. ${purpose}`);
+    button.title = purpose;
+    button.style.setProperty("--bali-nav-accent", row.accent || "#c8ff3d");
+    button.dataset.navPurpose = purpose;
     if (!row.image) {
       renderFallback(icon, row);
       return;

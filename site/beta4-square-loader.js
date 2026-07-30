@@ -1,6 +1,6 @@
 (async () => {
   const version = "bali-full-demo-8-stable27";
-  const assetRevision = "home-reference-7";
+  const assetRevision = "home-customization-2";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;

@@ -28,7 +28,7 @@
       button.disabled = !available;
       button.classList.toggle('navigation-loading', !available);
       button.setAttribute('aria-busy', available ? 'false' : 'true');
-      button.title = available ? '' : 'Раздел загружается';
+      button.title = available ? (button.dataset.navPurpose || button.getAttribute('aria-label') || '') : 'Раздел загружается';
     });
     return visibleButtons().every(([page]) => screenExists(page));
   }
