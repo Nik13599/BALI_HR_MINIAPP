@@ -13,19 +13,20 @@
   if (!game || !store) return;
 
   const ASSET = "./assets/bali-temple/";
+  const HOME_ICON = "./assets/home-icons/";
   const ICONS = {
-    points: `${ASSET}nav-game.svg`,
-    vip: `${ASSET}nav-profile.svg`,
-    game: `${ASSET}nav-game.svg`,
-    rank: `${ASSET}nav-people.svg`,
-    notice: `${ASSET}nav-events.svg`,
-    people: `${ASSET}nav-people.svg`,
-    clan: `${ASSET}nav-profile.svg`,
-    calendar: `${ASSET}nav-events.svg`,
-    qr: `${ASSET}nav-menu.svg`,
-    map: `${ASSET}nav-home.svg`,
-    contact: `${ASSET}nav-profile.svg`,
-    arrow: `${ASSET}nav-game.svg`
+    points: `${HOME_ICON}star.svg`,
+    vip: `${HOME_ICON}crown.svg`,
+    game: `${HOME_ICON}chart-no-axes-column-increasing.svg`,
+    rank: `${HOME_ICON}trophy.svg`,
+    notice: `${HOME_ICON}bell.svg`,
+    people: `${HOME_ICON}users.svg`,
+    clan: `${HOME_ICON}shield.svg`,
+    calendar: `${HOME_ICON}calendar-days.svg`,
+    qr: `${HOME_ICON}qr-code.svg`,
+    map: `${HOME_ICON}map-pin.svg`,
+    contact: `${HOME_ICON}headphones.svg`,
+    arrow: `${HOME_ICON}arrow-up-right.svg`
   };
   const LIST_META = {
     participants: { eyebrow: "БЛИЖАЙШЕЕ СОБЫТИЕ", title: "Участники" },
@@ -239,7 +240,7 @@
     const description = event.description || "Главная клубная ночь: музыка, DJ и свободный вход.";
     return `<section class="bali-home-reference-event">
       <div class="bali-home-event-grid">
-        <button class="bali-home-event-poster" type="button" data-home-open-event="${esc(event.id)}" aria-label="Открыть ${esc(event.title)}"><img src="${esc(poster)}" alt="${esc(event.title)}"></button>
+        <div class="bali-home-event-poster"><img src="${esc(poster)}" alt="${esc(event.title)}"><button class="bali-home-event-poster-hit" type="button" data-home-open-event="${esc(event.id)}" aria-label="Открыть ${esc(event.title)}"></button></div>
         <div class="bali-home-event-main">
           <div class="bali-home-event-head">
             <span class="bali-home-event-kicker">БЛИЖАЙШЕЕ СОБЫТИЕ · ${esc(dateText(event.event_date))} · ${esc(event.event_time || "23:00")}</span>

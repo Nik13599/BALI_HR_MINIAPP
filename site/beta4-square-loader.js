@@ -1,5 +1,6 @@
 (async () => {
   const version = "bali-full-demo-8-stable27";
+  const assetRevision = "home-reference-5";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
@@ -14,11 +15,11 @@
     "beta4-reward-icon-view.js","beta4-ranking-visits.js","beta4-profile-v2.js","profile-demographics-beta4.js","bali-bonuses-only-beta4.js","bali-people-privacy-beta4.js","bali-people-search-ranking-beta4.js","bali-people-public-cards-beta4.js","bali-people-vip-frame-beta4.js","full-demo-people-finalizer-beta4.js","profile-ranking-full-beta4.js","profile-recent-rewards-beta4.js","vip-duration-options-beta4.js","chip-requests-user-beta4.js","beta4-home-design.js","profile-full-restore-beta4.js","profile-controls-final-beta4.js","full-demo-review-window-beta4.js","venue-reviews-user-beta4.js","people-profile-stability-beta4.js","bali-visual-blocks-core-beta4.js","home-reference-page-beta4.js"
   ];
 
-  css.forEach(name => { const link=document.createElement("link"); link.rel="stylesheet"; link.href=`./${name}?v=${version}`; document.head.appendChild(link); });
+  css.forEach(name => { const link=document.createElement("link"); link.rel="stylesheet"; link.href=`./${name}?v=${version}&r=${assetRevision}`; document.head.appendChild(link); });
   const loadScript = (name, optional = false) => new Promise((resolve,reject) => {
     const script=document.createElement("script");
     script.async=false;
-    script.src=`./${name}?v=${version}`;
+    script.src=`./${name}?v=${version}&r=${assetRevision}`;
     script.onload=()=>resolve(name);
     script.onerror=()=>{
       const error=new Error(`Не удалось загрузить ${name}`);

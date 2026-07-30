@@ -20,6 +20,10 @@ assert.ok(page.includes("BaliMatch3"), "The game rating must use the live Match 
 assert.ok(styles.includes("@media(max-width:760px)"), "The reference home must adapt to tablets and phones");
 assert.ok(styles.includes("overflow-x:auto"), "Mobile metric cards must stay usable without squeezing");
 assert.ok(styles.includes("grid-template-columns:1fr"), "The featured event must collapse to one mobile column");
+assert.ok(styles.includes("min-height:clamp(210px,60vw,420px)!important"), "The event poster must remain visible on mobile");
+assert.ok(styles.includes(".inner.bali-home-reference-active>#clubLinks"), "Legacy home links must not duplicate the new social and contact blocks");
+assert.ok(page.includes("assets/home-icons/"), "Reference cards must use the dedicated outline icon set");
+assert.ok(page.includes("qr-code.svg"), "The check-in panel must show a real QR icon");
 assert.ok(homeDesign.includes("ЕДИНОЕ ПРИЛОЖЕНИЕ БАЛИ"), "The reset state must match the selected visual target");
 assert.ok(visualBlocks.includes('selector: ".bali-home-reference-hero"'), "Admin hero controls must target the new home");
 assert.ok(visualBlocks.includes('selector: ".bali-home-reference-event"'), "Admin event controls must target the new home");
