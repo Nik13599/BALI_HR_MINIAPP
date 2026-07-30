@@ -6,7 +6,7 @@ const ui = fs.readFileSync("site/match3-game-ui-beta4.js", "utf8");
 const fullscreen = fs.readFileSync("site/telegram-fullscreen-beta4.js", "utf8");
 const loader = fs.readFileSync("site/beta4-square-loader.js", "utf8");
 
-assert.ok(loader.includes('const version = "bali-full-demo-8-stable30"'), "Published user build must use the latest cache version");
+assert.ok(loader.includes('const version = "bali-full-demo-8-stable27"'), "Published user build must use the requested stable27 cache version");
 assert.ok(loader.includes("match3-game-core-beta4.js"), "Match 3 core must replace the retired crown contest");
 assert.ok(loader.includes("match3-game-ui-beta4.js"), "Match 3 interface must load");
 assert.ok(!loader.includes("night-crown-beta4.js"), "The retired King and Queen contest must not return");
