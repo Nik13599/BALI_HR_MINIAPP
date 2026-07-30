@@ -26,8 +26,6 @@
     style.id = "baliIntegratedHomeStyle";
     style.textContent = `
       .nav[data-navigation-ready="true"]>[data-page="menu"]{display:none!important}
-      [data-screen="home"] .inner>:not(.hero):not(#baliProductionHome){display:none!important}
-      [data-screen="home"] .hero{min-height:215px!important}
       .bali-now-event-duplicate{display:none!important}
       [data-screen="home"] .home-events:has(>.bali-now-event-duplicate){grid-template-columns:repeat(2,minmax(0,1fr))!important}
       .bali-now{position:relative;display:grid;gap:10px;padding:15px;border:1px solid rgba(227,189,100,.25);border-radius:22px;background:radial-gradient(circle at 88% 0,rgba(193,86,28,.19),transparent 36%),linear-gradient(145deg,rgba(31,27,20,.98),rgba(11,14,12,.98));overflow:hidden}
@@ -61,7 +59,7 @@
       .bali-now-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
       .bali-now-shortcuts button{min-width:0;min-height:47px;display:grid;place-items:center;gap:3px;padding:5px 3px;border:1px solid rgba(255,255,255,.08);border-radius:13px;background:rgba(255,255,255,.025);color:#fff}
       .bali-now-shortcuts i{font-style:normal;font-size:16px}.bali-now-shortcuts span{max-width:100%;font-size:6px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      @media(max-width:390px){[data-screen="home"] .hero{min-height:185px!important;padding:17px!important}.bali-now{padding:12px}.bali-now-metrics{grid-template-columns:1fr 1fr}.bali-now-event{grid-template-columns:78px minmax(0,1fr)}.bali-now-poster{min-height:116px}.bali-now-shortcuts span{font-size:5.5px}}
+      @media(max-width:390px){.bali-now{padding:12px}.bali-now-metrics{grid-template-columns:1fr 1fr}.bali-now-event{grid-template-columns:78px minmax(0,1fr)}.bali-now-poster{min-height:116px}.bali-now-shortcuts span{font-size:5.5px}}
     `;
     document.head.appendChild(style);
   }

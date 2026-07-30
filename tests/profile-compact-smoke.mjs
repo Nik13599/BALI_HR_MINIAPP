@@ -11,7 +11,7 @@ const vip = fs.readFileSync("site/vip-duration-options-beta4.js", "utf8");
 const demographics = fs.readFileSync("site/profile-demographics-beta4.js", "utf8");
 const chips = fs.readFileSync("site/chip-requests-user-beta4.js", "utf8");
 
-assert.ok(html.includes("bali-full-demo-8-stable31"), "Published page must use the latest build");
+assert.ok(html.includes("bali-full-demo-8-stable30"), "Published page must use the latest build");
 assert.ok(loader.includes("beta4-profile-v2.js"), "Compact profile controller must load");
 assert.ok(loader.includes("profile-controls-final-beta4.js"), "Final profile controls must load");
 assert.ok(loader.indexOf("profile-full-restore-beta4.js") < loader.indexOf("profile-controls-final-beta4.js"), "Final controls must run after the legacy profile guard");
