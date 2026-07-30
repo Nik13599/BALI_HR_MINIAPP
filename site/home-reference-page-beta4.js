@@ -27,6 +27,7 @@
     map: `${HOME_ICON}map-pin.svg`,
     contact: `${HOME_ICON}headphones.svg`,
     phone: `${HOME_ICON}phone.svg`,
+    venue: `${HOME_ICON}building-2.svg`,
     arrow: `${HOME_ICON}arrow-up-right.svg`
   };
   const LIST_META = {
@@ -304,6 +305,7 @@
 
   function renderBottom(design) {
     const contacts = design.contacts || {};
+    const about = design.about || {};
     const phoneText = contacts.phone?.subtitle || window.BALI_CONFIG?.venuePhone || "+375 29 670-03-00";
     const phoneHref = String(window.BALI_CONFIG?.venuePhone || phoneText).replace(/[^+\d]/g, "");
     return `<section class="bali-home-bottom-grid">
@@ -325,6 +327,12 @@
         <span><strong>${esc(contacts.phone?.title || "Позвонить")}</strong><small>${esc(phoneText)}</small></span>
         <img src="${esc(ICONS.arrow)}" alt="">
       </a>
+      <button class="bali-home-bottom-card bali-home-reference-about" type="button" data-open-venue-details>
+        <h3 class="bali-home-section-label">О ЗАВЕДЕНИИ</h3>
+        ${iconHtml("venue", "bali-home-link-icon")}
+        <span><strong class="bali-home-about-title">${esc(about.title || "О клубе BALI")}</strong><small>${esc(about.text || "Подробнее о заведении, фотографии и видео")}</small></span>
+        <img src="${esc(ICONS.arrow)}" alt="">
+      </button>
     </section>`;
   }
 

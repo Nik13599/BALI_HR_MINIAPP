@@ -23,7 +23,7 @@
     { id: "home.social", group: "home", label: "Социальные сети", selector: ".bali-home-reference-social", titleSelector: "h3", defaultTitle: "Соцсети", width: 1200, height: 720, defaultImage: STATUES, overlay: 66, position: "center" },
     { id: "home.map", group: "home", label: "Карта и маршрут", selector: ".bali-home-reference-map", titleSelector: "h3", defaultTitle: "Как нас найти", width: 1200, height: 720, defaultImage: STONE, overlay: 68, position: "center" },
     { id: "home.contacts", group: "home", label: "Контакты клуба", selector: ".bali-home-reference-contact", titleSelector: "h3", defaultTitle: "Связаться с BALI", width: 1200, height: 720, defaultImage: STATUES, overlay: 68, position: "center" },
-    { id: "home.about", group: "home", label: "О клубе", selector: '[data-screen="home"] .home-club-footer', titleSelector: ".card-head h3", defaultTitle: "Клуб BALI", width: 1400, height: 850, defaultImage: STONE, overlay: 62, position: "center" },
+    { id: "home.about", group: "home", label: "О клубе", selector: '.bali-home-reference-about, [data-screen="home"] .home-club-footer', titleSelector: ".bali-home-about-title, .card-head h3", defaultTitle: "Клуб BALI", width: 1400, height: 850, defaultImage: STONE, overlay: 62, position: "center" },
 
     { id: "events.header", group: "events", label: "Шапка афиш", selector: '[data-screen="events"] .head', titleSelector: "h2", defaultTitle: "Афиши", width: 1600, height: 600, defaultImage: STATUES, overlay: 52, position: "center" },
     { id: "events.catalog", group: "events", label: "Каталог событий", selector: "#eventsGrid", generatedTitle: true, defaultTitle: "Каталог событий", width: 1400, height: 900, defaultImage: STONE, overlay: 74, position: "center" },

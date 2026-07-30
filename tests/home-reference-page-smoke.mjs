@@ -27,10 +27,14 @@ assert.ok(styles.includes(".inner.bali-home-reference-active>#clubLinks"), "Lega
 assert.ok(homeLinks.includes('inner.querySelector(":scope > #clubLinks")?.remove()'), "Legacy social, map and contact blocks must be removed on the reference home");
 assert.ok(page.includes("bali-home-reference-phone"), "The new bottom area must include a separate call button");
 assert.ok(page.includes("phone.svg"), "The call button must use a dedicated phone icon");
+assert.ok(page.includes("bali-home-reference-about"), "The bottom area must include the restored venue block");
+assert.ok(page.includes("data-open-venue-details"), "The venue block must open the existing detailed venue page");
+assert.ok(page.includes("building-2.svg"), "The venue block must use a dedicated building icon");
 assert.ok(page.includes("assets/home-icons/"), "Reference cards must use the dedicated outline icon set");
 assert.ok(page.includes("qr-code.svg"), "The check-in panel must show a real QR icon");
 assert.ok(homeDesign.includes("ЕДИНОЕ ПРИЛОЖЕНИЕ БАЛИ"), "The reset state must match the selected visual target");
 assert.ok(visualBlocks.includes('selector: ".bali-home-reference-hero"'), "Admin hero controls must target the new home");
 assert.ok(visualBlocks.includes('selector: ".bali-home-reference-event"'), "Admin event controls must target the new home");
+assert.ok(visualBlocks.includes(".bali-home-reference-about"), "Admin venue block controls must target the restored venue block");
 
 console.log("Reference home page, mobile adaptation and interactive lists smoke test passed");

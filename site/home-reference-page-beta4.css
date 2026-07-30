@@ -508,6 +508,15 @@
   grid-column:1/-1;
   min-height:82px;
 }
+.bali-home-reference-about{
+  grid-column:1/-1;
+  width:100%;
+  min-height:94px;
+  color:inherit;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+}
 .bali-home-list-dialog{
   width:min(560px,calc(100% - 20px));
   max-height:82dvh;
@@ -799,6 +808,9 @@
     grid-template-columns:1fr;
   }
   .bali-home-reference-phone{
+    grid-column:1;
+  }
+  .bali-home-reference-about{
     grid-column:1;
   }
   .top{
