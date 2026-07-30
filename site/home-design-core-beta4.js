@@ -5,7 +5,7 @@
     brand: { logo: "", name: "BALI", subtitle: "МИНСК · NIGHT CLUB" },
     global: { accent: "#c8ff3d", pageBackground: "#080a0a", text: "#f5f7f5" },
     hero: {
-      eyebrow: "NIGHT CLUB · CONTACT BAR · 18+",
+      eyebrow: "ЕДИНОЕ ПРИЛОЖЕНИЕ БАЛИ",
       title: "BALI",
       accentTitle: "",
       text: "BALI — приложение ночного клуба и комьюнити людей, объединённых музыкой, любимыми диджеями, артистами и яркими вечеринками.",
@@ -47,6 +47,7 @@
       align: "left",
       instagram: { title: "Instagram", subtitle: "Новости и атмосфера", icon: "" },
       telegram: { title: "Telegram", subtitle: "Канал клуба", icon: "" },
+      tiktok: { title: "TikTok", subtitle: "Видео из BALI", icon: "" },
       manager: { title: "Связаться с менеджером", subtitle: "Личный чат в Telegram", icon: "" },
       phone: { title: "Позвонить", subtitle: "+375 29 670-03-00", icon: "" },
       map: { title: "Как добраться", subtitle: "Яндекс Карты", icon: "" }
