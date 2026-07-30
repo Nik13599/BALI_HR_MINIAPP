@@ -1,7 +1,7 @@
 (() => {
   const params = new URLSearchParams(location.search);
   const buildBadge = document.getElementById("baliPreviewBuild");
-  if (buildBadge) buildBadge.textContent = "PREVIEW · LATEST CHANGES";
+  if (buildBadge) buildBadge.textContent = "BETA 25 · INTEGRATED";
 
   const userTarget = String(params.get("show") || "").toLowerCase();
   const clanCategory = String(params.get("clanCategory") || "user").toLowerCase();

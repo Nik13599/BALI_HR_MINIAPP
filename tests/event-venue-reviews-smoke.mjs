@@ -11,7 +11,7 @@ const venueAdmin = fs.readFileSync("site/admin-venue-reviews-beta4.js", "utf8");
 const demoSeed = fs.readFileSync("site/demo-event-content-seed-beta4.js", "utf8");
 const migration = fs.readFileSync("site/supabase-event-content-reviews.sql", "utf8");
 
-assert.ok(html.includes("bali-full-demo-8-stable27"), "Published page must use the latest build");
+assert.ok(html.includes("bali-full-demo-8-stable30"), "Published page must use the latest build");
 assert.ok(loader.includes("demo-event-content-seed-beta4.js"), "Demo event content must load");
 assert.ok(loader.includes("event-performer-cards-beta4.js"), "Event performer cards must load");
 assert.ok(loader.includes("venue-reviews-user-beta4.js"), "Venue details and feedback must load");
