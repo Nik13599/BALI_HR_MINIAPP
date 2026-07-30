@@ -7,6 +7,7 @@ const adminHtml = fs.readFileSync("site/admin-beta4.html", "utf8");
 const adminRuntime = fs.readFileSync("site/admin-mobile-runtime.js", "utf8");
 const admin = fs.readFileSync("site/admin.js", "utf8");
 const clans = fs.readFileSync("site/admin-clans-beta4.js", "utf8");
+const preview = fs.readFileSync("site/preview-deeplink-beta4.js", "utf8");
 
 assert.ok(loader.includes("beta4-reward-icons-core.js"), "The current reward icon module must load");
 assert.ok(loader.includes("bali-people-public-cards-beta4.js"), "Public BALI People cards must load");
@@ -29,5 +30,9 @@ assert.ok(clans.includes("/api/v1/admin/clans/"), "Clan administration must use 
 assert.ok(clans.includes("clanAdminCreateForm"), "Admin must create user and corporate clans");
 assert.ok(clans.includes("leaderUserKey"), "Admin must appoint the senior while creating a clan");
 assert.ok(clans.includes('value="corporate"'), "Admin must expose the corporate clan category");
+assert.ok(preview.includes('params.get("show")'), "Published preview must support direct user-section links");
+assert.ok(preview.includes('params.get("view")'), "Published preview must support direct admin-section links");
+assert.ok(preview.includes("data-people-mode=") && preview.includes('mode = userTarget === "my-clans" ? "clan" : "ranking"'), "Published preview must open clan rankings directly");
+assert.ok(preview.includes('data-match3-tab="ranking"'), "Published preview must open the weekly game ranking directly");
 
 console.log("Latest admin, rewards, gifts, visual controls and integrated clan smoke test passed");

@@ -16,7 +16,7 @@
     "migrations:rollback": "tsx scripts/rollback.ts",
     "backup:postgres": "tsx scripts/backup.ts",
     "outbox:once": "tsx scripts/run-outbox.ts --once",
-    "lint": "eslint server tests/server scripts site/telegram-app.js site/clan-chat-app.js site/admin-production.js site/admin-platform-ui.js site/production-client.js site/production-loader.js site/production-booking-qr.js site/production-profile-economy.js site/production-social-ui.js site/beta4-app.js site/beta4-social-page.js site/bali-clans-demo-core-beta4.js site/bali-people-clans-beta4.js site/admin-clans-beta4.js site/fast-event-dialog-beta4.js site/nav-icons-core-beta4.js site/legacy-nav-final-beta4.js site/bali-visual-blocks-core-beta4.js site/match3-game-ui-beta4.js",
+    "lint": "eslint server tests/server scripts site/telegram-app.js site/clan-chat-app.js site/admin-production.js site/admin-platform-ui.js site/production-client.js site/production-loader.js site/production-booking-qr.js site/production-profile-economy.js site/production-social-ui.js site/preview-deeplink-beta4.js site/beta4-app.js site/beta4-social-page.js site/bali-clans-demo-core-beta4.js site/bali-people-clans-beta4.js site/admin-clans-beta4.js site/fast-event-dialog-beta4.js site/nav-icons-core-beta4.js site/legacy-nav-final-beta4.js site/bali-visual-blocks-core-beta4.js site/match3-game-ui-beta4.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:server": "node --import tsx --test --test-concurrency=1 tests/server/auth.test.ts tests/server/clan-chat.test.ts tests/server/admin.test.ts tests/server/privacy-migration.test.ts tests/server/production-platform.test.ts",
     "test:demo": "node scripts/run-demo-tests.mjs",
