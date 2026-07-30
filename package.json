@@ -11,18 +11,24 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server/index.js",
     "migrate": "tsx scripts/migrate.ts",
-    "lint": "eslint server tests/server scripts site/telegram-app.js site/clan-chat-app.js site/admin-production.js site/bali-clans-demo-core-beta4.js site/bali-people-clans-beta4.js site/admin-clans-beta4.js",
+    "migrations:check": "tsx scripts/check-migrations.ts",
+    "migrations:preflight": "tsx scripts/preflight.ts",
+    "migrations:rollback": "tsx scripts/rollback.ts",
+    "backup:postgres": "tsx scripts/backup.ts",
+    "outbox:once": "tsx scripts/run-outbox.ts --once",
+    "lint": "eslint server tests/server scripts site/telegram-app.js site/clan-chat-app.js site/admin-production.js site/admin-platform-ui.js site/production-client.js site/production-loader.js site/production-booking-qr.js site/production-profile-economy.js site/production-social-ui.js site/beta4-app.js site/beta4-social-page.js site/bali-clans-demo-core-beta4.js site/bali-people-clans-beta4.js site/admin-clans-beta4.js site/fast-event-dialog-beta4.js site/nav-icons-core-beta4.js site/legacy-nav-final-beta4.js site/bali-visual-blocks-core-beta4.js site/match3-game-ui-beta4.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:server": "node --import tsx --test --test-concurrency=1 tests/server/auth.test.ts tests/server/clan-chat.test.ts tests/server/admin.test.ts tests/server/privacy-migration.test.ts",
+    "test:server": "node --import tsx --test --test-concurrency=1 tests/server/auth.test.ts tests/server/clan-chat.test.ts tests/server/admin.test.ts tests/server/privacy-migration.test.ts tests/server/production-platform.test.ts",
     "test:demo": "node scripts/run-demo-tests.mjs",
     "test": "npm run test:server && npm run test:demo",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run migrations:check && npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",
     "express": "^4.21.2",
     "helmet": "^8.0.0",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -30,6 +36,7 @@
     "@types/express": "^4.17.21",
     "@types/node": "^22.10.5",
     "@types/pg": "^8.11.10",
+    "@types/qrcode": "^1.5.5",
     "@types/supertest": "^6.0.2",
     "eslint": "^10.8.0",
     "globals": "^17.8.0",

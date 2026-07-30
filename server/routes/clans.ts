@@ -21,7 +21,7 @@ import {
   uuid
 } from "../validation.js";
 import { writeAudit } from "../audit.js";
-import { visibleProfile } from "../privacy.js";
+import { visibleProfiles } from "../privacy.js";
 import { sha256 } from "../security.js";
 
 function chatId(req: any): string {
@@ -133,34 +133,38 @@ export function createClanRouter(db: Queryable): Router {
   router.get("/", asyncHandler(async (req, res) => {
     const rows = await many<any>(
       db,
-      `select c.id, c.name, c.clan_type, m.role, ch.id as chat_id, ch.enabled, ch.read_only,
-              rs.last_read_at
+      `select c.id, c.name, c.clan_type, m.role, ch.id as chat_id, ch.enabled, ch.read_only
          from public.clan_memberships m
          join public.clans c on c.id = m.clan_id and c.status = 'active'
          join public.clan_chats ch on ch.clan_id = c.id
-         left join public.clan_chat_read_states rs
-           on rs.chat_id = ch.id and rs.user_key = m.user_key
         where m.user_key = $1 and m.status = 'active'
         order by c.name`,
       [req.userPrincipal!.userKey]
     );
-    const clans = await Promise.all(rows.map(async row => {
-      const count = await one<{ unread_count: number }>(
-        db,
-        `select count(*)::integer as unread_count
-           from public.clan_chat_messages
-          where chat_id = $1 and deleted_at is null
-            and created_at > $2
-            and (author_user_key is null or author_user_key <> $3)`,
-        [
-          row.chat_id,
-          row.last_read_at || new Date(0),
-          req.userPrincipal!.userKey
-        ]
-      );
-      const clan = { ...row };
-      delete clan.last_read_at;
-      return { ...clan, unread_count: Number(count?.unread_count || 0) };
+    const counts = rows.length
+      ? await many<any>(
+          db,
+          `select message.chat_id, count(*)::integer as unread_count
+             from public.clan_chat_messages message
+             left join public.clan_chat_read_states read_state
+               on read_state.chat_id = message.chat_id and read_state.user_key = $1
+            where message.chat_id in (${rows.map((_, index) => `$${index + 2}`).join(",")})
+              and message.deleted_at is null
+              and message.created_at > coalesce(
+                read_state.last_read_at,
+                '1970-01-01T00:00:00Z'::timestamptz
+              )
+              and (message.author_user_key is null or message.author_user_key <> $1)
+            group by message.chat_id`,
+          [req.userPrincipal!.userKey, ...rows.map(row => row.chat_id)]
+        )
+      : [];
+    const countsByChat = new Map(
+      counts.map(row => [String(row.chat_id), Number(row.unread_count || 0)])
+    );
+    const clans = rows.map(row => ({
+      ...row,
+      unread_count: countsByChat.get(String(row.chat_id)) || 0
     }));
     res.json({ clans });
   }));
@@ -211,6 +215,190 @@ export function createClanRouter(db: Queryable): Router {
         corporate: clans.filter(row => row.clanType === "corporate")
       }
     });
+  }));
+
+  router.get("/invitations/me", asyncHandler(async (req, res) => {
+    const invitations = await many<any>(
+      db,
+      `select invitation.*, clan.name as clan_name, clan.clan_type,
+              inviter.name as inviter_name
+         from public.clan_invitations invitation
+         join public.clans clan on clan.id = invitation.clan_id
+         join public.app_users inviter on inviter.user_key = invitation.inviter_user_key
+        where invitation.invitee_user_key = $1
+          and invitation.status = 'pending'
+          and (invitation.expires_at is null or invitation.expires_at > now())
+        order by invitation.created_at desc`,
+      [req.userPrincipal!.userKey]
+    );
+    res.json({ invitations });
+  }));
+
+  router.patch("/invitations/:invitationId", asyncHandler(async (req, res) => {
+    const invitationId = uuid(req.params.invitationId, "invitationId");
+    const status = req.body?.status === "accepted"
+      ? "accepted"
+      : req.body?.status === "declined" ? "declined" : "";
+    if (!status) throw new ApiError(400, "status must be accepted or declined", "validation_error");
+    const result = await transaction(db, async client => {
+      const invitation = await one<any>(
+        client,
+        `select invitation.*, clan.clan_type, clan.status as clan_status
+           from public.clan_invitations invitation
+           join public.clans clan on clan.id = invitation.clan_id
+          where invitation.id = $1 and invitation.invitee_user_key = $2
+          for update`,
+        [invitationId, req.userPrincipal!.userKey]
+      );
+      if (!invitation) throw new ApiError(404, "Clan invitation was not found", "not_found");
+      if (invitation.status !== "pending") {
+        throw new ApiError(409, "Clan invitation has already been answered", "clan_invitation_answered");
+      }
+      if (invitation.expires_at && new Date(invitation.expires_at).getTime() <= Date.now()) {
+        await client.query(
+          `update public.clan_invitations set status = 'expired', updated_at = now() where id = $1`,
+          [invitationId]
+        );
+        throw new ApiError(409, "Clan invitation has expired", "clan_invitation_expired");
+      }
+      if (invitation.clan_status !== "active") {
+        throw new ApiError(409, "Clan is not active", "clan_unavailable");
+      }
+      if (status === "accepted") {
+        const conflict = await one<any>(
+          client,
+          `select clan.id, clan.name
+             from public.clan_memberships membership
+             join public.clans clan on clan.id = membership.clan_id
+            where membership.user_key = $1
+              and membership.status = 'active'
+              and membership.clan_type = $2
+            limit 1`,
+          [req.userPrincipal!.userKey, invitation.clan_type]
+        );
+        if (conflict) {
+          throw new ApiError(
+            409,
+            "You already belong to a clan in this category",
+            "clan_category_membership_conflict",
+            { clanId: conflict.id, clanName: conflict.name, clanType: invitation.clan_type }
+          );
+        }
+        await client.query(
+          `insert into public.clan_memberships(
+             clan_id, user_key, clan_type, role, status
+           ) values ($1,$2,$3,'member','active')`,
+          [invitation.clan_id, req.userPrincipal!.userKey, invitation.clan_type]
+        );
+      }
+      const updated = await one<any>(
+        client,
+        `update public.clan_invitations
+            set status = $2, responded_at = now(), updated_at = now()
+          where id = $1 returning *`,
+        [invitationId, status]
+      );
+      await client.query(
+        `insert into public.notifications(
+           user_key, notification_type, title, body, data, idempotency_key
+         ) values ($1,'clan_invitation_response',$2,$3,$4::jsonb,$5)
+         on conflict (idempotency_key) do nothing`,
+        [
+          invitation.inviter_user_key,
+          status === "accepted" ? "Приглашение в клан принято" : "Приглашение в клан отклонено",
+          `${req.userPrincipal!.name}: ${status === "accepted" ? "вступил в клан" : "отклонил приглашение"}.`,
+          JSON.stringify({ invitationId, clanId: invitation.clan_id, status }),
+          `clan-invitation-response:${invitationId}`
+        ]
+      );
+      return updated;
+    });
+    res.json({ invitation: result });
+  }));
+
+  router.post("/:clanId/invitations", asyncHandler(async (req, res) => {
+    await enforceRateLimit(db, req, "invitation.create", requestSubject(req, req.params.clanId));
+    const inviteeUserKey = identifier(req.body?.inviteeUserKey, "inviteeUserKey");
+    const message = optionalText(req.body?.message, 500);
+    if (inviteeUserKey === req.userPrincipal!.userKey) {
+      throw new ApiError(400, "A leader cannot invite themselves", "validation_error");
+    }
+    const clan = await one<any>(
+      db,
+      `select clan.*, membership.role
+         from public.clans clan
+         join public.clan_memberships membership on membership.clan_id = clan.id
+        where clan.id = $1
+          and membership.user_key = $2
+          and membership.status = 'active'`,
+      [req.params.clanId, req.userPrincipal!.userKey]
+    );
+    if (!clan || clan.status !== "active") {
+      throw new ApiError(404, "Active clan was not found", "not_found");
+    }
+    if (clan.role !== "leader") {
+      throw new ApiError(403, "Only the clan leader can invite members", "permission_denied");
+    }
+    const [invitee, conflict] = await Promise.all([
+      one<any>(
+        db,
+        `select user_key, name from public.app_users
+          where user_key = $1 and account_status = 'active'`,
+        [inviteeUserKey]
+      ),
+      one<any>(
+        db,
+        `select clan.id, clan.name
+           from public.clan_memberships membership
+           join public.clans clan on clan.id = membership.clan_id
+          where membership.user_key = $1
+            and membership.status = 'active'
+            and membership.clan_type = $2
+          limit 1`,
+        [inviteeUserKey, clan.clan_type]
+      )
+    ]);
+    if (!invitee) throw new ApiError(404, "Invitee was not found", "not_found");
+    if (conflict) {
+      throw new ApiError(
+        409,
+        "This user already belongs to a clan in the same category",
+        "clan_category_membership_conflict",
+        { clanId: conflict.id, clanName: conflict.name, clanType: clan.clan_type }
+      );
+    }
+    try {
+      const invitation = await transaction(db, async client => {
+        const created = await one<any>(
+          client,
+          `insert into public.clan_invitations(
+             clan_id, inviter_user_key, invitee_user_key, message, expires_at
+           ) values ($1,$2,$3,$4,now() + interval '7 days')
+           returning *`,
+          [clan.id, req.userPrincipal!.userKey, inviteeUserKey, message]
+        );
+        await client.query(
+          `insert into public.notifications(
+             user_key, notification_type, title, body, data, idempotency_key
+           ) values ($1,'clan_invitation',$2,$3,$4::jsonb,$5)
+           on conflict (idempotency_key) do nothing`,
+          [
+            inviteeUserKey,
+            "Приглашение в клан",
+            `${req.userPrincipal!.name} приглашает вас в «${clan.name}».`,
+            JSON.stringify({ invitationId: created!.id, clanId: clan.id }),
+            `clan-invitation:${created!.id}`
+          ]
+        );
+        return created;
+      });
+      res.status(201).json({ invitation });
+    } catch (error: any) {
+      if (error?.code === "23505") {
+        throw new ApiError(409, "A pending invitation already exists", "clan_invitation_pending");
+      }
+      throw error;
+    }
   }));
 
   router.get("/:clanId/chat", requireClanPermission(db, "chat.read"), asyncHandler(async (req, res) => {
@@ -298,13 +486,15 @@ export function createClanRouter(db: Queryable): Router {
         order by case when role = 'leader' then 0 else 1 end, joined_at`,
       [req.params.clanId]
     );
-    const members = [];
-    for (const row of rows) {
-      members.push({
-        role: row.role,
-        profile: await visibleProfile(db, req.userPrincipal!.userKey, row.user_key)
-      });
-    }
+    const profiles = await visibleProfiles(
+      db,
+      req.userPrincipal!.userKey,
+      rows.map(row => row.user_key)
+    );
+    const profileByKey = new Map(profiles.map(profile => [String(profile.id), profile]));
+    const members = rows
+      .filter(row => profileByKey.has(row.user_key))
+      .map(row => ({ role: row.role, profile: profileByKey.get(row.user_key) }));
     res.json({ members });
   }));
 

@@ -110,6 +110,9 @@
       <section class="admin-panel"><h2>Главный клана</h2>
         <form id="leaderForm"><label class="field">Новый главный<select name="userKey">${d.members.filter(row => row.status === "active").map(row => `<option value="${esc(row.user_key)}" ${row.user_key === d.chat.leader_user_key ? "selected" : ""}>${esc(row.name)} · ${esc(row.role)}</option>`).join("")}</select></label><label class="field">Причина<input name="reason" required></label><button class="gold-button">Сменить главного</button></form>
       </section>
+      <section class="admin-panel"><h2>Назначить участника</h2>
+        <form id="memberForm"><label class="field">User key<input name="userKey" maxlength="160" required></label><label class="field">Причина<input name="reason" required></label><button class="gold-button">Добавить в этот клан</button></form>
+      </section>
       <section class="admin-panel"><h2>Официальное объявление</h2>
         <form id="announcementForm"><label class="field">Заголовок<input name="title" maxlength="200"></label><label class="field">Текст<textarea name="body" maxlength="4000" required></textarea></label><button class="gold-button">Опубликовать</button></form>
       </section>
@@ -186,6 +189,16 @@
   document.getElementById("chatSearch").addEventListener("input", event => loadChats(event.target.value));
   document.addEventListener("click", async event => {
     const main = event.target.closest("[data-admin-view]"); if (main) return selectMainView(main.dataset.adminView);
+    if (event.target.closest("#createClanButton")) {
+      return modal("Создать клан", '<label class="field">Название<input name="name" maxlength="120" required></label><label class="field">Категория<select name="clanType"><option value="user">Пользовательский</option><option value="corporate">Корпоративный</option></select></label><label class="field">User key старшего<input name="leaderUserKey" maxlength="160" required></label><label class="field">Стартовый рейтинг<input name="ratingPoints" type="number" min="0" value="0"></label><label class="field">Причина<input name="reason" required></label><button class="gold-button">Создать и назначить старшего</button>', async data => {
+        const body = Object.fromEntries(data.entries());
+        body.ratingPoints = Number(body.ratingPoints);
+        const result = await act(() => api("/api/v1/admin/clans", { method:"POST", body:JSON.stringify(body) }), "Клан создан");
+        dialog.close();
+        await loadChats();
+        if (result?.clan?.id) await loadDetail(result.clan.id);
+      });
+    }
     const clan = event.target.closest("[data-admin-clan]"); if (clan) return loadDetail(clan.dataset.adminClan);
     const tab = event.target.closest("[data-detail-tab]"); if (tab) { state.detailTab = tab.dataset.detailTab; return renderDetail(); }
     const message = event.target.closest("[data-admin-delete-message]");
@@ -206,6 +219,7 @@
     }
     if (event.target.id === "chatSettingsForm") { event.preventDefault(); const f=event.target; await act(() => api(`/api/v1/admin/clans/${state.activeClanId}/chat`, { method:"PATCH", body:JSON.stringify({ enabled:f.elements.enabled.checked, readOnly:f.elements.readOnly.checked, ownDeleteWindowSeconds:Number(f.elements.deleteWindow.value), reason:f.elements.reason.value }) }), "Настройки сохранены"); return loadDetail(state.activeClanId); }
     if (event.target.id === "leaderForm") { event.preventDefault(); const d=Object.fromEntries(new FormData(event.target).entries()); await act(() => api(`/api/v1/admin/clans/${state.activeClanId}/leader`, { method:"PUT", body:JSON.stringify(d) }), "Главный клана изменён"); return loadDetail(state.activeClanId); }
+    if (event.target.id === "memberForm") { event.preventDefault(); const d=Object.fromEntries(new FormData(event.target).entries()); await act(() => api(`/api/v1/admin/clans/${state.activeClanId}/members`, { method:"POST", body:JSON.stringify(d) }), "Участник назначен"); return loadDetail(state.activeClanId); }
     if (event.target.id === "announcementForm") { event.preventDefault(); const d=Object.fromEntries(new FormData(event.target).entries()); await act(() => api(`/api/v1/admin/clans/${state.activeClanId}/announcements`, { method:"POST", body:JSON.stringify(d) }), "Объявление опубликовано"); event.target.reset(); return loadDetail(state.activeClanId); }
     if (event.target.id === "grantForm") { event.preventDefault(); const d=Object.fromEntries(new FormData(event.target).entries()); if (!d.expiresAt) delete d.expiresAt; await act(() => api(`/api/v1/admin/clans/${state.activeClanId}/grants`, { method:"POST", body:JSON.stringify(d) }), "Право применено"); return loadDetail(state.activeClanId); }
     const limit=event.target.closest("[data-limit-bucket]"); if (limit) { event.preventDefault(); await act(() => api(`/api/v1/admin/rate-limits/${encodeURIComponent(limit.dataset.limitBucket)}`, { method:"PUT", body:JSON.stringify({ limitCount:Number(limit.elements.limitCount.value), windowSeconds:Number(limit.elements.windowSeconds.value), enabled:limit.elements.enabled.checked }) }), "Лимит сохранён"); }

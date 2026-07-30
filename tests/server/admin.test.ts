@@ -124,6 +124,62 @@ test("one user cannot hold two active memberships in the same clan category", as
   assert.equal(corporate.status, 201);
 });
 
+test("an administrator can explicitly assign a member to each clan category", async () => {
+  const s = await setup();
+  const outsider = await loginUser(s.context, USERS.outsider);
+  const userKey = `tg:${USERS.outsider.id}`;
+  const assigned = await s.context.adminAgent
+    .post(`/api/v1/admin/clans/${s.clanId}/members`)
+    .send({ userKey, reason: "Назначение через CRM" });
+  assert.equal(assigned.status, 201);
+  assert.equal(assigned.body.membership.user_key, userKey);
+  assert.equal(assigned.body.membership.clan_type, "user");
+
+  const corporate = await createClan(s.context, {
+    id: "clan-corporate-assignment",
+    name: "BALI STAFF",
+    clanType: "corporate",
+    leaderUserKey: `tg:${USERS.deputy.id}`,
+    members: [{ userKey: `tg:${USERS.deputy.id}`, role: "leader" }]
+  });
+  const corporateAssignment = await s.context.adminAgent
+    .post(`/api/v1/admin/clans/${corporate.clanId}/members`)
+    .send({ userKey, reason: "Корпоративное назначение" });
+  assert.equal(corporateAssignment.status, 201);
+
+  const mine = await outsider.get("/api/v1/clans");
+  assert.deepEqual(
+    mine.body.clans.map((row: any) => row.clan_type).sort(),
+    ["corporate", "user"]
+  );
+});
+
+test("a clan leader can invite a user who explicitly accepts the membership", async () => {
+  const s = await setup();
+  const outsider = await loginUser(s.context, USERS.outsider);
+  const invite = await s.leader
+    .post(`/api/v1/clans/${s.clanId}/invitations`)
+    .send({
+      inviteeUserKey: `tg:${USERS.outsider.id}`,
+      message: "Присоединяйтесь к нашей команде"
+    });
+  assert.equal(invite.status, 201);
+
+  const pending = await outsider.get("/api/v1/clans/invitations/me");
+  assert.equal(pending.status, 200);
+  assert.equal(pending.body.invitations.length, 1);
+  assert.equal(pending.body.invitations[0].clan_name, "BALI Clan");
+
+  const accepted = await outsider
+    .patch(`/api/v1/clans/invitations/${invite.body.invitation.id}`)
+    .send({ status: "accepted" });
+  assert.equal(accepted.status, 200);
+
+  const mine = await outsider.get("/api/v1/clans");
+  assert.equal(mine.body.clans.length, 1);
+  assert.equal(mine.body.clans[0].id, s.clanId);
+});
+
 test("an administrator can update clan rating and the public order changes", async () => {
   const s = await setup();
   const updated = await s.context.adminAgent

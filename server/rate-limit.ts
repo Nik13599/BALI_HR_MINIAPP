@@ -14,7 +14,16 @@ const DEFAULTS: Record<string, { limit: number; windowSeconds: number }> = {
   "poll.vote": { limit: 30, windowSeconds: 60 },
   "event.attach": { limit: 10, windowSeconds: 3600 },
   "report.create": { limit: 5, windowSeconds: 3600 },
-  "notification.broadcast": { limit: 3, windowSeconds: 3600 }
+  "notification.broadcast": { limit: 3, windowSeconds: 3600 },
+  "connection.create": { limit: 10, windowSeconds: 86400 },
+  "invitation.create": { limit: 20, windowSeconds: 86400 },
+  "event_invitation.create": { limit: 20, windowSeconds: 86400 },
+  "direct_message.create": { limit: 60, windowSeconds: 60 },
+  "user_report.create": { limit: 5, windowSeconds: 86400 },
+  "gift.create": { limit: 20, windowSeconds: 3600 },
+  "booking.hold": { limit: 10, windowSeconds: 60 },
+  "game.session": { limit: 30, windowSeconds: 3600 },
+  "content.upload": { limit: 30, windowSeconds: 3600 }
 };
 
 export function requestSubject(req: Request, suffix = ""): string {

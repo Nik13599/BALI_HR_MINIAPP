@@ -3,15 +3,33 @@
 
   const KEY = "bali_nav_icons_v1";
   const DEFAULTS = [
-    { page: "home", label: "Главная", iconText: "⌂", image: "./assets/bali-temple/nav-home.svg" },
-    { page: "events", label: "Афиши", iconText: "◫", image: "./assets/bali-temple/nav-events.svg" },
-    { page: "menu", label: "Меню", iconText: "◇", image: "./assets/bali-temple/nav-menu.svg" },
-    { page: "dating", label: "BALI PEOPLE", iconText: "●", image: "./assets/bali-temple/nav-people.svg" },
-    { page: "crown", label: "Игра", iconText: "◆", image: "./assets/bali-temple/nav-game.svg" },
-    { page: "profile", label: "Профиль", iconText: "◎", image: "./assets/bali-temple/nav-profile.svg" },
+    { page: "home", label: "Главная", iconText: "⌂", image: "/site/assets/bali-temple/nav-home.svg" },
+    { page: "events", label: "Афиши", iconText: "◫", image: "/site/assets/bali-temple/nav-events.svg" },
+    { page: "menu", label: "Меню", iconText: "◇", image: "/site/assets/bali-temple/nav-menu.svg" },
+    { page: "dating", label: "BALI PEOPLE", iconText: "●", image: "/site/assets/bali-temple/nav-people.svg" },
+    { page: "crown", label: "Игра", iconText: "◆", image: "/site/assets/bali-temple/nav-game.svg" },
+    { page: "profile", label: "Профиль", iconText: "◎", image: "/site/assets/bali-temple/nav-profile.svg" },
   ];
 
   const clone = (value) => JSON.parse(JSON.stringify(value));
+  const productionRows = () => {
+    if (!window.BaliProduction) return null;
+    const rows = (window.BaliProduction.state?.platform?.navigation || [])
+      .filter((row) => row.app_type === "app")
+      .map((row) => {
+        const page = String(row.route || row.item_key || "").replace(/^#/, "");
+        const fallback = DEFAULTS.find((item) => item.page === page) || {};
+        return {
+          ...fallback,
+          page,
+          label: String(row.label || fallback.label || page),
+          iconText: String(fallback.iconText || "•"),
+          image: String(row.icon_url || fallback.image || ""),
+        };
+      })
+      .filter((row) => row.page);
+    return rows.length ? rows : clone(DEFAULTS);
+  };
   const normalize = (rows) => {
     const saved = new Map((Array.isArray(rows) ? rows : []).map((row) => [String(row.page || ""), row]));
     return DEFAULTS.map((fallback) => {
@@ -26,6 +44,8 @@
   };
 
   function read() {
+    const serverRows = productionRows();
+    if (serverRows) return serverRows;
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) || "[]");
       return normalize(Array.isArray(saved) ? saved : saved.items);
@@ -36,6 +56,7 @@
 
   function write(rows) {
     const next = normalize(rows);
+    if (window.BaliProduction) return next;
     localStorage.setItem(KEY, JSON.stringify(next));
     window.dispatchEvent(new CustomEvent("bali:nav-icons-changed", { detail: next }));
     return next;
@@ -50,6 +71,7 @@
   }
 
   function reset() {
+    if (window.BaliProduction) return read();
     localStorage.removeItem(KEY);
     return write(DEFAULTS);
   }
@@ -121,7 +143,9 @@
   });
 
   window.addEventListener("bali:nav-icons-changed", () => applyAll());
+  window.addEventListener("bali:production-refreshed", () => applyAll());
   window.addEventListener("storage", (event) => {
+    if (window.BaliProduction) return;
     if (event.key === KEY) applyAll();
   });
   ["bali:full-demo-ready", "bali:full-demo-enhancements-ready", "bali:match3-changed"].forEach((name) => {

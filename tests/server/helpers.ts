@@ -52,6 +52,36 @@ create table app_users (
   birth_date date,
   updated_at timestamptz not null default now()
 );
+create table user_profiles (
+  user_key text primary key references app_users(user_key) on delete cascade,
+  display_name text not null default '',
+  status_text text not null default '',
+  bio text not null default '',
+  interests text[] not null default '{}',
+  birth_date date,
+  gender text not null default 'unspecified',
+  avatar_url text not null default '',
+  phone text not null default '',
+  discoverable boolean not null default true,
+  allow_connections boolean not null default true,
+  allow_event_invites boolean not null default true,
+  allow_gifts boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table user_consents (
+  user_key text primary key references app_users(user_key) on delete cascade,
+  age_confirmed boolean not null default false,
+  age_confirmed_at timestamptz,
+  terms_version text not null default '',
+  terms_accepted_at timestamptz,
+  privacy_version text not null default '',
+  privacy_accepted_at timestamptz,
+  marketing_opt_in boolean not null default false,
+  marketing_updated_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
 create table telegram_accounts (
   id uuid primary key default gen_random_uuid(),
   app_user_key text not null unique references app_users(user_key) on delete cascade,
@@ -99,6 +129,102 @@ create table admin_sessions (
   created_at timestamptz not null default now(),
   last_seen_at timestamptz not null default now()
 );
+create table crm_customers (
+  id uuid primary key default gen_random_uuid(),
+  user_key text not null unique references app_users(user_key) on delete cascade,
+  legacy_customer_id text unique,
+  phone text not null default '',
+  first_name text not null default '',
+  last_name text not null default '',
+  birth_date date,
+  trust_status text not null default 'normal',
+  marketing_opt_in boolean not null default false,
+  first_seen_at timestamptz not null default now(),
+  last_activity_at timestamptz not null default now(),
+  app_opens integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table point_accounts (
+  user_key text primary key references app_users(user_key) on delete cascade,
+  balance bigint not null default 0,
+  lifetime_earned bigint not null default 0,
+  lifetime_spent bigint not null default 0,
+  version bigint not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table economy_settings (
+  singleton boolean primary key default true,
+  registration_points bigint not null default 100,
+  profile_completion_points bigint not null default 100,
+  checkin_points bigint not null default 250,
+  invited_friend_points bigint not null default 150,
+  clan_activity_points bigint not null default 25,
+  updated_by_admin_id uuid references admin_users(id),
+  updated_at timestamptz not null default now()
+);
+insert into economy_settings(singleton) values (true);
+create table point_ledger (
+  id uuid primary key default gen_random_uuid(),
+  user_key text not null references app_users(user_key),
+  amount bigint not null,
+  balance_before bigint not null,
+  balance_after bigint not null,
+  operation_type text not null,
+  source_type text not null,
+  source_id text not null default '',
+  reason text not null default '',
+  administrator_id uuid references admin_users(id),
+  idempotency_key text not null unique,
+  metadata jsonb not null default '{}',
+  created_at timestamptz not null default now()
+);
+create table game_profiles (
+  user_key text primary key references app_users(user_key) on delete cascade,
+  lives integer not null default 5,
+  best_score bigint not null default 0,
+  xp bigint not null default 0,
+  suspicious_score_count integer not null default 0,
+  last_life_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table notification_preferences (
+  user_key text primary key references app_users(user_key) on delete cascade,
+  in_app_enabled boolean not null default true,
+  telegram_enabled boolean not null default true,
+  marketing_enabled boolean not null default false,
+  quiet_hours_start time,
+  quiet_hours_end time,
+  disabled_types text[] not null default '{}',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table idempotency_records (
+  scope text not null,
+  idempotency_key text not null,
+  actor_key text not null default '',
+  request_hash text not null default '',
+  response_code integer,
+  response_body jsonb,
+  completed_at timestamptz,
+  expires_at timestamptz not null default (now() + interval '7 days'),
+  created_at timestamptz not null default now(),
+  primary key (scope, idempotency_key)
+);
+create table analytics_events (
+  id uuid primary key default gen_random_uuid(),
+  user_key text references app_users(user_key),
+  session_id uuid references user_sessions(id),
+  event_name text not null,
+  source text not null default 'app',
+  entity_type text not null default '',
+  entity_id text not null default '',
+  properties jsonb not null default '{}',
+  occurred_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
 create table events (
   id text primary key,
   title text not null,
@@ -135,6 +261,90 @@ create table clan_memberships (
 );
 create unique index clan_memberships_one_active_category
   on clan_memberships(user_key, clan_type) where status = 'active';
+create table clan_invitations (
+  id uuid primary key default gen_random_uuid(),
+  clan_id text not null references clans(id) on delete cascade,
+  inviter_user_key text not null references app_users(user_key) on delete cascade,
+  invitee_user_key text not null references app_users(user_key) on delete cascade,
+  status text not null default 'pending',
+  message text not null default '',
+  expires_at timestamptz,
+  responded_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create unique index clan_invitations_one_pending_idx
+  on clan_invitations(clan_id, invitee_user_key) where status = 'pending';
+create table notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_key text not null references app_users(user_key) on delete cascade,
+  notification_type text not null,
+  title text not null,
+  body text not null,
+  data jsonb not null default '{}',
+  idempotency_key text not null unique,
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create table clan_profiles (
+  clan_id text primary key references clans(id) on delete cascade,
+  logo_url text not null default '',
+  cover_url text not null default '',
+  description text not null default '',
+  achievements jsonb not null default '[]',
+  settings jsonb not null default '{}',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table user_connections (
+  id uuid primary key default gen_random_uuid(),
+  requester_user_key text not null references app_users(user_key),
+  recipient_user_key text not null references app_users(user_key),
+  pair_low text not null references app_users(user_key),
+  pair_high text not null references app_users(user_key),
+  status text not null default 'pending',
+  request_message text not null default '',
+  cooldown_until timestamptz,
+  responded_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (pair_low, pair_high)
+);
+create table user_blocks (
+  id uuid primary key default gen_random_uuid(),
+  blocker_user_key text not null references app_users(user_key),
+  blocked_user_key text not null references app_users(user_key),
+  reason text not null default '',
+  created_at timestamptz not null default now(),
+  unique (blocker_user_key, blocked_user_key)
+);
+create table event_runtime (
+  event_id text primary key references events(id) on delete cascade,
+  status text not null default 'published',
+  starts_at timestamptz,
+  ends_at timestamptz,
+  age_limit integer not null default 18,
+  dj text not null default '',
+  artists jsonb not null default '[]',
+  metadata jsonb not null default '{}',
+  published_at timestamptz,
+  completed_at timestamptz,
+  archived_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table event_attendance (
+  id uuid primary key default gen_random_uuid(),
+  event_id text not null references events(id) on delete cascade,
+  user_key text not null references app_users(user_key) on delete cascade,
+  status text not null,
+  source_type text not null default 'self',
+  source_id text not null default '',
+  responded_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (event_id, user_key)
+);
 create table clan_chats (
   id uuid primary key default gen_random_uuid(),
   clan_id text not null unique references clans(id) on delete cascade,

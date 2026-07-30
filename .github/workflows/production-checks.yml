@@ -1,4 +1,4 @@
-name: Production auth and clan chat checks
+name: Production checks
 
 on:
   pull_request:
@@ -21,6 +21,8 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Validate versioned migrations and rollback pairs
+        run: npm run migrations:check
       - run: npm run check
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high

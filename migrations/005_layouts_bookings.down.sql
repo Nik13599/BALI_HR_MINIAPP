@@ -1,0 +1,14 @@
+drop table if exists public.event_checkins;
+drop table if exists public.booking_status_history;
+drop table if exists public.booking_records;
+drop table if exists public.booking_holds;
+drop table if exists public.crm_notes;
+drop table if exists public.crm_customer_tags;
+drop table if exists public.crm_tags;
+drop table if exists public.crm_customers;
+drop table if exists public.booking_settings;
+drop table if exists public.event_layout_assignment_history;
+drop table if exists public.event_layout_assignments;
+drop table if exists public.layout_tables;
+drop table if exists public.hall_layout_elements;
+drop table if exists public.hall_layouts;

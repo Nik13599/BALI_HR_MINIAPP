@@ -2,10 +2,10 @@
   if (window.BaliVisualBlocks) return;
 
   const KEY = "bali_visual_blocks_v1";
-  const STONE = "./assets/bali-temple/hero-stone-face.webp";
-  const STATUES = "./assets/bali-temple/bronze-statues.webp";
-  const BEAR = "./assets/bali-temple/gold-bear.webp";
-  const GAME = "./assets/match3/background.webp";
+  const STONE = "/site/assets/bali-temple/hero-stone-face.webp";
+  const STATUES = "/site/assets/bali-temple/bronze-statues.webp";
+  const BEAR = "/site/assets/bali-temple/gold-bear.webp";
+  const GAME = "/site/assets/match3/background.webp";
 
   const GROUPS = [
     { id: "home", label: "Главная", page: "home" },
@@ -34,6 +34,7 @@
 
     { id: "people.header", group: "people", label: "Шапка BALI PEOPLE", selector: '[data-screen="dating"] .head', titleSelector: "h2", defaultTitle: "Люди BALI", width: 1600, height: 600, defaultImage: STATUES, overlay: 54, position: "center" },
     { id: "people.filters", group: "people", label: "Фильтры сообщества", selector: '[data-screen="dating"] .social-tabs-v2', generatedTitle: true, defaultTitle: "Фильтры", width: 1400, height: 520, defaultImage: STONE, overlay: 74, position: "center" },
+    { id: "people.connections", group: "people", label: "Знакомства и приглашения", selector: "#productionSocialPanel", generatedTitle: true, defaultTitle: "Заявки, приглашения и мои люди", width: 1400, height: 720, defaultImage: STONE, overlay: 74, position: "center" },
     { id: "people.catalog", group: "people", label: "Карточки участников", selector: "#socialV2Content", generatedTitle: true, defaultTitle: "Участники сообщества", width: 1400, height: 1000, defaultImage: STATUES, overlay: 78, position: "center" },
 
     { id: "game.header", group: "game", label: "Шапка игры", selector: ".match3-topbar", titleSelector: ".match3-brand h2", defaultTitle: "BALI Match", width: 1600, height: 600, defaultImage: GAME, overlay: 50, position: "center" },
@@ -46,6 +47,7 @@
     { id: "profile.header", group: "profile", label: "Шапка профиля", selector: '[data-screen="profile"] .head', titleSelector: "h2", defaultTitle: "Мой профиль", width: 1600, height: 600, defaultImage: STONE, overlay: 54, position: "center" },
     { id: "profile.hero", group: "profile", label: "Карточка пользователя", selector: "#profileHero", generatedTitle: true, defaultTitle: "Карточка пользователя", width: 1200, height: 800, defaultImage: STONE, overlay: 60, position: "center" },
     { id: "profile.level", group: "profile", label: "Статус и прогресс", selector: "#xpCard", generatedTitle: true, defaultTitle: "Статус и прогресс", width: 1200, height: 720, defaultImage: STATUES, overlay: 72, position: "center" },
+    { id: "profile.economy", group: "profile", label: "BALI Club: баллы, подарки и VIP", selector: "#productionProfileEconomy", titleSelector: ".card-head h3", defaultTitle: "BALI Club", width: 1200, height: 900, defaultImage: BEAR, overlay: 68, position: "center" },
     { id: "profile.shop", group: "profile", label: "BALI Shop", selector: "#profileV2Quick .profile-v2-tile.shop", titleSelector: "strong", defaultTitle: "BALI Shop", width: 1080, height: 1080, defaultImage: BEAR, overlay: 64, position: "center" },
     { id: "profile.rewards", group: "profile", label: "Мои награды", selector: "#profileV2Quick .profile-v2-tile.rewards", titleSelector: "strong", defaultTitle: "Мои награды", width: 1080, height: 1080, defaultImage: STATUES, overlay: 68, position: "center" },
     { id: "profile.invitations", group: "profile", label: "Приглашения", selector: "#profileV2Quick .profile-v2-tile.invites", titleSelector: "strong", defaultTitle: "Приглашения", width: 1080, height: 1080, defaultImage: STONE, overlay: 68, position: "center" },
@@ -59,8 +61,28 @@
   };
   const definition = (id) => BLOCKS.find((block) => block.id === id);
   const blank = (block) => ({ title: "", image: "", overlay: block.overlay, position: block.position });
+  const serverRaw = () => {
+    if (!window.BaliProduction) return null;
+    const platform = window.BaliProduction.state?.platform || {};
+    const assets = new Map((platform.assets || []).map((asset) => [asset.asset_key, asset.url]));
+    return Object.fromEntries((platform.blocks || [])
+      .filter((row) => ["app", "game", "shared"].includes(row.scope))
+      .map((row) => {
+        const configuration = row.configuration && typeof row.configuration === "object"
+          ? row.configuration
+          : {};
+        return [row.block_key, {
+          title: row.title || "",
+          image: row.asset_key ? assets.get(row.asset_key) || "" : String(configuration.image || ""),
+          overlay: configuration.overlay,
+          position: configuration.position,
+        }];
+      }));
+  };
 
   function raw() {
+    const serverValue = serverRaw();
+    if (serverValue) return serverValue;
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
       return saved && typeof saved === "object" ? saved : {};
@@ -96,6 +118,7 @@
 
   function write(value) {
     const next = compact(value);
+    if (window.BaliProduction) return normalize(next);
     localStorage.setItem(KEY, JSON.stringify(next));
     window.dispatchEvent(new CustomEvent("bali:visual-blocks-changed", { detail: clone(next) }));
     return normalize(next);
@@ -116,6 +139,7 @@
   }
 
   function reset() {
+    if (window.BaliProduction) return read();
     localStorage.removeItem(KEY);
     window.dispatchEvent(new CustomEvent("bali:visual-blocks-changed", { detail: {} }));
     return read();
@@ -270,6 +294,7 @@
 
   const refreshEvents = [
     "bali:visual-blocks-changed",
+    "bali:production-refreshed",
     "bali:full-demo-ready",
     "bali:full-demo-enhancements-ready",
     "bali:home-design-changed",
@@ -282,6 +307,7 @@
   ];
   refreshEvents.forEach((name) => window.addEventListener(name, () => requestAnimationFrame(applyAll)));
   window.addEventListener("storage", (event) => {
+    if (window.BaliProduction) return;
     if (event.key === KEY) requestAnimationFrame(applyAll);
   });
   document.addEventListener("click", (event) => {

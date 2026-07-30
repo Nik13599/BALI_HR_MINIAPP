@@ -24,6 +24,7 @@
     rankingType:"user",
     clanId:"",
     bundle:null,
+    invitations:[],
     availableEvents:[],
     loading:false,
     rankingLoading:false
@@ -114,6 +115,8 @@
       .clan-poll-option.selected{border-color:var(--lime);background:#c8ff3d12}.clan-poll-option b{color:var(--lime)}
       .clan-tools{display:grid;gap:8px;padding:10px}.clan-tools form{display:grid;gap:7px;padding:10px;border:1px solid var(--line);border-radius:13px;background:#ffffff04}
       .clan-tools input,.clan-tools textarea,.clan-tools select{width:100%;min-height:42px;padding:9px;border:1px solid var(--line);border-radius:11px;background:#090c0a;color:#fff;font:9px/1.4 system-ui;box-sizing:border-box}
+      .clan-invitations{display:grid;gap:8px}.clan-invitation{padding:12px;border:1px solid #c8ff3d55;border-radius:15px;background:linear-gradient(120deg,#c8ff3d12,#101411)}
+      .clan-invitation h4{margin:5px 0;color:#fff;font-size:11px}.clan-invitation p{margin:0 0 10px;color:var(--muted);font-size:8px;line-height:1.5}.clan-invitation-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
       .clan-empty{padding:25px 12px;color:var(--muted);text-align:center;font-size:9px;line-height:1.5}
       .clan-notification{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:8px}.clan-notification input{accent-color:var(--lime)}
       @media(max-width:360px){.people-mode-switch button{font-size:8px}.clan-main-tabs button{font-size:7px}.clan-event-mini{grid-template-columns:60px 1fr}.clan-event-mini img{width:60px}.clan-composer{grid-template-columns:1fr}.clan-composer button{width:100%}.clan-ranking-row{grid-template-columns:38px minmax(0,1fr) auto;gap:8px;padding:9px}.clan-ranking-position{width:38px;height:38px}}
@@ -229,15 +232,19 @@
     if (!state.bundle || force) root.innerHTML = '<div class="clan-empty">Загружаем кланы BALI…</div>';
     try {
       if (!state.clans.length || force) {
-        const result = await api("/api/v1/clans");
+        const [result, invitationResult] = await Promise.all([
+          api("/api/v1/clans"),
+          api("/api/v1/clans/invitations/me"),
+        ]);
         state.clans = result.clans || [];
+        state.invitations = invitationResult.invitations || [];
         if (!state.clanId || !state.clans.some(row => row.id === state.clanId)) {
           state.clanId = state.clans[0]?.id || "";
         }
       }
       if (!state.clanId) {
         state.bundle = null;
-        root.innerHTML = '<div class="clan-empty">Вы пока не состоите в клане BALI.</div>';
+        root.innerHTML = `<div class="clan-integrated-shell">${invitationsView()}<div class="clan-empty">Вы пока не состоите в клане BALI.</div></div>`;
         return;
       }
       state.bundle = await api(`/api/v1/clans/${encodeURIComponent(state.clanId)}/chat`);
@@ -268,6 +275,20 @@
       <nav class="clan-main-tabs">
         ${[["chat","✦","Чат"],["members","●","Участники"],["polls","✓","Опросы"],["events","◫","События"]].map(([id,icon,label]) => `<button type="button" class="${state.tab === id ? "active" : ""}" data-clan-tab="${id}"><i>${icon}</i>${label}</button>`).join("")}
       </nav>`;
+  }
+
+  function invitationsView() {
+    if (!state.invitations.length) return "";
+    return `<section class="clan-card"><div class="clan-card-head"><h4>Приглашения в кланы</h4><small>${state.invitations.length}</small></div>
+      <div class="clan-member-list clan-invitations">${state.invitations.map(invitation => `<article class="clan-invitation">
+        <span class="eyebrow">${esc(clanTypeName(invitation.clan_type).toUpperCase())}</span>
+        <h4>${esc(invitation.clan_name)}</h4>
+        <p>${esc(invitation.inviter_name || "Старший клана")}${invitation.message ? ` · ${esc(invitation.message)}` : ""}</p>
+        <div class="clan-invitation-actions">
+          <button class="clan-action" type="button" data-clan-invitation="${esc(invitation.id)}" data-invitation-status="accepted">ВСТУПИТЬ</button>
+          <button class="clan-action ghost" type="button" data-clan-invitation="${esc(invitation.id)}" data-invitation-status="declined">ОТКЛОНИТЬ</button>
+        </div>
+      </article>`).join("")}</div></section>`;
   }
 
   function announcements() {
@@ -319,7 +340,14 @@
     const members = result.members || [];
     return `<section class="clan-card"><div class="clan-card-head"><h4>Участники</h4><small>${members.length}</small></div><div class="clan-member-list">
       ${members.map(member => `<article class="clan-member"><div class="clan-avatar">${esc(String(member.profile?.name || "B").split(/\s+/).map(part => part[0]).join("").slice(0, 2))}</div><div><h4>${esc(member.profile?.name || "Участник")}</h4><p>${member.profile?.username ? `@${esc(String(member.profile.username).replace(/^@/, ""))}` : "BALI PEOPLE"}</p></div><span>${esc(roleName(member.role))}</span></article>`).join("")}
-    </div></section>`;
+    </div></section>
+    ${state.bundle.clan.role === "leader" ? `<section class="clan-card"><div class="clan-card-head"><h4>Пригласить участника</h4></div><div class="clan-tools">
+      <form id="clanInvitationForm">
+        <input name="inviteeUserKey" maxlength="160" placeholder="User key из профиля BALI" required>
+        <textarea name="message" maxlength="500" placeholder="Сообщение (необязательно)"></textarea>
+        <button class="clan-action" type="submit">ОТПРАВИТЬ ПРИГЛАШЕНИЕ</button>
+      </form>
+    </div></section>` : ""}`;
   }
 
   function pollsView() {
@@ -352,7 +380,7 @@
     if (state.tab === "members") content = await membersView();
     if (state.tab === "polls") content = pollsView();
     if (state.tab === "events") content = eventsView();
-    root.innerHTML = `<div class="clan-integrated-shell">${hero()}${content}</div>`;
+    root.innerHTML = `<div class="clan-integrated-shell">${invitationsView()}${hero()}${content}</div>`;
     requestAnimationFrame(() => {
       const list = document.getElementById("clanMessageList");
       if (list) list.scrollTop = list.scrollHeight;
@@ -360,8 +388,9 @@
   }
 
   document.addEventListener("click", async event => {
-    const mode = event.target.closest("[data-people-mode]");
-    if (mode) {
+    try {
+      const mode = event.target.closest("[data-people-mode]");
+      if (mode) {
       state.mode = mode.dataset.peopleMode;
       renderMode();
       return;
@@ -422,27 +451,49 @@
       await api(`/api/v1/clans/${encodeURIComponent(state.clanId)}/events`, json({ eventId:attach.dataset.clanAttachEvent }));
       toast("Событие прикреплено");
       await loadClan(true);
+      return;
+    }
+    const invitation = event.target.closest("[data-clan-invitation]");
+      if (invitation) {
+        await api(`/api/v1/clans/invitations/${encodeURIComponent(invitation.dataset.clanInvitation)}`, {
+          method:"PATCH",
+          body:JSON.stringify({ status:invitation.dataset.invitationStatus }),
+        });
+        toast(invitation.dataset.invitationStatus === "accepted" ? "Вы вступили в клан" : "Приглашение отклонено");
+        state.clans = [];
+        state.bundle = null;
+        await loadClan(true);
+      }
+    } catch (error) {
+      toast(error.message || "Действие не выполнено");
     }
   });
 
   document.addEventListener("change", async event => {
-    if (event.target.matches("[data-clan-select]")) {
-      state.clanId = event.target.value;
-      state.bundle = null;
-      await loadClan(true);
-    }
-    if (event.target.matches("[data-clan-announcements-only]")) {
-      await api(`/api/v1/clans/${encodeURIComponent(state.clanId)}/notifications`, {
-        method:"PUT",
-        body:JSON.stringify({ announcementsOnly:event.target.checked, mutedUntil:null })
-      });
-      toast("Настройки уведомлений сохранены");
-      await loadClan(true);
+    try {
+      if (event.target.matches("[data-clan-select]")) {
+        state.clanId = event.target.value;
+        state.bundle = null;
+        await loadClan(true);
+      }
+      if (event.target.matches("[data-clan-announcements-only]")) {
+        await api(`/api/v1/clans/${encodeURIComponent(state.clanId)}/notifications`, {
+          method:"PUT",
+          body:JSON.stringify({ announcementsOnly:event.target.checked, mutedUntil:null })
+        });
+        toast("Настройки уведомлений сохранены");
+        await loadClan(true);
+      }
+    } catch (error) {
+      toast(error.message || "Настройки не сохранены");
     }
   });
 
   document.addEventListener("submit", async event => {
-    if (event.target.id === "clanMessageForm") {
+    if (!["clanMessageForm", "clanPollForm", "clanAnnouncementForm", "clanInvitationForm"].includes(event.target.id)) return;
+    event.preventDefault();
+    try {
+      if (event.target.id === "clanMessageForm") {
       event.preventDefault();
       const form = new FormData(event.target);
       await api(`/api/v1/clans/${encodeURIComponent(state.clanId)}/messages`, json({
@@ -470,6 +521,19 @@
       toast("Объявление опубликовано");
       state.tab = "chat";
       await loadClan(true);
+    }
+      if (event.target.id === "clanInvitationForm") {
+      event.preventDefault();
+      const form = new FormData(event.target);
+      await api(`/api/v1/clans/${encodeURIComponent(state.clanId)}/invitations`, json({
+        inviteeUserKey:form.get("inviteeUserKey"),
+        message:form.get("message"),
+      }));
+      event.target.reset();
+        toast("Приглашение отправлено");
+      }
+    } catch (error) {
+      toast(error.message || "Действие не выполнено");
     }
   });
 

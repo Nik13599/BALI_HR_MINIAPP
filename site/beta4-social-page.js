@@ -134,6 +134,18 @@
   }
 
   async function insideIds() {
+    if (window.BaliProduction) {
+      const activeEvents = window.BaliProduction.state.events.filter(event => {
+        const end = eventEnd(event);
+        return Boolean(end && end.getTime() > Date.now());
+      });
+      const bundles = await Promise.all(activeEvents.map(event =>
+        window.BaliProduction.api(`/api/v1/events/${encodeURIComponent(event.id)}`).catch(() => ({ checkedIn: [] }))
+      ));
+      return new Set(bundles.flatMap(bundle =>
+        (bundle.checkedIn || []).map(row => String(row.user_key))
+      ));
+    }
     let checkins = [];
     let eventRows = [];
     try {
@@ -141,7 +153,9 @@
         attendance ? attendance.listCheckins() : Promise.resolve(Object.values(JSON.parse(localStorage.getItem("bali_event_checkins_v1") || "{}"))),
         store.list("events")
       ]);
-    } catch {}
+    } catch {
+      // The attendance filter stays empty when optional demo data is unavailable.
+    }
     const ids = new Set();
     checkins.filter(row => {
       if (row.left_at || row.presence_status === "left") return false;
@@ -195,6 +209,14 @@
   async function sendGift(giftId) {
     const gift = social.GIFT_CATALOG.find(row => row.id === giftId);
     if (!gift || !activePerson) return;
+    if (window.BaliProduction) {
+      if (confirm(`Отправить ${gift.icon} ${gift.name} за ${gift.stars} BALI Points?`)) {
+        social.recordGift(activePerson, giftId, "bali_points");
+        toast("Подарок отправлен");
+        document.getElementById("socialGiftV2").close();
+      }
+      return;
+    }
     const endpoint = window.BALI_CONFIG?.socialGiftInvoiceEndpoint;
     if (endpoint && tg?.openInvoice) {
       try {

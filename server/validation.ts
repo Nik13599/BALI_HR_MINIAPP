@@ -38,7 +38,30 @@ export function boundedInteger(value: unknown, fallback: number, min: number, ma
 }
 
 export function booleanValue(value: unknown, fallback = false): boolean {
-  return value === undefined ? fallback : value === true;
+  if (value === undefined) return fallback;
+  if (value === true || value === false) return value;
+  throw new ApiError(400, "Value must be a boolean", "validation_error");
+}
+
+export function enumValue<T extends string>(
+  value: unknown,
+  field: string,
+  allowed: readonly T[]
+): T {
+  const text = String(value ?? "").trim() as T;
+  if (!allowed.includes(text)) {
+    throw new ApiError(400, `${field} must be one of: ${allowed.join(", ")}`, "validation_error");
+  }
+  return text;
+}
+
+export function boundedNumber(value: unknown, fallback: number, min: number, max: number): number {
+  if (value === undefined || value === null || value === "") return fallback;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
+    throw new ApiError(400, `Value must be a number from ${min} to ${max}`, "validation_error");
+  }
+  return parsed;
 }
 
 export function uniqueStrings(value: unknown, field: string, min: number, max: number, itemMax = 200): string[] {

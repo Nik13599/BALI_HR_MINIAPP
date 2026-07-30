@@ -13,7 +13,7 @@ export function optionalUser(db: Queryable, config: AppConfig): RequestHandler {
     if (!token) return next();
     const row = await one<any>(
       db,
-      `select s.id as session_id, s.app_user_key, a.telegram_user_id,
+      `select s.id as session_id, s.app_user_key, s.last_seen_at, a.telegram_user_id,
               u.name, u.username, u.account_status
          from public.user_sessions s
          join public.app_users u on u.user_key = s.app_user_key
@@ -32,10 +32,13 @@ export function optionalUser(db: Queryable, config: AppConfig): RequestHandler {
         username: row.username,
         status: row.account_status
       };
-      await db.query(
-        `update public.user_sessions set last_seen_at = now() where id = $1`,
-        [row.session_id]
-      );
+      if (Date.now() - new Date(row.last_seen_at).getTime() > 300_000) {
+        await db.query(
+          `update public.user_sessions set last_seen_at = now()
+            where id = $1 and last_seen_at < now() - interval '5 minutes'`,
+          [row.session_id]
+        );
+      }
     }
     next();
   });
@@ -52,7 +55,7 @@ export function optionalAdmin(db: Queryable, config: AppConfig): RequestHandler 
     if (!token) return next();
     const row = await one<any>(
       db,
-      `select s.id as session_id, a.id as admin_id, a.email, a.role, a.status
+      `select s.id as session_id, s.last_seen_at, a.id as admin_id, a.email, a.role, a.status
          from public.admin_sessions s
          join public.admin_users a on a.id = s.admin_user_id
         where s.token_hash = $1 and s.revoked_at is null and s.expires_at > now()
@@ -68,7 +71,13 @@ export function optionalAdmin(db: Queryable, config: AppConfig): RequestHandler 
         role: row.role,
         status: row.status
       };
-      await db.query(`update public.admin_sessions set last_seen_at = now() where id = $1`, [row.session_id]);
+      if (Date.now() - new Date(row.last_seen_at).getTime() > 300_000) {
+        await db.query(
+          `update public.admin_sessions set last_seen_at = now()
+            where id = $1 and last_seen_at < now() - interval '5 minutes'`,
+          [row.session_id]
+        );
+      }
     }
     next();
   });

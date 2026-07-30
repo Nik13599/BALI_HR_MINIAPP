@@ -12,7 +12,14 @@
   ];
 
   const screenExists = page => Boolean(document.querySelector(`[data-screen="${page}"]`));
-  const visibleButtons = () => buttons.filter(([page]) => page !== "crown" || window.BaliMatch3?.config?.().enabled !== false);
+  const visibleButtons = () => {
+    const configured = window.BaliProduction && window.BaliNavIcons
+      ? window.BaliNavIcons.read().map(row => [row.page, row.iconText || "", row.label])
+      : buttons;
+    return configured.filter(([page]) =>
+      page !== "crown" || window.BaliMatch3?.config?.().enabled !== false
+    );
+  };
 
   function syncAvailability(nav) {
     nav.querySelectorAll('button[data-page]').forEach(button => {

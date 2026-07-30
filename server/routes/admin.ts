@@ -534,6 +534,88 @@ export function createAdminRouter(db: Queryable): Router {
     })
   );
 
+  router.post(
+    "/clans/:clanId/members",
+    requireRole("admin", "superadmin"),
+    asyncHandler(async (req, res) => {
+      const clanId = identifier(req.params.clanId, "clanId");
+      const userKey = identifier(req.body?.userKey, "userKey");
+      const reason = requiredText(req.body?.reason, "reason", 1000);
+      const [clan, user, existing] = await Promise.all([
+        one<any>(
+          db,
+          `select id, name, clan_type, status from public.clans where id = $1`,
+          [clanId]
+        ),
+        one<any>(
+          db,
+          `select user_key, name, account_status from public.app_users where user_key = $1`,
+          [userKey]
+        ),
+        one<any>(
+          db,
+          `select * from public.clan_memberships where clan_id = $1 and user_key = $2`,
+          [clanId, userKey]
+        )
+      ]);
+      if (!clan || clan.status !== "active") {
+        throw new ApiError(404, "Active clan was not found", "not_found");
+      }
+      if (!user || user.account_status !== "active") {
+        throw new ApiError(404, "Active user was not found", "not_found");
+      }
+      const conflict = await one<any>(
+        db,
+        `select membership.id, clan.id as clan_id, clan.name
+           from public.clan_memberships membership
+           join public.clans clan on clan.id = membership.clan_id
+          where membership.user_key = $1
+            and membership.status = 'active'
+            and membership.clan_type = $2
+            and membership.clan_id <> $3
+          limit 1`,
+        [userKey, clan.clan_type, clanId]
+      );
+      if (conflict) {
+        throw new ApiError(
+          409,
+          "User already belongs to a clan in this category",
+          "clan_category_membership_conflict",
+          { clanId: conflict.clan_id, clanName: conflict.name, clanType: clan.clan_type }
+        );
+      }
+      const membership = await one<any>(
+        db,
+        `insert into public.clan_memberships(
+           clan_id, user_key, clan_type, role, status
+         ) values ($1,$2,$3,'member','active')
+         on conflict (clan_id, user_key) do update
+           set clan_type = excluded.clan_type,
+               role = case
+                 when public.clan_memberships.role = 'leader' then 'leader'
+                 else 'member'
+               end,
+               status = 'active',
+               ended_at = null,
+               joined_at = now(),
+               updated_at = now()
+         returning *`,
+        [clanId, userKey, clan.clan_type]
+      );
+      await adminAudit(db, req, {
+        permissionKey: "clan.membership.manage",
+        action: existing?.status === "active" ? "clan.member.confirm" : "clan.member.assign",
+        targetType: "clan_membership",
+        targetId: membership!.id,
+        clanId,
+        reason,
+        before: existing,
+        after: membership
+      });
+      res.status(existing?.status === "active" ? 200 : 201).json({ membership });
+    })
+  );
+
   router.put(
     "/clans/:clanId/leader",
     requireRole("admin", "superadmin"),

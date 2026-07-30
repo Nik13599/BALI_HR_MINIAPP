@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#090806">
-  <title>BALI Admin — Clan Control</title>
-  <link rel="stylesheet" href="/site/admin-production.css?v=telegram-clan-chat-1">
-  <script defer src="/site/admin-production.js?v=telegram-clan-chat-1"></script>
+  <title>BALI Admin — Production Control</title>
+  <link rel="stylesheet" href="/site/admin-production.css?v=bali-production-2">
+  <script defer src="/site/admin-production.js?v=bali-production-2"></script>
 </head>
 <body>
   <section class="admin-login" id="adminLogin">
@@ -24,8 +24,18 @@
 
   <div class="admin-app" id="adminApp" hidden>
     <header class="admin-header">
-      <div class="admin-brand"><span>B</span><div><b>BALI CONTROL</b><small>CLAN CHAT · SECURITY</small></div></div>
+      <div class="admin-brand"><span>B</span><div><b>BALI CONTROL</b><small>CRM · EVENTS · ECONOMY · SECURITY</small></div></div>
       <nav>
+        <button type="button" data-admin-view="dashboard">Дашборд</button>
+        <button type="button" data-admin-view="crm">CRM</button>
+        <button type="button" data-admin-view="events">События</button>
+        <button type="button" data-admin-view="bookings">Брони</button>
+        <button type="button" data-admin-view="operations">QR</button>
+        <button type="button" data-admin-view="layouts">Схемы</button>
+        <button type="button" data-admin-view="economy">Экономика</button>
+        <button type="button" data-admin-view="content">Дизайн</button>
+        <button type="button" data-admin-view="campaigns">Рассылки</button>
+        <button type="button" data-admin-view="moderation">Модерация</button>
         <button class="active" type="button" data-admin-view="chats">Чаты</button>
         <button type="button" data-admin-view="audit">Аудит</button>
         <button type="button" data-admin-view="limits">Лимиты</button>
@@ -35,7 +45,7 @@
 
     <main class="admin-layout">
       <aside class="chat-sidebar" id="chatSidebar">
-        <header><h2>Кланы</h2><input id="chatSearch" type="search" placeholder="Поиск клана"></header>
+        <header><h2>Кланы</h2><button class="small-button" id="createClanButton" type="button">Создать клан</button><input id="chatSearch" type="search" placeholder="Поиск клана"></header>
         <div id="chatList"></div>
       </aside>
       <section class="admin-content" id="adminContent">
@@ -45,5 +55,6 @@
   </div>
   <dialog id="adminDialog"><form method="dialog" id="adminDialogForm"><header><h2 id="adminDialogTitle">Действие</h2><button value="cancel">×</button></header><div id="adminDialogBody"></div></form></dialog>
   <div class="admin-toast" id="adminToast"></div>
+  <script defer src="/site/admin-platform-ui.js?v=bali-production-2"></script>
 </body>
 </html>

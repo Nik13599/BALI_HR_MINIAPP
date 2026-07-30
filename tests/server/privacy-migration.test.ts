@@ -36,7 +36,7 @@ async function seedPrivateProfile(): Promise<{
       `tg:${USERS.leader.id}`,
       JSON.stringify({
         avatar: "public",
-        username: "vip",
+        username: "private",
         phone: "private",
         birth_date: "clan"
       })
@@ -45,7 +45,7 @@ async function seedPrivateProfile(): Promise<{
   return { leader, member };
 }
 
-test("VIP access reveals only fields explicitly marked visible to VIP", async () => {
+test("VIP status does not bypass a user's profile privacy", async () => {
   context = await createTestContext();
   const { member } = await seedPrivateProfile();
   await context.db.query(
@@ -57,12 +57,12 @@ test("VIP access reveals only fields explicitly marked visible to VIP", async ()
 
   assert.equal(response.status, 200);
   assert.equal(response.body.profile.avatar, "https://assets.test/leader.jpg");
-  assert.equal(response.body.profile.username, "leader_private");
+  assert.equal(response.body.profile.username, undefined);
   assert.equal(response.body.profile.phone, undefined);
   assert.equal(response.body.profile.birthDate, undefined);
 });
 
-test("a non-VIP viewer cannot see a VIP-only profile field", async () => {
+test("a regular viewer cannot see a private profile field", async () => {
   context = await createTestContext();
   const { member } = await seedPrivateProfile();
 
@@ -103,7 +103,7 @@ test("profile owner sees every own field and privacy settings", async () => {
   assert.equal(response.body.profile.username, "leader_private");
   assert.deepEqual(response.body.profile.privacy, {
     avatar: "public",
-    username: "vip",
+    username: "private",
     phone: "private",
     birth_date: "clan"
   });

@@ -52,6 +52,42 @@ export function createAuthRouter(db: Queryable, config: AppConfig): Router {
       `select app_user_key from public.telegram_accounts where telegram_user_id = $1`,
       [telegram.id]
     );
+    if (!existing) {
+      const legacy = await one<any>(
+        db,
+        `select user_key
+           from public.app_users
+          where telegram_id = $1 and user_key <> $2
+          limit 1`,
+        [String(telegram.id), userKey]
+      );
+      if (legacy) {
+        await db.query(
+          `insert into public.data_merge_review(
+             entity_type, legacy_id, candidate_user_key, reason, payload
+           ) values ('telegram_identity',$1,$2,$3,$4::jsonb)
+           on conflict (entity_type, legacy_id) do update
+             set candidate_user_key = excluded.candidate_user_key,
+                 reason = excluded.reason,
+                 payload = excluded.payload,
+                 status = case
+                   when data_merge_review.status = 'linked' then data_merge_review.status
+                   else 'pending'
+                 end`,
+          [
+            String(telegram.id),
+            legacy.user_key,
+            "Legacy Telegram ID requires administrator review before account binding",
+            JSON.stringify({ signedTelegramUser: telegram, canonicalUserKey: userKey })
+          ]
+        );
+        throw new ApiError(
+          409,
+          "Account binding requires administrator review",
+          "identity_merge_review_required"
+        );
+      }
+    }
     const linkedUserKey = existing?.app_user_key || userKey;
     const sessionToken = createSessionToken();
     const expiresAt = new Date(Date.now() + config.sessionTtlSeconds * 1000);
@@ -111,6 +147,104 @@ export function createAuthRouter(db: Queryable, config: AppConfig): Router {
         ]
       );
       await client.query(
+        `insert into public.user_profiles(
+           user_key, display_name, avatar_url, phone
+         ) values ($1,$2,$3,'')
+         on conflict (user_key) do nothing`,
+        [linkedUserKey, fullName, telegram.photo_url || ""]
+      );
+      await client.query(
+        `insert into public.user_consents(user_key)
+         values ($1)
+         on conflict (user_key) do nothing`,
+        [linkedUserKey]
+      );
+      await client.query(
+        `insert into public.crm_customers(
+           user_key, first_name, last_name, last_activity_at, app_opens
+         ) values ($1,$2,$3,now(),1)
+         on conflict (user_key) do update
+           set first_name = excluded.first_name,
+               last_name = excluded.last_name,
+               last_activity_at = now(),
+               app_opens = public.crm_customers.app_opens + 1,
+               updated_at = now()`,
+        [linkedUserKey, telegram.first_name, telegram.last_name || ""]
+      );
+      await client.query(
+        `insert into public.point_accounts(user_key)
+         values ($1)
+         on conflict (user_key) do nothing`,
+        [linkedUserKey]
+      );
+      await client.query(
+        `insert into public.game_profiles(user_key)
+         values ($1)
+         on conflict (user_key) do nothing`,
+        [linkedUserKey]
+      );
+      await client.query(
+        `insert into public.notification_preferences(user_key)
+         values ($1)
+         on conflict (user_key) do nothing`,
+        [linkedUserKey]
+      );
+      if (!existing) {
+        const registrationKey = `registration:${linkedUserKey}`;
+        const claim = await one<any>(
+          client,
+          `insert into public.idempotency_records(
+             scope, idempotency_key, actor_key, completed_at
+           ) values ('points',$1,$2,now())
+           on conflict (scope, idempotency_key) do nothing
+           returning idempotency_key`,
+          [registrationKey, linkedUserKey]
+        );
+        if (claim) {
+          const settings = await one<any>(
+            client,
+            `select registration_points as amount
+               from public.economy_settings
+              where singleton = true`
+          );
+          const amount = Number(settings?.amount || 0);
+          const account = await one<any>(
+            client,
+            `select balance from public.point_accounts
+              where user_key = $1 for update`,
+            [linkedUserKey]
+          );
+          const balanceBefore = Number(account?.balance || 0);
+          const balanceAfter = balanceBefore + amount;
+          await client.query(
+            `update public.point_accounts
+                set balance = $2,
+                    lifetime_earned = lifetime_earned + $3,
+                    version = version + 1,
+                    updated_at = now()
+              where user_key = $1`,
+            [linkedUserKey, balanceAfter, amount]
+          );
+          if (amount > 0) {
+            await client.query(
+              `insert into public.point_ledger(
+                 user_key, amount, balance_before, balance_after,
+                 operation_type, source_type, source_id, reason, idempotency_key
+               ) values ($1,$2,$3,$4,'credit','registration',$1,$5,$6)
+               on conflict (idempotency_key) do nothing`,
+              [
+                linkedUserKey,
+                amount,
+                balanceBefore,
+                balanceAfter,
+                "Начисление за регистрацию",
+                registrationKey
+              ]
+            );
+          }
+        }
+      }
+      await client.query(
         `insert into public.user_sessions(
            app_user_key, token_hash, telegram_auth_date, expires_at, ip_hash, user_agent
          ) values ($1,$2,$3,$4,$5,$6)`,
@@ -122,6 +256,12 @@ export function createAuthRouter(db: Queryable, config: AppConfig): Router {
           metadata.ipHash,
           metadata.userAgent
         ]
+      );
+      await client.query(
+        `insert into public.analytics_events(
+           user_key, event_name, source, entity_type, entity_id, properties
+         ) values ($1,'app_open','telegram','user',$1,$2::jsonb)`,
+        [linkedUserKey, JSON.stringify({ firstOpen: !existing })]
       );
       return user;
     });

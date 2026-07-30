@@ -38,15 +38,6 @@
     return Math.abs(ar - br) + Math.abs(ac - bc) === 1;
   };
 
-  function toast(message) {
-    const node = document.getElementById("toast");
-    if (!node) return;
-    node.textContent = message;
-    node.classList.add("show");
-    clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => node.classList.remove("show"), 2300);
-  }
-
   function swap(board, a, b) {
     [board[a], board[b]] = [board[b], board[a]];
   }
@@ -237,7 +228,11 @@
       state.message = combo > 1 ? `Каскад ×${combo}!` : `Комбинация: ${matches.size} предмета`;
       renderBoard();
       renderMetrics();
-      try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.(combo > 2 ? "heavy" : "medium"); } catch {}
+      try {
+        window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.(combo > 2 ? "heavy" : "medium");
+      } catch {
+        // Haptic feedback is optional in browsers and older Telegram clients.
+      }
       await delay(210);
       collapseBoard(matches);
       state.matched = new Set();
@@ -302,7 +297,11 @@
   function finishRound() {
     if (state.completed) return;
     state.completed = true;
-    const result = api.submitScore(state.score, { bestCombo: state.bestCombo, completed: true });
+    const result = api.submitScore(state.score, {
+      bestCombo: state.bestCombo,
+      completed: true,
+      durationSeconds: Math.max(0, Math.floor((Date.now() - state.roundStartedAt) / 1000)),
+    });
     renderAll();
     const dialog = document.getElementById("match3Finish");
     if (!dialog) return;
@@ -327,6 +326,8 @@
     state.boosterMode = "";
     state.busy = false;
     state.completed = false;
+    state.roundStartedAt = Date.now();
+    api.startSession?.();
     state.roundStartBest = Number(api.leaderboard().find((row) => row.isMe)?.score || 0);
     state.message = "Соединяйте три одинаковых предмета в ряд.";
     document.getElementById("match3Finish")?.close();
