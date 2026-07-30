@@ -12,6 +12,9 @@ const venue = fs.readFileSync("site/venue-reviews-user-beta4.js", "utf8");
 const clans = fs.readFileSync("site/bali-people-clans-beta4.js", "utf8");
 const socialPage = fs.readFileSync("site/beta4-social-page.js", "utf8");
 const profileFallback = fs.readFileSync("site/people-profile-stability-beta4.js", "utf8");
+const templeTheme = fs.readFileSync("site/bali-temple-theme-beta4.css", "utf8");
+const homeDesign = fs.readFileSync("site/home-design-core-beta4.js", "utf8");
+const visualBlocks = fs.readFileSync("site/bali-visual-blocks-core-beta4.js", "utf8");
 
 assert.ok(html.includes("bali-full-demo-8-stable27"), "Published page must use the requested stable27 build");
 assert.ok(loader.includes("home-layout-final-beta4.js"), "The current home layout must load");
@@ -35,6 +38,11 @@ assert.ok(home.includes("topProfileButton"), "The profile avatar must remain in 
 assert.ok(home.includes("repeat(3,minmax(0,1fr))"), "Three upcoming events must remain in one row where space allows");
 assert.ok(home.includes("home-social-links"), "Social links must remain compact");
 assert.ok(home.includes("home-contact-links"), "Contact links must remain compact");
+assert.ok(templeTheme.includes("width:min(943px,calc(100vw - 28px))"), "The desktop home hero must match the 943px reference width");
+assert.ok(templeTheme.includes("url(\"./assets/bali-temple/hero-stone-face.webp\")"), "The home hero must keep the supplied stone-face artwork");
+assert.ok(templeTheme.includes("width:calc(100vw - 22px)"), "The home hero must adapt to a mobile viewport");
+assert.ok(homeDesign.includes("minHeight: 265"), "The default home hero height must match the reference");
+assert.ok(visualBlocks.includes('width: 1600, height: 450, defaultImage: STONE'), "Admin image guidance must use a wide hero aspect ratio");
 assert.ok(venue.includes("Узнать подробнее о площадке"), "Home must open venue details");
 assert.ok(venue.includes("Оставить отзыв"), "Home must expose feedback");
 assert.ok(clans.includes("data-people-mode=\"people\""), "BALI People must retain its people directory mode");

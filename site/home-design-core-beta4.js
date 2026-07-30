@@ -12,7 +12,7 @@
       backgroundColor: "#151a17",
       backgroundImage: "",
       align: "left",
-      minHeight: 310,
+      minHeight: 265,
       pills: ["Кирова, 13", "ПТ–СБ · 23:00–06:00", "5 минут от «Динамо»"]
     },
     actions: {

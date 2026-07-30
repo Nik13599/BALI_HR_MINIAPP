@@ -97,6 +97,10 @@
 
   const homeDesign = read("bali_home_design_v1", {});
   const oldHero = homeDesign?.hero || {};
+  if (Number(oldHero.minHeight) === 310) {
+    homeDesign.hero = { ...oldHero, minHeight:265 };
+    changed = writeIfChanged("bali_home_design_v1", homeDesign) || changed;
+  }
   if (
     oldHero.title === "Твоя ночь" &&
     oldHero.accentTitle === "начинается здесь" &&

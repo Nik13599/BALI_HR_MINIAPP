@@ -17,7 +17,7 @@
   ];
 
   const BLOCKS = [
-    { id: "home.hero", group: "home", label: "Главный баннер", selector: '[data-screen="home"] .hero', titleSelector: "h1", defaultTitle: "BALI", width: 1600, height: 1000, defaultImage: STONE, overlay: 48, position: "center" },
+    { id: "home.hero", group: "home", label: "Главный баннер", selector: '[data-screen="home"] .hero', titleSelector: "h1", defaultTitle: "BALI", width: 1600, height: 450, defaultImage: STONE, overlay: 48, position: "center" },
     { id: "home.checkin", group: "home", label: "QR-подтверждение входа", selector: "#eventQrHomeCard", titleSelector: "h3", defaultTitle: "Подтвердить вход", width: 1200, height: 800, defaultImage: STONE, overlay: 58, position: "center" },
     { id: "home.upcoming", group: "home", label: "Ближайшие события", selector: "#homeEvents", closest: "section.card", titleSelector: ".card-head h3", defaultTitle: "Ближайшие события", width: 1400, height: 900, defaultImage: STATUES, overlay: 68, position: "center" },
     { id: "home.social", group: "home", label: "Социальные сети", selector: ".home-social-section", titleSelector: "h3", defaultTitle: "Мы в соцсетях", width: 1200, height: 720, defaultImage: STATUES, overlay: 66, position: "center" },
