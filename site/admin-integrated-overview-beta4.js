@@ -8,6 +8,7 @@
     style.id = "baliAdminIntegratedOverviewStyle";
     style.textContent = `
       .bali-admin-control{position:relative;overflow:hidden;border-color:rgba(227,189,100,.28)!important;background:radial-gradient(circle at 95% 0,rgba(174,76,24,.18),transparent 32%),linear-gradient(145deg,rgba(35,29,20,.96),rgba(13,16,14,.98))!important}
+      #content>.bali-admin-control~*{display:none!important}
       .bali-admin-control:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 47%,rgba(255,255,255,.025) 48%,transparent 49%);background-size:24px 24px;pointer-events:none}
       .bali-admin-control>*{position:relative;z-index:1}
       .bali-admin-control-head{display:flex;align-items:start;justify-content:space-between;gap:16px;padding:17px}
@@ -31,7 +32,7 @@
   function counts() {
     const snapshot = window.BaliClans?.snapshot?.() || {};
     const clans = Array.isArray(snapshot.clans) ? snapshot.clans : [];
-    const matchTop = window.BaliMatch3?.leaderboard?.().length || 0;
+    const matchTop = Math.min(10, window.BaliMatch3?.leaderboard?.().length || 10);
     return {
       users:Number(window.BaliDemo?.users?.length || 0),
       clans:clans.length,
@@ -49,7 +50,7 @@
     section.className = "panel bali-admin-control";
     section.innerHTML = `
       <header class="bali-admin-control-head">
-        <div><span class="eyebrow">ЕДИНЫЙ ЦЕНТР УПРАВЛЕНИЯ · BALI PEOPLE</span><h3>Все новые модули встроены в текущую админку</h3><p>Пользователи и корпоративные кланы, Match-3, экономика, события, QR и полный визуальный редактор.</p></div>
+        <div><span class="eyebrow">ЕДИНЫЙ ЦЕНТР УПРАВЛЕНИЯ · BALI PEOPLE</span><h3>Каждый модуль находится в своём разделе</h3><p>Выберите нужное направление: данные и инструменты больше не смешиваются на одном экране.</p></div>
         <span class="bali-admin-online">БЕТА РАБОТАЕТ</span>
       </header>
       <div class="bali-admin-control-metrics">

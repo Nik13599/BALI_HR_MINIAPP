@@ -1,5 +1,5 @@
 (async () => {
-  const version = "bali-full-demo-8-stable30";
+  const version = "bali-full-demo-8-stable31";
   window.BALI_DEMO_ONLY = true;
   window.BALI_WEB_DEMO = true;
   window.BALI_BROWSER_DEMO = true;
