@@ -312,12 +312,26 @@
           ${field("Цена продолжения", "continuePointsCost", data.gameSettings.continue_points_cost, "number", true)}
           ${field("Дней в рейтинге", "rankingPeriodDays", data.gameSettings.ranking_period_days, "number", true)}
           ${field("Макс. очков/сек.", "maxScorePerSecond", data.gameSettings.max_score_per_second, "number", true)}
+          ${field("Название игры", "gameTitle", data.gameSettings.game_title || "BALI Match", "text", true)}
+          ${field("Подзаголовок игры", "gameSubtitle", data.gameSettings.game_subtitle || "", "text", true)}
+          ${field("URL фона", "backgroundImageUrl", data.gameSettings.background_image_url || "", "url", true)}
+          ${field("URL изображения награды", "rewardImageUrl", data.gameSettings.reward_image_url || "", "url", true)}
           <label class="field">Фишки игры (JSON)<textarea name="symbolsJson" rows="14" required>${esc(JSON.stringify(data.gameSettings.symbols || [], null, 2))}</textarea></label>
+          <p class="platform-copy">Все игровые фишки загружаются квадратными изображениями 512 × 512 px. Для каждой версии сохраняется история, оригинал можно вернуть.</p>
           <label class="field">Награды Top-10 (JSON)<textarea name="prizesJson" rows="16" required>${esc(JSON.stringify(data.gameSettings.default_prizes || [], null, 2))}</textarea></label>
-          <div class="platform-inline"><button class="small-button" type="button" data-reset-game-symbols>Вернуть исходные фишки</button><button class="small-button" type="button" data-reset-game-prizes>Вернуть исходные награды</button></div>
+          <label class="field">Генератор уровней (JSON)<textarea name="levelRulesJson" rows="12" required>${esc(JSON.stringify(data.gameSettings.level_rules || {}, null, 2))}</textarea></label>
+          <label class="field">Формула очков (JSON)<textarea name="scoringRulesJson" rows="12" required>${esc(JSON.stringify(data.gameSettings.scoring_rules || {}, null, 2))}</textarea></label>
+          <label class="field">Формула рейтинга (JSON)<textarea name="ratingRulesJson" rows="10" required>${esc(JSON.stringify(data.gameSettings.rating_rules || {}, null, 2))}</textarea></label>
+          <label class="field">Bally, бустеры и продолжения (JSON)<textarea name="economyRulesJson" rows="12" required>${esc(JSON.stringify(data.gameSettings.economy_rules || {}, null, 2))}</textarea></label>
+          <label class="field">Жизни (JSON)<textarea name="livesRulesJson" rows="8" required>${esc(JSON.stringify(data.gameSettings.lives_rules || {}, null, 2))}</textarea></label>
+          <label class="field">Клановые раунды (JSON)<textarea name="clanRulesJson" rows="10" required>${esc(JSON.stringify(data.gameSettings.clan_rules || {}, null, 2))}</textarea></label>
+          <div class="platform-inline"><button class="small-button" type="button" data-reset-game-symbols>Вернуть исходные фишки</button><button class="small-button" type="button" data-reset-game-prizes>Вернуть исходные награды</button><button class="small-button" type="button" data-reset-game-rules>Вернуть исходные формулы</button></div>
           ${field("Причина", "reason", "Настройка игры", "text", true)}
           <button class="gold-button">Сохранить</button>
         </form></section>
+        ${list("История изображений фишек · 512 × 512", data.gameSymbolVersions || [],
+          item => `${item.symbol_key} · ${item.source} · ${item.width}×${item.height} · ${item.active ? "АКТИВНО" : fmt(item.created_at)}`,
+          item => `<button class="small-button" data-restore-game-symbol-version="${esc(item.id)}" data-symbol-key="${esc(item.symbol_key)}">Вернуть эту версию</button>`)}
         <section class="admin-panel"><h2>Недельное состязание</h2><form id="platformGameSeason">
           ${field("Название", "name", `Неделя ${seasonStart.toLocaleDateString("ru-RU")}`, "text", true)}
           ${field("Начало", "startsAt", seasonStart.toISOString().slice(0, 16), "datetime-local", true)}
@@ -555,6 +569,23 @@
       });
       return economy();
     }
+    const resetGameRules = event.target.closest("[data-reset-game-rules]");
+    if (resetGameRules && confirm("Вернуть исходные настройки уровней, формул, Bally, жизней и кланов?")) {
+      await send("/api/v1/admin/game/settings", "PATCH", {
+        resetGameRules: true,
+        reason: "Возврат исходных правил BALI Match",
+      });
+      return economy();
+    }
+    const restoreGameSymbol = event.target.closest("[data-restore-game-symbol-version]");
+    if (restoreGameSymbol && confirm("Сделать эту версию изображения активной?")) {
+      await send(
+        `/api/v1/admin/game/symbols/${encodeURIComponent(restoreGameSymbol.dataset.symbolKey)}/versions/${encodeURIComponent(restoreGameSymbol.dataset.restoreGameSymbolVersion)}/restore`,
+        "POST",
+        { reason: "Восстановление версии изображения фишки через BALI Control" }
+      );
+      return economy();
+    }
     const editAsset = event.target.closest("[data-edit-asset]");
     if (editAsset) {
       const current = designState.assets.find(item => item.asset_key === editAsset.dataset.editAsset);
@@ -778,12 +809,26 @@
     if (form.id === "platformGame") {
       let symbols;
       let defaultPrizes;
+      let levelRules;
+      let scoringRules;
+      let ratingRules;
+      let economyRules;
+      let livesRules;
+      let clanRules;
       try {
         symbols = JSON.parse(data.symbolsJson);
         defaultPrizes = JSON.parse(data.prizesJson);
-        if (!Array.isArray(symbols) || !Array.isArray(defaultPrizes)) throw new Error();
+        levelRules = JSON.parse(data.levelRulesJson);
+        scoringRules = JSON.parse(data.scoringRulesJson);
+        ratingRules = JSON.parse(data.ratingRulesJson);
+        economyRules = JSON.parse(data.economyRulesJson);
+        livesRules = JSON.parse(data.livesRulesJson);
+        clanRules = JSON.parse(data.clanRulesJson);
+        if (!Array.isArray(symbols) || !Array.isArray(defaultPrizes)
+          || [levelRules, scoringRules, ratingRules, economyRules, livesRules, clanRules]
+            .some(value => !value || Array.isArray(value) || typeof value !== "object")) throw new Error();
       } catch {
-        return toast("Фишки и награды должны быть корректными JSON-массивами");
+        return toast("Фишки, награды и правила должны содержать корректный JSON");
       }
       await send("/api/v1/admin/game/settings", "PATCH", {
         ...data,
@@ -793,6 +838,12 @@
         maxScorePerSecond: Number(data.maxScorePerSecond),
         symbols,
         defaultPrizes,
+        levelRules,
+        scoringRules,
+        ratingRules,
+        economyRules,
+        livesRules,
+        clanRules,
       });
       toast("Настройки игры сохранены");
       return economy();

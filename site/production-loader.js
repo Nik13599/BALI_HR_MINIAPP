@@ -1,6 +1,6 @@
 (async () => {
   "use strict";
-  const version = "bali-production-2";
+  const version = "bali-production-match3-infinite-1";
   window.BALI_DEMO_ONLY = false;
   window.BALI_WEB_DEMO = false;
   window.BALI_BROWSER_DEMO = false;
@@ -24,7 +24,9 @@
     "production-shell.css",
   ];
   const critical = [
+    "match3-infinite-engine-beta4.js",
     "production-client.js",
+    "production-match3-infinite.js",
     "beta4-app.js",
     "match3-game-ui-beta4.js",
     "home-community-copy-beta4.js",
@@ -85,11 +87,12 @@
   };
 
   try {
+    await loadScript("match3-infinite-engine-beta4.js");
     await loadScript("production-client.js");
     await window.BaliProduction.bootstrap();
     gate.hidden = true;
     app.hidden = false;
-    await loadOrdered(critical.slice(1));
+    await loadOrdered(critical.slice(2));
     document.documentElement.dataset.baliMode = "production";
     document.documentElement.dataset.database = "enabled";
     document.documentElement.dataset.externalAuth = "telegram";

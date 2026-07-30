@@ -42,12 +42,16 @@ export async function finalizeGameSeason(
       client,
       `select best.user_key, best.score,
               row_number() over (
-                order by best.score desc, best.ended_at asc, best.user_key
+                order by best.score desc, best.level desc, best.three_stars desc,
+                         best.updated_at asc, best.user_key
               )::integer as position
          from (
-           select user_key, max(final_score)::bigint as score, min(ended_at) as ended_at
-             from public.game_sessions
-            where season_id = $1 and status = 'completed' and suspicious = false
+           select user_key, sum(best_rating)::bigint as score,
+                  max(level_number)::integer as level,
+                  count(*) filter (where best_stars = 3)::integer as three_stars,
+                  min(updated_at) as updated_at
+             from public.game_level_results
+            where season_id = $1
             group by user_key
          ) best
         order by position limit 10`,

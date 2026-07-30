@@ -62,7 +62,8 @@ export function createAdminEconomyRouter(db: Queryable): Router {
       vipPlans,
       shopItems,
       gameSettings,
-      seasons
+      seasons,
+      gameSymbolVersions
     ] = await Promise.all([
       one<any>(db, `select * from public.economy_settings where singleton = true`),
       many<any>(db, `select * from public.reward_definitions order by updated_at desc`),
@@ -70,9 +71,10 @@ export function createAdminEconomyRouter(db: Queryable): Router {
       many<any>(db, `select * from public.vip_plans order by sort_order, points_cost`),
       many<any>(db, `select * from public.shop_items order by sort_order, name`),
       one<any>(db, `select * from public.game_settings where singleton = true`),
-      many<any>(db, `select * from public.game_seasons order by starts_at desc`)
+      many<any>(db, `select * from public.game_seasons order by starts_at desc`),
+      many<any>(db, `select * from public.game_symbol_versions order by created_at desc limit 200`)
     ]);
-    res.json({ settings, rewards, gifts, vipPlans, shopItems, gameSettings, seasons });
+    res.json({ settings, rewards, gifts, vipPlans, shopItems, gameSettings, seasons, gameSymbolVersions });
   }));
 
   router.patch("/economy/settings", asyncHandler(async (req, res) => {
@@ -778,29 +780,82 @@ export function createAdminEconomyRouter(db: Queryable): Router {
     if (!before) throw new ApiError(500, "Game settings are missing", "game_settings_missing");
     const resetSymbols = booleanValue(req.body?.resetSymbols);
     const resetPrizes = booleanValue(req.body?.resetPrizes);
+    const resetGameRules = booleanValue(req.body?.resetGameRules);
+    const nextSymbols = resetSymbols
+      ? before.original_symbols
+      : req.body?.symbols === undefined ? before.symbols : jsonArray(req.body.symbols, "symbols");
     const settings = await one<any>(
       db,
       `update public.game_settings
           set base_lives = $1, continue_points_cost = $2, ranking_period_days = $3,
               max_score_per_second = $4, symbols = $5::jsonb,
-              default_prizes = $6::jsonb, updated_by_admin_id = $7, updated_at = now()
+              default_prizes = $6::jsonb, game_title = $7, game_subtitle = $8,
+              background_image_url = $9, reward_image_url = $10,
+              level_rules = $11::jsonb, scoring_rules = $12::jsonb,
+              rating_rules = $13::jsonb, economy_rules = $14::jsonb,
+              lives_rules = $15::jsonb, clan_rules = $16::jsonb,
+              updated_by_admin_id = $17, updated_at = now()
         where singleton = true returning *`,
       [
         boundedInteger(req.body?.baseLives, Number(before.base_lives), 1, 100),
         boundedInteger(req.body?.continuePointsCost, Number(before.continue_points_cost), 0, 1_000_000_000),
         boundedInteger(req.body?.rankingPeriodDays, Number(before.ranking_period_days), 1, 366),
         boundedNumber(req.body?.maxScorePerSecond, Number(before.max_score_per_second), 1, 1_000_000),
-        JSON.stringify(resetSymbols
-          ? before.original_symbols
-          : req.body?.symbols === undefined ? before.symbols : jsonArray(req.body.symbols, "symbols")),
+        JSON.stringify(nextSymbols),
         JSON.stringify(resetPrizes
           ? before.original_prizes
           : req.body?.defaultPrizes === undefined
             ? before.default_prizes
           : jsonArray(req.body.defaultPrizes, "defaultPrizes")),
+        req.body?.gameTitle === undefined ? before.game_title : requiredText(req.body.gameTitle, "gameTitle", 160),
+        req.body?.gameSubtitle === undefined ? before.game_subtitle : requiredText(req.body.gameSubtitle, "gameSubtitle", 300),
+        req.body?.backgroundImageUrl === undefined ? before.background_image_url : optionalText(req.body.backgroundImageUrl, 2000),
+        req.body?.rewardImageUrl === undefined ? before.reward_image_url : optionalText(req.body.rewardImageUrl, 2000),
+        JSON.stringify(resetGameRules
+          ? before.original_level_rules
+          : req.body?.levelRules === undefined ? before.level_rules : jsonObject(req.body.levelRules, "levelRules")),
+        JSON.stringify(resetGameRules
+          ? before.original_scoring_rules
+          : req.body?.scoringRules === undefined ? before.scoring_rules : jsonObject(req.body.scoringRules, "scoringRules")),
+        JSON.stringify(resetGameRules
+          ? before.original_rating_rules
+          : req.body?.ratingRules === undefined ? before.rating_rules : jsonObject(req.body.ratingRules, "ratingRules")),
+        JSON.stringify(resetGameRules
+          ? before.original_economy_rules
+          : req.body?.economyRules === undefined ? before.economy_rules : jsonObject(req.body.economyRules, "economyRules")),
+        JSON.stringify(resetGameRules
+          ? before.original_lives_rules
+          : req.body?.livesRules === undefined ? before.lives_rules : jsonObject(req.body.livesRules, "livesRules")),
+        JSON.stringify(resetGameRules
+          ? before.original_clan_rules
+          : req.body?.clanRules === undefined ? before.clan_rules : jsonObject(req.body.clanRules, "clanRules")),
         req.adminPrincipal!.adminId
       ]
     );
+    for (const symbol of nextSymbols as any[]) {
+      const previous = Array.isArray(before.symbols)
+        ? before.symbols.find((row: any) => String(row.key) === String(symbol?.key))
+        : null;
+      const imageUrl = String(symbol?.imageUrl || symbol?.defaultImageUrl || "");
+      const previousUrl = String(previous?.imageUrl || previous?.defaultImageUrl || "");
+      if (!symbol?.key || !imageUrl || imageUrl === previousUrl) continue;
+      await db.query(
+        `update public.game_symbol_versions set active = false where symbol_key = $1`,
+        [String(symbol.key)]
+      );
+      await db.query(
+        `insert into public.game_symbol_versions(
+           symbol_key, label, image_url, width, height, source, active, created_by_admin_id
+         ) values ($1,$2,$3,512,512,$4,true,$5)`,
+        [
+          String(symbol.key),
+          String(symbol.label || symbol.key),
+          imageUrl,
+          resetSymbols ? "restored" : "custom",
+          req.adminPrincipal!.adminId
+        ]
+      );
+    }
     await writeAdminAudit(db, req, {
       action: "game.settings.update",
       targetType: "game_settings",
@@ -810,6 +865,55 @@ export function createAdminEconomyRouter(db: Queryable): Router {
       after: settings
     });
     res.json({ settings });
+  }));
+
+  router.get("/game/symbols/:symbolKey/versions", asyncHandler(async (req, res) => {
+    const symbolKey = identifier(req.params.symbolKey, "symbolKey");
+    const versions = await many<any>(
+      db,
+      `select * from public.game_symbol_versions
+        where symbol_key = $1 order by created_at desc limit 50`,
+      [symbolKey]
+    );
+    res.json({ symbolKey, recommendedWidth: 512, recommendedHeight: 512, versions });
+  }));
+
+  router.post("/game/symbols/:symbolKey/versions/:versionId/restore", asyncHandler(async (req, res) => {
+    const symbolKey = identifier(req.params.symbolKey, "symbolKey");
+    const versionId = uuid(req.params.versionId, "versionId");
+    const before = await one<any>(db, `select * from public.game_settings where singleton = true`);
+    const version = await one<any>(
+      db,
+      `select * from public.game_symbol_versions where id = $1 and symbol_key = $2`,
+      [versionId, symbolKey]
+    );
+    if (!before || !version) throw new ApiError(404, "Game symbol version was not found", "not_found");
+    const symbols = (Array.isArray(before.symbols) ? before.symbols : []).map((symbol: any) =>
+      String(symbol.key) === symbolKey
+        ? { ...symbol, imageUrl: version.image_url, active: true }
+        : symbol
+    );
+    const settings = await one<any>(
+      db,
+      `update public.game_settings
+          set symbols = $1::jsonb, updated_by_admin_id = $2, updated_at = now()
+        where singleton = true returning *`,
+      [JSON.stringify(symbols), req.adminPrincipal!.adminId]
+    );
+    await db.query(
+      `update public.game_symbol_versions set active = (id = $2)
+        where symbol_key = $1`,
+      [symbolKey, versionId]
+    );
+    await writeAdminAudit(db, req, {
+      action: "game.symbol.version.restore",
+      targetType: "game_symbol",
+      targetId: symbolKey,
+      reason: requiredText(req.body?.reason, "reason", 1000),
+      before,
+      after: settings
+    });
+    res.json({ settings, version });
   }));
 
   router.post("/game/seasons", asyncHandler(async (req, res) => {
@@ -837,15 +941,25 @@ export function createAdminEconomyRouter(db: Queryable): Router {
     const season = await one<any>(
       db,
       `insert into public.game_seasons(
-         name, starts_at, ends_at, status, rewards, created_by_admin_id
-       ) values ($1,$2,$3,$4,$5::jsonb,$6)
+         name, description, starts_at, ends_at, status, rewards,
+         configuration, progress_mode, created_by_admin_id
+       ) values ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8,$9)
        returning *`,
       [
         requiredText(req.body?.name, "name", 160),
+        optionalText(req.body?.description, 1000),
         startsAt,
         endsAt,
         enumValue(req.body?.status || "scheduled", "status", SEASON_STATUSES),
         JSON.stringify(jsonArray(req.body?.rewards || [], "rewards")),
+        JSON.stringify(req.body?.configuration === undefined
+          ? {}
+          : jsonObject(req.body.configuration, "configuration")),
+        enumValue(
+          req.body?.progressMode || "account_keep_season_reset",
+          "progressMode",
+          ["account_keep_season_reset", "carry_all", "reset_all"] as const
+        ),
         req.adminPrincipal!.adminId
       ]
     );

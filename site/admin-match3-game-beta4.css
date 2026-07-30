@@ -12,3 +12,9 @@
 @media(max-width:1050px){.match3-tile-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.match3-admin-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.match3-admin-summary{grid-template-columns:repeat(2,1fr)}.match3-tile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.match3-admin-form{grid-template-columns:1fr}.match3-admin-form .wide{grid-column:auto}.match3-admin-rank{grid-template-columns:26px minmax(0,1fr) auto}.match3-admin-rank small{grid-column:2/4}.match3-admin-actions{display:grid;grid-template-columns:1fr}.match3-admin-actions button{width:100%}}
 @media(max-width:420px){.match3-tile-grid{grid-template-columns:1fr 1fr}.match3-tile-card{padding:7px}.match3-tile-card h4{font-size:9px}}
+.match3-admin-details{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:14px;background:#ffffff03}
+.match3-admin-details>summary{cursor:pointer;color:#fff;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+.match3-admin-details>.match3-admin-form{margin-top:10px}
+.match3-image-size{margin:0;color:#b69d75;font-size:8px;line-height:1.4}
+.match3-tile-card details{padding:7px;border:1px solid var(--line);border-radius:10px}.match3-tile-card summary{cursor:pointer;color:#aaa;font-size:8px}
+.match3-tile-versions{display:grid;gap:5px;margin-top:7px}.match3-tile-versions button{text-align:left;overflow:hidden;text-overflow:ellipsis}.match3-tile-versions small{color:#777;font-size:8px}

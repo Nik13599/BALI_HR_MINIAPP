@@ -176,15 +176,19 @@ test("production economy renders scannable QR images instead of plaintext-only t
   assert.match(profile, /qrDataUrl/);
 });
 
-test("one match-3 round maps to one server game session", async () => {
-  const [client, ui] = await Promise.all([
-    read("site/production-client.js"),
-    read("site/match3-game-ui-beta4.js")
+test("every match-3 level and move is validated by one server game session", async () => {
+  const [adapter, ui, route, migration] = await Promise.all([
+    read("site/production-match3-infinite.js"),
+    read("site/match3-game-ui-beta4.js"),
+    read("server/routes/game.ts"),
+    read("migrations/017_infinite_match3_levels.up.sql")
   ]);
-  assert.match(client, /if \(!details\.completed\) return/);
-  assert.match(client, /activeGameSessionPromise/);
-  assert.match(ui, /api\.startSession\?\.\(\)/);
-  assert.match(ui, /durationSeconds/);
+  assert.match(adapter, /\/api\/v1\/game\/sessions/);
+  assert.match(adapter, /\/moves/);
+  assert.match(ui, /api\.playMove/);
+  assert.match(route, /game_move_sequence_mismatch/);
+  assert.match(route, /client_finish_payload/);
+  assert.match(migration, /unique \(game_session_id, sequence\)/);
 });
 
 test("weekly match-3 seasons are automatic and issue configured Top-10 prizes", async () => {

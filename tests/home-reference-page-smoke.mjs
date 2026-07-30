@@ -40,7 +40,7 @@ assert.ok(homeDesign.includes('heading: "СОЦСЕТИ"') && homeDesign.include
 assert.ok(page.includes("eventUi.participantsIcon") && page.includes("config.notice?.icon"), "Event and metric icons must use admin-configurable sources");
 assert.ok(page.includes("contacts.map?.heading") && page.includes("contacts.phone?.href"), "Bottom headings and actions must use admin-configurable content");
 assert.ok(adminHomeDesign.includes("Полная настройка главного экрана"), "Admin must expose a complete home customization panel");
-assert.ok(adminRuntime.includes("home-customization-2"), "Admin customization modules must use the current asset revision");
+assert.ok(adminRuntime.includes("match3-infinite-1"), "Admin customization modules must use the current asset revision");
 assert.ok(adminHomeDesign.includes('data-home-image="stats.${key}.icon"'), "Admin must upload a custom icon for every metric");
 assert.ok(adminHomeDesign.includes("event.peopleIcon") && adminHomeDesign.includes("controls.arrowIcon"), "Admin must edit all featured-event and transition icons");
 assert.ok(adminHomeDesign.includes("booking.icon") && adminHomeDesign.includes("social.heading"), "Admin must edit booking and social blocks");

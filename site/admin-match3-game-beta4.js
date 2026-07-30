@@ -14,6 +14,8 @@
     return `<form id="match3AdminConfig">
       <div class="match3-admin-form">
         <label class="match3-admin-switch"><span>Игра включена</span><input name="enabled" type="checkbox" ${config.enabled !== false ? "checked" : ""}></label>
+        <label class="wide"><span>Название сезона</span><input name="seasonName" value="${esc(config.season.name)}"></label>
+        <label class="wide"><span>Описание сезона</span><input name="seasonDescription" value="${esc(config.season.description)}"></label>
         <label><span>Размер поля</span><select name="boardSize">${[6, 7, 8].map((size) => `<option value="${size}" ${size === config.boardSize ? "selected" : ""}>${size} × ${size}</option>`).join("")}</select></label>
         <label><span>Ходов в раунде</span><input name="startingMoves" type="number" min="5" max="99" value="${config.startingMoves}"></label>
         <label><span>Цель раунда</span><input name="targetScore" type="number" min="1000" step="500" value="${config.targetScore}"></label>
@@ -25,8 +27,66 @@
         <label><span>Бомбы на раунд</span><input name="bomb" type="number" min="0" max="20" value="${Number(config.boosters.bomb || 0)}"></label>
         <label><span>Перемешивания</span><input name="shuffle" type="number" min="0" max="20" value="${Number(config.boosters.shuffle || 0)}"></label>
         <label><span>Подсказки</span><input name="hint" type="number" min="0" max="20" value="${Number(config.boosters.hint || 0)}"></label>
-        <label><span>Бонусы +5 ходов</span><input name="extraMoves" type="number" min="0" max="20" value="${Number(config.boosters.extraMoves || 0)}"></label>
+        <label><span>Удаления одной фишки</span><input name="remove" type="number" min="0" max="20" value="${Number(config.boosters.remove || 0)}"></label>
+        <label><span>Удаления типа фишек</span><input name="removeType" type="number" min="0" max="20" value="${Number(config.boosters.removeType || 0)}"></label>
       </div>
+      <details class="match3-admin-details" open><summary>Генератор бесконечных уровней</summary><div class="match3-admin-form">
+        <label><span>Строк поля (5–10)</span><input name="rows" type="number" min="5" max="10" value="${config.levelRules.rows}"></label>
+        <label><span>Колонок поля (5–10)</span><input name="columns" type="number" min="5" max="10" value="${config.levelRules.columns}"></label>
+        <label><span>Минимум типов фишек</span><input name="minTileTypes" type="number" min="5" max="8" value="${config.levelRules.minTileTypes}"></label>
+        <label><span>Максимум типов фишек</span><input name="maxTileTypes" type="number" min="5" max="8" value="${config.levelRules.maxTileTypes}"></label>
+        <label><span>Базовые ходы</span><input name="baseMoves" type="number" min="5" max="99" value="${config.levelRules.baseMoves}"></label>
+        <label><span>Минимум ходов</span><input name="minMoves" type="number" min="5" max="99" value="${config.levelRules.minMoves}"></label>
+        <label><span>Базовая цель очков</span><input name="baseTargetScore" type="number" min="500" step="100" value="${config.levelRules.baseTargetScore}"></label>
+        <label><span>Коэффициент √ уровня</span><input name="sqrtDifficulty" type="number" min="0" max="1" step="0.001" value="${config.levelRules.sqrtDifficulty}"></label>
+        <label><span>Линейный коэффициент</span><input name="linearDifficulty" type="number" min="0" max="1" step="0.001" value="${config.levelRules.linearDifficulty}"></label>
+        <label><span>Максимум целей</span><input name="maxGoals" type="number" min="1" max="5" value="${config.levelRules.maxGoals}"></label>
+        <label><span>Контрольная точка каждые</span><input name="checkpointEvery" type="number" min="1" max="100" value="${config.levelRules.checkpointEvery}"></label>
+        <label><span>Многоэтапный уровень каждые</span><input name="milestoneEvery" type="number" min="1" max="100" value="${config.levelRules.milestoneEvery}"></label>
+        <label><span>Спецфишки с уровня</span><input name="specialStartLevel" type="number" min="1" value="${config.levelRules.specialStartLevel}"></label>
+        <label><span>Препятствия с уровня</span><input name="obstacleStartLevel" type="number" min="1" value="${config.levelRules.obstacleStartLevel}"></label>
+        <label><span>Макс. доля блоков</span><input name="blockedChanceMax" type="number" min="0" max=".5" step=".01" value="${config.levelRules.blockedChanceMax}"></label>
+        <label><span>Макс. доля препятствий</span><input name="obstacleChanceMax" type="number" min="0" max=".8" step=".01" value="${config.levelRules.obstacleChanceMax}"></label>
+      </div></details>
+      <details class="match3-admin-details"><summary>Очки, звёзды и сезонный рейтинг</summary><div class="match3-admin-form">
+        ${[
+          ["baseTile", "Очков за фишку"], ["combo3", "Коэффициент 3"], ["combo4", "Коэффициент 4"],
+          ["combo5", "Коэффициент 5"], ["combo6", "Коэффициент 6+"], ["comboTL", "Коэффициент T/L"],
+          ["cascadeStep", "Шаг каскада"], ["maxCascade", "Макс. множитель каскада"],
+          ["lineCreate", "Создание линии"], ["bombCreate", "Создание бомбы"], ["rainbowCreate", "Создание радуги"],
+          ["lineActivate", "Активация линии"], ["bombActivate", "Активация бомбы"], ["rainbowActivate", "Активация радуги"],
+          ["obstacleLayer", "Слой препятствия"], ["goalComplete", "Завершение цели"], ["allGoalsBase", "Все цели"],
+          ["remainingMove", "Оставшийся ход"], ["cleanMultiplier", "Чистое прохождение"], ["star2", "Порог 2★"], ["star3", "Порог 3★"],
+        ].map(([key, label]) => `<label><span>${label}</span><input name="scoring_${key}" type="number" min="0" step=".01" value="${config.scoringRules[key]}"></label>`).join("")}
+        ${[
+          ["base", "База рейтинга"], ["levelLog", "Логарифм уровня"], ["star1", "Коэфф. 1★"], ["star2", "Коэфф. 2★"],
+          ["star3", "Коэфф. 3★"], ["continue0", "Без продолжения"], ["continue1", "1 продолжение"], ["continue2", "2 продолжения"],
+        ].map(([key, label]) => `<label><span>${label}</span><input name="rating_${key}" type="number" min="0" step=".01" value="${config.ratingRules[key]}"></label>`).join("")}
+      </div></details>
+      <details class="match3-admin-details"><summary>Bally, бустеры, продолжения и жизни</summary><div class="match3-admin-form">
+        <label><span>Первое прохождение</span><input name="firstCompletion" type="number" min="0" value="${config.economy.firstCompletion}"></label>
+        <label><span>Чистое прохождение</span><input name="cleanCompletion" type="number" min="0" value="${config.economy.cleanCompletion}"></label>
+        <label><span>Bally за 1★</span><input name="starReward1" type="number" min="0" value="${config.economy.starRewards[1]}"></label>
+        <label><span>Bally за 2★</span><input name="starReward2" type="number" min="0" value="${config.economy.starRewards[2]}"></label>
+        <label><span>Bally за 3★</span><input name="starReward3" type="number" min="0" value="${config.economy.starRewards[3]}"></label>
+        <label><span>Ходов за продолжение</span><input name="continueMoves" type="number" min="1" value="${config.economy.continueMoves}"></label>
+        <label><span>Цена 1-го продолжения</span><input name="continueCost1" type="number" min="0" value="${config.economy.continueCosts[0]}"></label>
+        <label><span>Цена 2-го продолжения</span><input name="continueCost2" type="number" min="0" value="${config.economy.continueCosts[1]}"></label>
+        ${["shuffle", "hint", "bomb", "remove", "removeType"].map(key => `<label><span>Цена бустера ${key}</span><input name="booster_${key}" type="number" min="0" value="${config.economy.boosterCosts[key]}"></label>`).join("")}
+        <label><span>Максимум жизней</span><input name="maximumLives" type="number" min="1" max="20" value="${config.lives.maximum}"></label>
+        <label><span>Восстановление, минут</span><input name="restoreMinutes" type="number" min="1" value="${config.lives.restoreMinutes}"></label>
+        <label><span>Цена одной жизни</span><input name="lifeCost" type="number" min="0" value="${config.economy.lifeCost}"></label>
+        <label><span>Цена полного запаса</span><input name="fullLivesCost" type="number" min="0" value="${config.economy.fullLivesCost}"></label>
+      </div></details>
+      <details class="match3-admin-details"><summary>Честное клановое соревнование</summary><div class="match3-admin-form">
+        <label><span>Минимум участников</span><input name="minimumMembers" type="number" min="2" value="${config.clanRules.minimumMembers}"></label>
+        <label><span>Максимум участников</span><input name="maximumMembers" type="number" min="2" value="${config.clanRules.maximumMembers}"></label>
+        <label><span>Блокировка перехода, часов</span><input name="transitionLockHours" type="number" min="0" value="${config.clanRules.transitionLockHours}"></label>
+        <label><span>Лимит бонуса задач</span><input name="taskRatingBonusLimit" type="number" min="0" max=".5" step=".01" value="${config.clanRules.taskRatingBonusLimit}"></label>
+        <label><span>Уровней для сундука</span><input name="minimumLevelsForChest" type="number" min="1" value="${config.clanRules.minimumLevelsForChest}"></label>
+        <label><span>Лучших раундов в сезон</span><input name="bestClanRounds" type="number" min="1" value="${config.season.bestClanRounds}"></label>
+        <label class="match3-admin-switch"><span>Заморозить сезон</span><input name="seasonFrozen" type="checkbox" ${config.season.frozen ? "checked" : ""}></label>
+      </div></details>
       <div class="match3-admin-actions" style="margin-top:12px"><button class="primary" type="submit">Сохранить настройки игры</button><button class="ghost pink" type="button" data-match3-reset-config>Вернуть исходные настройки</button></div>
     </form>`;
   }
@@ -34,11 +94,15 @@
   function tileCards(config) {
     return `<form id="match3AdminTiles"><div class="match3-tile-grid">${config.tiles.map((tile) => `
       <article class="match3-tile-card" data-match3-tile="${esc(tile.id)}">
-        <img src="${esc(tile.image)}" alt="" data-match3-tile-preview>
+        <img src="${esc(tile.activeAsset || tile.image)}" alt="" data-match3-tile-preview>
         <h4>${esc(tile.name)}</h4>
+        <p class="match3-image-size">Исходный размер: 512 × 512 px · WebP/PNG/JPG · квадрат</p>
         <label><span>Название предмета</span><input data-tile-field="name" value="${esc(tile.name)}"></label>
-        <label><span>URL или загруженное изображение</span><input data-tile-field="image" value="${esc(tile.image)}"></label>
+        <label><span>Оригинал</span><input data-tile-field="originalAsset" value="${esc(tile.originalAsset || tile.image)}" readonly></label>
+        <label><span>Активное изображение</span><input data-tile-field="activeAsset" value="${esc(tile.activeAsset || tile.image)}"></label>
+        <label><span>Последнее пользовательское</span><input data-tile-field="customAsset" value="${esc(tile.customAsset || "")}" readonly></label>
         <label class="match3-upload">Загрузить изображение<input type="file" accept="image/*" data-match3-tile-upload></label>
+        <details><summary>История изображений (${tile.versions?.length || 0})</summary><div class="match3-tile-versions">${(tile.versions || []).slice(0, 5).map((version, index) => `<button type="button" class="ghost compact" data-match3-tile-version="${index}" data-version-src="${esc(version.image || version)}">${new Date(version.createdAt || Date.now()).toLocaleDateString("ru-RU")}</button>`).join("") || "<small>Пока нет сохранённых версий</small>"}</div></details>
         <div class="match3-tile-controls"><label><input data-tile-field="active" type="checkbox" ${tile.active !== false ? "checked" : ""}> Активен</label><button class="ghost compact" type="button" data-match3-reset-tile="${esc(tile.id)}">Вернуть</button></div>
       </article>`).join("")}</div>
       <div class="match3-admin-actions" style="margin-top:12px"><button class="primary" type="submit">Сохранить предметы</button><button class="ghost pink" type="button" data-match3-reset-tiles>Вернуть все исходные предметы</button></div>
@@ -108,7 +172,7 @@
       const image = new Image();
       const url = URL.createObjectURL(file);
       image.onload = () => {
-        const size = 384;
+        const size = 512;
         const canvas = document.createElement("canvas");
         canvas.width = canvas.height = size;
         const context = canvas.getContext("2d");
@@ -127,33 +191,86 @@
     if (event.target.id === "match3AdminConfig") {
       event.preventDefault();
       const data = Object.fromEntries(new FormData(event.target).entries());
+      const numeric = name => Number(data[name]);
+      const scoringRules = Object.fromEntries([...event.target.elements]
+        .filter(input => input.name?.startsWith("scoring_"))
+        .map(input => [input.name.replace("scoring_", ""), Number(input.value)]));
+      const ratingRules = Object.fromEntries([...event.target.elements]
+        .filter(input => input.name?.startsWith("rating_"))
+        .map(input => [input.name.replace("rating_", ""), Number(input.value)]));
       api.saveConfig({
         enabled: event.target.enabled.checked,
         title: data.title.trim(),
         subtitle: data.subtitle.trim(),
-        boardSize: Number(data.boardSize),
-        startingMoves: Number(data.startingMoves),
-        targetScore: Number(data.targetScore),
-        resetDay: Number(data.resetDay),
+        boardSize: numeric("rows"),
+        startingMoves: numeric("baseMoves"),
+        targetScore: numeric("baseTargetScore"),
+        resetDay: numeric("resetDay"),
         backgroundImage: data.backgroundImage.trim(),
         rewardImage: data.rewardImage.trim(),
+        levelRules: {
+          rows: numeric("rows"), columns: numeric("columns"),
+          minTileTypes: numeric("minTileTypes"), maxTileTypes: numeric("maxTileTypes"),
+          baseMoves: numeric("baseMoves"), minMoves: numeric("minMoves"),
+          baseTargetScore: numeric("baseTargetScore"),
+          sqrtDifficulty: numeric("sqrtDifficulty"), linearDifficulty: numeric("linearDifficulty"),
+          maxGoals: numeric("maxGoals"), checkpointEvery: numeric("checkpointEvery"),
+          milestoneEvery: numeric("milestoneEvery"), specialStartLevel: numeric("specialStartLevel"),
+          obstacleStartLevel: numeric("obstacleStartLevel"),
+          blockedChanceMax: numeric("blockedChanceMax"), obstacleChanceMax: numeric("obstacleChanceMax"),
+        },
+        scoringRules,
+        ratingRules,
+        economy: {
+          firstCompletion: numeric("firstCompletion"), cleanCompletion: numeric("cleanCompletion"),
+          starRewards: [0, numeric("starReward1"), numeric("starReward2"), numeric("starReward3")],
+          continueMoves: numeric("continueMoves"),
+          continueCosts: [numeric("continueCost1"), numeric("continueCost2")],
+          boosterCosts: {
+            shuffle: numeric("booster_shuffle"), hint: numeric("booster_hint"), bomb: numeric("booster_bomb"),
+            remove: numeric("booster_remove"), removeType: numeric("booster_removeType"),
+          },
+          lifeCost: numeric("lifeCost"), fullLivesCost: numeric("fullLivesCost"),
+        },
+        lives: { maximum: numeric("maximumLives"), restoreMinutes: numeric("restoreMinutes") },
+        season: {
+          name: data.seasonName.trim(), description: data.seasonDescription.trim(),
+          frozen: event.target.seasonFrozen.checked, bestClanRounds: numeric("bestClanRounds"),
+        },
+        clanRules: {
+          minimumMembers: numeric("minimumMembers"), maximumMembers: numeric("maximumMembers"),
+          transitionLockHours: numeric("transitionLockHours"),
+          taskRatingBonusLimit: numeric("taskRatingBonusLimit"),
+          minimumLevelsForChest: numeric("minimumLevelsForChest"),
+        },
         boosters: {
-          bomb: Number(data.bomb),
-          shuffle: Number(data.shuffle),
-          hint: Number(data.hint),
-          extraMoves: Number(data.extraMoves),
+          bomb: numeric("bomb"), shuffle: numeric("shuffle"), hint: numeric("hint"),
+          remove: numeric("remove"), removeType: numeric("removeType"),
         },
       });
       toast("Настройки игры сохранены");
     }
     if (event.target.id === "match3AdminTiles") {
       event.preventDefault();
-      const tiles = [...event.target.querySelectorAll("[data-match3-tile]")].map((card) => ({
-        id: card.dataset.match3Tile,
-        name: card.querySelector('[data-tile-field="name"]').value.trim(),
-        image: card.querySelector('[data-tile-field="image"]').value.trim(),
-        active: card.querySelector('[data-tile-field="active"]').checked,
-      }));
+      const current = api.config();
+      const tiles = [...event.target.querySelectorAll("[data-match3-tile]")].map((card) => {
+        const previous = current.tiles.find(tile => tile.id === card.dataset.match3Tile) || {};
+        const activeAsset = card.querySelector('[data-tile-field="activeAsset"]').value.trim();
+        const versions = [...(previous.versions || [])];
+        if (activeAsset && activeAsset !== previous.activeAsset) {
+          versions.unshift({ image: activeAsset, createdAt: new Date().toISOString() });
+        }
+        return {
+          id: card.dataset.match3Tile,
+          name: card.querySelector('[data-tile-field="name"]').value.trim(),
+          image: activeAsset,
+          originalAsset: card.querySelector('[data-tile-field="originalAsset"]').value.trim(),
+          activeAsset,
+          customAsset: card.querySelector('[data-tile-field="customAsset"]').value.trim(),
+          versions: versions.slice(0, 20),
+          active: card.querySelector('[data-tile-field="active"]').checked,
+        };
+      });
       if (tiles.filter((tile) => tile.active && tile.image).length < 5) {
         toast("Оставьте активными минимум 5 предметов");
         return;
@@ -182,7 +299,8 @@
       try {
         const image = await resizeImage(upload.files[0]);
         const card = upload.closest("[data-match3-tile]");
-        card.querySelector('[data-tile-field="image"]').value = image;
+        card.querySelector('[data-tile-field="activeAsset"]').value = image;
+        card.querySelector('[data-tile-field="customAsset"]').value = image;
         card.querySelector("[data-match3-tile-preview]").src = image;
         toast("Изображение подготовлено. Нажмите «Сохранить предметы».");
       } catch {
@@ -191,7 +309,7 @@
       upload.value = "";
       return;
     }
-    const imageInput = event.target.closest('[data-tile-field="image"]');
+    const imageInput = event.target.closest('[data-tile-field="activeAsset"]');
     if (imageInput) imageInput.closest("[data-match3-tile]").querySelector("[data-match3-tile-preview]").src = imageInput.value.trim();
   }, true);
 
@@ -202,11 +320,23 @@
       const card = resetTile.closest("[data-match3-tile]");
       if (original && card) {
         card.querySelector('[data-tile-field="name"]').value = original.name;
-        card.querySelector('[data-tile-field="image"]').value = original.image;
+        card.querySelector('[data-tile-field="originalAsset"]').value = original.originalAsset || original.image;
+        card.querySelector('[data-tile-field="activeAsset"]').value = original.originalAsset || original.image;
+        card.querySelector('[data-tile-field="customAsset"]').value = "";
         card.querySelector('[data-tile-field="active"]').checked = true;
         card.querySelector("[data-match3-tile-preview]").src = original.image;
         card.querySelector("h4").textContent = original.name;
       }
+      return;
+    }
+    const versionButton = event.target.closest("[data-match3-tile-version]");
+    if (versionButton) {
+      const card = versionButton.closest("[data-match3-tile]");
+      const source = versionButton.dataset.versionSrc;
+      card.querySelector('[data-tile-field="activeAsset"]').value = source;
+      card.querySelector('[data-tile-field="customAsset"]').value = source;
+      card.querySelector("[data-match3-tile-preview]").src = source;
+      toast("Выбрана сохранённая версия. Нажмите «Сохранить предметы».");
       return;
     }
     if (event.target.closest("[data-match3-reset-tiles]")) {

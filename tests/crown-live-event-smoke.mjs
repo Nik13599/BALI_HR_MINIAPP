@@ -18,7 +18,7 @@ assert.ok(core.includes("points.adjustAccount"), "Weekly prizes must grant bonus
 assert.ok(core.includes("activateVip"), "Configured weekly prizes must grant VIP status");
 assert.ok(core.includes("function resetTiles"), "Default game items must be restorable");
 assert.ok(core.includes("function resetRewards"), "Default rewards must be restorable");
-assert.ok(ui.includes("Рейтинг недели"), "The mobile game UI must expose the weekly ranking");
+assert.ok(ui.includes("Личный TOP 10"), "The mobile game UI must expose the seasonal ranking");
 assert.ok(ui.includes("Награды TOP 10"), "The game UI must show the top-10 reward table");
 
 assert.ok(fullscreen.includes("tg.ready()"), "Telegram Mini App must signal readiness");
