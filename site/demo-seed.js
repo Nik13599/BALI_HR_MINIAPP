@@ -11,9 +11,10 @@
     "bali_attendance_codes_v1", "bali_points_accounts_v1", "bali_beta4_profile_v1", "bali_beta4_vip_v1",
     "bali_beta4_vip_gifts_v1", "bali_vip_config_v1", "bali_beta4_achievements_v1",
     "bali_beta4_loyalty_config_v1", "bali_beta4_chips_v1", "bali_beta4_chip_history_v1",
-    "bali_beta4_custom_rewards_v1", "bali_beta4_reward_grants_v1", "bali_app_users_v1",
+    "bali_beta4_custom_rewards_v1", "bali_beta4_reward_grants_v1",
+    "bali_beta4_reward_points_audit_v1", "bali_beta4_reward_notifications_v1", "bali_app_users_v1",
     "bali_age_verification_v1", "bali_social_profile_v1", "bali_social_people_v1",
-    "bali_social_requests_v1", "bali_social_gifts_v1", "bali_social_swipes_v2",
+    "bali_social_requests_v1", "bali_social_gifts_v1", "bali_social_gift_catalog_v1",
     "bali_event_checkins_v1", "bali_event_rsvps_v1", "bali_event_qr_trust_v2",
     "bali_night_crown_entries_v1", "bali_night_crown_votes_v1", "bali_night_crown_prizes_v1",
     "bali_chip_requests_v1", "bali_event_checkin_notices_v1", "bali_home_design_v1"
@@ -76,7 +77,8 @@
     return {
       id:user.key, name:user.name, username:user.username, phone:user.phone, photo:user.avatar,
       status:user.status, bio:user.bio, active:true, gender:user.gender, birthDate:user.birthDate,
-      shareTelegram:user.shareTelegram, sharePhone:user.sharePhone, cropX:50, cropY:42, updatedAt:isoTime(0,12,0)
+      privacy:{telegram:user.shareTelegram?"public":"private",phone:user.sharePhone?"public":"private",age:"public",photo:"public",points:"private"},
+      cropX:50, cropY:42, updatedAt:isoTime(0,12,0)
     };
   }
 
@@ -167,19 +169,12 @@
     const crownVotes = votePairs.map(([from,to,gender],index)=>({id:`crown-vote-${index+1}`,event_id:"event-demo-crown",event_title:"BALI Neon Crown",event_date:isoDate(0),voter_key:from,candidate_key:to,candidate_name:byKey[to].name,candidate_gender:gender,created_at:isoTime(0,23,index*3)}));
 
     const rewards = [
-      {id:"reward-demo-regular",title:"Постоянный гость",description:"Посетить BALI минимум 5 раз",image:"",xp:300,conditionType:"visits",eventId:"",eventTitle:"",threshold:5,active:true,sort_order:1,createdAt:isoTime(-200,12,0),updatedAt:isoTime(0,12,0)},
-      {id:"reward-demo-crown",title:"Участник Neon Crown",description:"Посетить BALI Neon Crown",image:"",xp:500,conditionType:"event",eventId:"event-demo-crown",eventTitle:"BALI Neon Crown",threshold:1,active:true,sort_order:2,createdAt:isoTime(-20,12,0),updatedAt:isoTime(0,12,0)},
-      {id:"reward-demo-legend",title:"Легенда танцпола",description:"Эксклюзивная ручная награда",image:"",xp:1000,conditionType:"manual",eventId:"",eventTitle:"",threshold:1,active:true,sort_order:3,createdAt:isoTime(-100,12,0),updatedAt:isoTime(0,12,0)}
+      {id:"reward-demo-regular",title:"Постоянный гость",description:"Посетить BALI минимум 5 раз",image:"",xp:300,conditionType:"visits",eventId:"",eventTitle:"",threshold:5,active:true,repeatable:false,awardPointsEnabled:true,pointsRewardAmount:250,pointsRewardType:"points",awardPointsMode:"first",deductPointsOnRevoke:false,pointsHistoryComment:"Награда: Постоянный гость",sort_order:1,createdAt:isoTime(-200,12,0),updatedAt:isoTime(0,12,0)},
+      {id:"reward-demo-crown",title:"Участник BALI Match",description:"Войти в TOP 10 недельного рейтинга игры",image:"",xp:500,conditionType:"ranking",eventId:"",eventTitle:"",threshold:10,active:true,repeatable:true,awardPointsEnabled:true,pointsRewardAmount:500,pointsRewardType:"points",awardPointsMode:"each",deductPointsOnRevoke:false,pointsHistoryComment:"Награда: Участник BALI Match",sort_order:2,createdAt:isoTime(-20,12,0),updatedAt:isoTime(0,12,0)},
+      {id:"reward-demo-legend",title:"Легенда танцпола",description:"Эксклюзивная ручная награда",image:"",xp:1000,conditionType:"manual",eventId:"",eventTitle:"",threshold:1,active:true,repeatable:false,awardPointsEnabled:true,pointsRewardAmount:1000,pointsRewardType:"points",awardPointsMode:"first",deductPointsOnRevoke:false,pointsHistoryComment:"Награда: Легенда танцпола",sort_order:3,createdAt:isoTime(-100,12,0),updatedAt:isoTime(0,12,0)}
     ];
 
     const socialPeople = users.map(socialFor);
-    const swipes = [
-      {id:"thumb-1",fromId:"bali-user-nikolay",toId:"bali-user-anna",decision:"thumb",createdAt:isoTime(-2,19,0)},
-      {id:"thumb-2",fromId:"bali-user-anna",toId:"bali-user-nikolay",decision:"thumb",createdAt:isoTime(-1,20,0)},
-      {id:"thumb-3",fromId:"bali-user-sofia",toId:"bali-user-nikolay",decision:"thumb",createdAt:isoTime(-1,21,0)},
-      {id:"thumb-4",fromId:"bali-user-maxim",toId:"bali-user-daria",decision:"thumb",createdAt:isoTime(-3,22,0)}
-    ];
-
     const requests = [
       {id:"request-1",fromId:"bali-user-anna",fromName:"Анна Мороз",toId:"bali-user-nikolay",toName:"Николай",type:"event",status:"pending",eventId:"event-demo-tropic",eventTitle:"Tropic Party",eventDate:isoDate(5),createdAt:isoTime(-1,18,30)},
       {id:"request-2",fromId:"bali-user-nikolay",fromName:"Николай",toId:"bali-user-maxim",toName:"Максим Орлов",type:"table",status:"accepted",eventId:"event-demo-black",eventTitle:"BALI Black Night",eventDate:isoDate(14),createdAt:isoTime(-4,19,0),respondedAt:isoTime(-3,10,0)}
@@ -225,7 +220,6 @@
     write("bali_social_people_v1", socialPeople);
     write("bali_social_requests_v1", requests);
     write("bali_social_gifts_v1", gifts);
-    write("bali_social_swipes_v2", swipes);
     write("bali_event_checkins_v1", checkins);
     write("bali_event_rsvps_v1", {"event-demo-crown":Object.fromEntries(users.map(user=>[user.key,{user_key:user.key,name:user.name,telegram:user.username,telegram_id:user.telegramId,status:"checked_in",attendance_mode:"qr",updated_at:isoTime(0,22,30)}]))});
     write("bali_event_qr_trust_v2", {"event-demo-crown":"demo-crown-token","event-demo-tropic":"demo-tropic-token"});

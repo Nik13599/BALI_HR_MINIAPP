@@ -51,10 +51,18 @@
 
   function canSee(person, field) {
     if (peopleApi?.canSee) return peopleApi.canSee(person, field);
-    if (field === "photo") return person.showPhoto === true || social.isConnection?.(person.id);
-    if (field === "phone") return person.sharePhone === true;
-    if (field === "telegram") return person.shareTelegram === true;
-    if (field === "age") return person.shareAge === true;
+    const legacy = {
+      photo: person.showPhoto,
+      phone: person.sharePhone,
+      telegram: person.shareTelegram,
+      age: person.shareAge,
+      instagram: person.shareInstagram,
+    };
+    const mode = person?.privacy?.[field]
+      || person?.[`privacy${field.charAt(0).toUpperCase()}${field.slice(1)}`]
+      || (legacy[field] === true ? "public" : "private");
+    if (mode === "public") return true;
+    if (mode === "vip") return Boolean(game?.vip?.());
     return false;
   }
 
@@ -71,8 +79,7 @@
     const rank = ranking.find(row => String(row.id || row.userKey || "") === String(person.id || person.userKey || ""));
     const photoVisible = canSee(person, "photo");
     const photo = person.photo || person.avatar || "";
-    const mine = social.hasThumb?.(social.myId(), person.id);
-    const instagramVisible = peopleApi?.viewerHasVip?.() || person.shareInstagram === true;
+    const instagramVisible = canSee(person, "instagram");
 
     body.innerHTML = `
       <div class="person-v2-photo ${photoVisible ? "" : "is-locked"}">
@@ -83,6 +90,7 @@
       <h2>${esc(person.name || "Пользователь BALI")}</h2>
       <p>${esc(person.bio || "Пользователь сообщества BALI")}</p>
       <section class="people-detail-section"><h3>Профиль BALI</h3><div class="people-detail-list">
+        <div class="people-detail-row"><span>Статус пользователя</span><strong>${esc(social.statusText?.(person.status) || person.status || "Не указан")}</strong></div>
         <div class="people-detail-row"><span>Уровень</span><strong>${esc(statusLabel(person, account))}</strong></div>
         <div class="people-detail-row"><span>Место в рейтинге</span><strong>${rank?.position ? `#${Number(rank.position)}` : "—"}</strong></div>
         <div class="people-detail-row"><span>Посещения</span><strong>${Number(visits.length || account.visits || 0)}</strong></div>
@@ -93,10 +101,8 @@
         ${instagramVisible && person.instagram ? `<div class="people-detail-row"><span>Instagram</span><strong>${esc(person.instagram)}</strong></div>` : ""}
       </div></section>
       ${rewards.length ? `<section class="people-detail-section"><h3>Награды</h3><div class="people-detail-list">${rewards.slice(0,20).map(row => `<div class="people-detail-row"><span>${esc(row.reward?.icon || "🏆")} ${esc(row.reward?.title || "Награда BALI")}</span><strong>${esc(fmt(row.earnedAt))}</strong></div>`).join("")}</div></section>` : ""}
-      <div class="person-v2-actions">
-        <button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(person.id)}">＋</button>
-        <button type="button" title="Подарок" data-person-gift="${esc(person.id)}">🎁</button>
-        <button type="button" title="Лайк" class="${mine ? "active" : ""}" data-person-thumb="${esc(person.id)}">👍</button>
+      <div class="person-v2-actions one-action">
+        <button type="button" title="Подарить подарок" data-person-gift="${esc(person.id)}">🎁 Подарить подарок</button>
       </div>`;
 
     if (!dialog.open) {

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#080a0a">
+  <meta name="bali-telegram-url" content="">
+  <meta http-equiv="Cache-Control" content="no-cache">
+  <title>BALI Minsk</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body data-bali-mode="production">
+  <section class="production-gate" id="productionGate" aria-live="polite">
+    <div class="production-gate__card">
+      <span class="production-gate__mark">B</span>
+      <h1 id="productionGateTitle">Откройте приложение через Telegram</h1>
+      <p id="productionGateMessage">Проверяем Telegram и получаем актуальные данные BALI.</p>
+      <a id="productionTelegramLink" href="#" hidden>Открыть в Telegram</a>
+      <button id="productionRetry" type="button" onclick="location.reload()" hidden>Повторить</button>
+    </div>
+  </section>
+  <div id="app" hidden></div>
+  <div id="toast" class="toast"></div>
+  <script src="/site/production-loader.js?v=bali-production-2"></script>
+</body>
+</html>

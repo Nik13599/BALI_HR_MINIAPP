@@ -115,9 +115,11 @@
     if (title && title.textContent !== "Ближайшие события") title.textContent = "Ближайшие события";
     if (all && all.textContent !== "Остальные афиши") all.textContent = "Остальные афиши";
     card.querySelectorAll("#homeEvents .compact-event").forEach(article => {
-      const button = article.querySelector("[data-event]");
-      if (button?.dataset.event) {
-        if (article.dataset.event !== button.dataset.event) article.dataset.event = button.dataset.event;
+      const nested = article.querySelector("[data-event]");
+      const eventId = article.dataset.event || nested?.dataset.event;
+      if (eventId) {
+        if (article.dataset.event !== eventId) article.dataset.event = eventId;
+        nested?.removeAttribute("data-event");
         if (article.getAttribute("role") !== "button") article.setAttribute("role", "button");
         if (article.tabIndex !== 0) article.tabIndex = 0;
       }

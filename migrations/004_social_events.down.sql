@@ -1,0 +1,17 @@
+drop table if exists public.idempotency_records;
+drop table if exists public.clan_event_attendance;
+drop table if exists public.clan_invitations;
+drop table if exists public.clan_creation_settings;
+drop table if exists public.clan_profiles;
+drop table if exists public.user_reports;
+drop table if exists public.user_blocks;
+drop table if exists public.direct_message_read_states;
+drop table if exists public.direct_messages;
+drop table if exists public.direct_conversations;
+drop table if exists public.user_connections;
+drop table if exists public.event_invitations;
+drop table if exists public.event_attendance;
+drop table if exists public.event_runtime;
+drop table if exists public.data_merge_review;
+drop table if exists public.user_consents;
+drop table if exists public.user_profiles;

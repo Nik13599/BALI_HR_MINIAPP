@@ -8,17 +8,12 @@
   const attendance = window.BaliEventQrAttendance;
   let tab = "all";
   let activePerson = "";
-  let events = [];
 
   const esc = (value = "") => String(value).replace(/[&<>'"]/g, char => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
   })[char]);
   const initials = name => String(name || "B").trim().split(/\s+/).slice(0, 2).map(part => part[0]).join("").toUpperCase();
-  const statusName = id => social.STATUSES.find(row => row[0] === id)?.[1] || "Открыт(а) к общению";
-  const eventLabel = event => {
-    const date = event?.event_date ? new Date(`${event.event_date}T12:00:00`).toLocaleDateString("ru-RU", { day:"2-digit", month:"short" }) : "";
-    return `${event?.title || "Мероприятие BALI"}${date ? ` · ${date}` : ""}${event?.event_time ? ` · ${event.event_time}` : ""}`;
-  };
+  const statusName = value => social.statusText?.(value) || String(value || "").trim() || "Статус не указан";
   const toast = message => {
     const node = document.getElementById("toast");
     if (!node) return;
@@ -33,7 +28,7 @@
     const style = document.createElement("style");
     style.id = "socialV2Style";
     style.textContent = `
-      .social-tabs-v2{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+      .social-tabs-v2{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:12px}
       .social-tabs-v2 button{min-height:42px;padding:0 6px;border:1px solid var(--line);border-radius:13px;background:#ffffff08;color:var(--muted);font-size:8px;line-height:1.2}
       .social-tabs-v2 button.active{background:var(--lime);color:#090b08}
       .people-v2-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -45,13 +40,14 @@
       .person-v2-lock{position:absolute;inset:0;display:grid;place-items:center;padding:18px;text-align:center;color:#fff;font-size:9px;line-height:1.5;background:#0004}
       .person-v2-status{position:absolute;left:8px;right:8px;bottom:8px;padding:6px 8px;border-radius:999px;background:#080a0acc;color:#fff;font-size:8px;text-align:center}
       .person-v2-body{padding:10px}.person-v2-body h3{margin:0 0 4px;font-size:13px}.person-v2-body p{margin:0;color:var(--muted);font-size:9px;line-height:1.4}
-      .person-v2-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}.person-v2-actions button{min-height:38px;padding:0;border-radius:11px;font-size:18px}.person-v2-actions button.active{background:var(--lime);color:#090b08}
+      .person-v2-custom-status{margin:0 0 5px;color:var(--lime);font-size:8px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}
+      .person-v2-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:9px}.person-v2-actions button{min-height:38px;padding:0;border-radius:11px;font-size:18px}
+      .person-v2-actions.one-action{grid-template-columns:1fr}.person-v2-actions.one-action button{font-size:11px;font-weight:900}
       .social-v2-dialog{width:min(520px,calc(100% - 16px));max-height:94dvh;padding:0;border:1px solid var(--line);border-radius:23px;background:#0c0f0e;color:#fff;overflow:hidden}.social-v2-dialog::backdrop{background:#000d;backdrop-filter:blur(5px)}
       .social-v2-sheet{max-height:94dvh;overflow:auto}.social-v2-head{display:flex;justify-content:space-between;align-items:center;padding:15px;border-bottom:1px solid var(--line)}
       .social-v2-close{width:41px;height:41px;border:1px solid var(--line);border-radius:50%;background:#ffffff08;color:#fff;font-size:23px}
       .social-v2-profile{padding:14px}.social-v2-profile .person-v2-photo{border-radius:18px}.social-v2-profile h2{margin:12px 0 5px}.social-v2-profile>p{color:var(--muted);font-size:10px;line-height:1.55}.social-v2-profile .person-v2-actions{margin-top:13px}
-      .social-v2-options{display:grid;gap:9px;padding:14px}.social-v2-options select{width:100%;min-height:50px;padding:0 11px;border:1px solid var(--line);border-radius:13px;background:#171b19;color:#fff}
-      .social-invite-note{padding:11px;border:1px solid var(--line);border-radius:13px;background:#ffffff05;color:var(--muted);font-size:9px;line-height:1.5}
+      .social-v2-options{display:grid;gap:9px;padding:14px}
       .social-v2-gifts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.social-v2-gifts button{display:grid;gap:4px;padding:14px;border:1px solid var(--line);border-radius:14px;background:#ffffff08;color:#fff}.social-v2-gifts i{font-style:normal;font-size:28px}
       .social-v2-empty{padding:28px 14px;border:1px dashed var(--line);border-radius:18px;color:var(--muted);text-align:center;font-size:10px;line-height:1.6}
       @media(max-width:360px){.people-v2-grid{grid-template-columns:1fr}}
@@ -70,7 +66,6 @@
           <div class="social-tabs-v2">
             <button class="active" data-social-v2-tab="all">Все</button>
             <button data-social-v2-tab="inside">Пришёл на мероприятие</button>
-            <button data-social-v2-tab="thumbs">👍 Лайки</button>
           </div>
           <div id="socialV2Content"></div>
         </div></section>`);
@@ -88,21 +83,34 @@
   }
 
   function ensureDialogs() {
-    if (document.getElementById("socialPersonDialog")) return;
+    if (document.getElementById("socialPersonDialog")) {
+      renderGiftCatalog();
+      return;
+    }
     document.body.insertAdjacentHTML("beforeend", `
       <dialog class="social-v2-dialog" id="socialPersonDialog"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Профиль</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-profile" id="socialPersonBody"></div></div></dialog>
-      <dialog class="social-v2-dialog" id="socialInviteV2"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Пригласить на мероприятие</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-options"><div class="social-invite-note">Выберите ближайшее активное мероприятие. Приглашение исчезнет после его завершения.</div><select id="socialInviteEvent"></select><button class="primary full" id="socialInviteSubmit" data-send-social-invite="event">Пригласить на мероприятие</button></div></div></dialog>
-      <dialog class="social-v2-dialog" id="socialGiftV2"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Подарок</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-options"><div class="social-v2-gifts">${social.GIFT_CATALOG.map(gift => `<button type="button" data-send-social-gift="${esc(gift.id)}"><i>${gift.icon}</i><strong>${esc(gift.name)}</strong><small>⭐ ${gift.stars}</small></button>`).join("")}</div></div></div></dialog>`);
+      <dialog class="social-v2-dialog" id="socialGiftV2"><div class="social-v2-sheet"><div class="social-v2-head"><strong>Подарок</strong><button class="social-v2-close" type="button" data-social-v2-close>×</button></div><div class="social-v2-options"><div class="social-v2-gifts">${social.GIFT_CATALOG.filter(gift => gift.active !== false).map(gift => `<button type="button" data-send-social-gift="${esc(gift.id)}"><i>${esc(gift.icon)}</i><strong>${esc(gift.name)}</strong><small>B ${Number(gift.stars || 0)}</small></button>`).join("")}</div></div></div></dialog>`);
+    renderGiftCatalog();
+  }
+
+  function renderGiftCatalog() {
+    const root = document.querySelector("#socialGiftV2 .social-v2-gifts");
+    if (!root) return;
+    const gifts = social.GIFT_CATALOG.filter(gift => gift.active !== false);
+    const signature = JSON.stringify(gifts.map(gift => [gift.id, gift.icon, gift.name, Number(gift.stars || 0)]));
+    if (root.dataset.catalogSignature === signature) return;
+    root.innerHTML = gifts.map(gift => `<button type="button" data-send-social-gift="${esc(gift.id)}"><i>${esc(gift.icon)}</i><strong>${esc(gift.name)}</strong><small>${Number(gift.stars || 0)} BALI-Баллов</small></button>`).join("")
+      || '<div class="social-v2-empty">Подарки временно недоступны.</div>';
+    root.dataset.catalogSignature = signature;
   }
 
   function photo(person) {
-    const connected = social.isConnection(person.id);
-    return `<div class="person-v2-photo ${connected ? "" : "is-locked"}">${person.photo ? `<img src="${esc(person.photo)}" alt="${esc(person.name)}" style="object-position:${Number(person.cropX ?? 50)}% ${Number(person.cropY ?? 40)}%">` : `<div class="person-v2-placeholder">${esc(initials(person.name))}</div>`}${connected ? "" : '<div class="person-v2-lock">Фото откроется полностью при взаимном 👍</div>'}<span class="person-v2-status">${esc(statusName(person.status))}</span></div>`;
+    const visible = person.privacy?.photo === "public" || person.privacyPhoto === "public" || person.showPhoto === true;
+    return `<div class="person-v2-photo ${visible ? "" : "is-locked"}">${person.photo ? `<img src="${esc(person.photo)}" alt="${esc(person.name)}" style="object-position:${Number(person.cropX ?? 50)}% ${Number(person.cropY ?? 40)}%">` : `<div class="person-v2-placeholder">${esc(initials(person.name))}</div>`}${visible ? "" : '<div class="person-v2-lock">Фото скрыто настройками конфиденциальности</div>'}<span class="person-v2-status">${esc(statusName(person.status))}</span></div>`;
   }
 
   function card(person) {
-    const mine = social.hasThumb(social.myId(), person.id);
-    return `<article class="person-v2" data-open-social-person="${esc(person.id)}">${photo(person)}<div class="person-v2-body"><h3>${esc(person.name)}</h3><p>${esc(person.bio || statusName(person.status))}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(person.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(person.id)}">🎁</button><button type="button" title="Палец вверх" class="${mine ? "active" : ""}" data-person-thumb="${esc(person.id)}">👍</button></div></div></article>`;
+    return `<article class="person-v2" data-open-social-person="${esc(person.id)}">${photo(person)}<div class="person-v2-body"><h3>${esc(person.name)}</h3><div class="person-v2-custom-status">${esc(statusName(person.status))}</div><p>${esc(person.bio || "Пользователь сообщества BALI")}</p><div class="person-v2-actions"><button type="button" title="Смотреть профиль" aria-label="Смотреть профиль" data-person-profile="${esc(person.id)}">👤</button><button type="button" title="Подарить подарок" aria-label="Подарить подарок" data-person-gift="${esc(person.id)}">🎁</button></div></div></article>`;
   }
 
   function dateAt(date, time = "00:00") {
@@ -126,6 +134,18 @@
   }
 
   async function insideIds() {
+    if (window.BaliProduction) {
+      const activeEvents = window.BaliProduction.state.events.filter(event => {
+        const end = eventEnd(event);
+        return Boolean(end && end.getTime() > Date.now());
+      });
+      const bundles = await Promise.all(activeEvents.map(event =>
+        window.BaliProduction.api(`/api/v1/events/${encodeURIComponent(event.id)}`).catch(() => ({ checkedIn: [] }))
+      ));
+      return new Set(bundles.flatMap(bundle =>
+        (bundle.checkedIn || []).map(row => String(row.user_key))
+      ));
+    }
     let checkins = [];
     let eventRows = [];
     try {
@@ -133,7 +153,9 @@
         attendance ? attendance.listCheckins() : Promise.resolve(Object.values(JSON.parse(localStorage.getItem("bali_event_checkins_v1") || "{}"))),
         store.list("events")
       ]);
-    } catch {}
+    } catch {
+      // The attendance filter stays empty when optional demo data is unavailable.
+    }
     const ids = new Set();
     checkins.filter(row => {
       if (row.left_at || row.presence_status === "left") return false;
@@ -152,8 +174,8 @@
     if (!root) return;
     document.querySelectorAll("[data-social-v2-tab]").forEach(button => button.classList.toggle("active", button.dataset.socialV2Tab === tab));
     const me = social.profile();
-    if (!me.active || me.status === "closed") {
-      root.innerHTML = '<div class="social-v2-empty">Включите BALI PEOPLE в настройках профиля и выберите статус.</div>';
+    if (!me.active) {
+      root.innerHTML = '<div class="social-v2-empty">Включите показ профиля в BALI PEOPLE в настройках.</div>';
       return;
     }
     let rows = social.visiblePeople();
@@ -161,10 +183,9 @@
       const ids = await insideIds();
       rows = rows.filter(person => ids.has(String(person.id)) || (person.telegramId && ids.has(`tg:${person.telegramId}`)) || (person.userKey && ids.has(String(person.userKey))));
     }
-    if (tab === "thumbs") rows = social.incomingThumbs();
     root.innerHTML = rows.length
       ? `<div class="people-v2-grid">${rows.map(card).join("")}</div>`
-      : `<div class="social-v2-empty">${tab === "inside" ? "Пока никто не подтвердил вход на активное мероприятие через QR-код." : tab === "thumbs" ? "Никто ещё не поставил вам 👍." : "Пользователей пока нет."}</div>`;
+      : `<div class="social-v2-empty">${tab === "inside" ? "Пока никто не подтвердил вход на активное мероприятие через QR-код." : "Пользователей пока нет."}</div>`;
   }
 
   function person(id) {
@@ -175,38 +196,27 @@
     const personRow = person(id);
     if (!personRow) return;
     activePerson = personRow.id;
-    document.getElementById("socialPersonBody").innerHTML = `${photo(personRow)}<h2>${esc(personRow.name)}</h2><p>${esc(personRow.bio || statusName(personRow.status))}</p><div class="person-v2-actions"><button type="button" title="Пригласить на мероприятие" data-person-invite="${esc(personRow.id)}">＋</button><button type="button" title="Подарок" data-person-gift="${esc(personRow.id)}">🎁</button><button type="button" class="${social.hasThumb(social.myId(), personRow.id) ? "active" : ""}" data-person-thumb="${esc(personRow.id)}">👍</button></div>`;
+    document.getElementById("socialPersonBody").innerHTML = `${photo(personRow)}<h2>${esc(personRow.name)}</h2><div class="person-v2-custom-status">${esc(statusName(personRow.status))}</div><p>${esc(personRow.bio || "Пользователь сообщества BALI")}</p><div class="person-v2-actions one-action"><button type="button" title="Подарить подарок" data-person-gift="${esc(personRow.id)}">🎁 Подарить подарок</button></div>`;
     document.getElementById("socialPersonDialog").showModal();
-  }
-
-  async function openInvite(id) {
-    activePerson = id || activePerson;
-    const all = await store.list("events");
-    events = all.filter(item => item.active !== false && social.eventEndAt(item) && new Date(social.eventEndAt(item)).getTime() > Date.now())
-      .sort((a, b) => `${a.event_date || ""}T${a.event_time || ""}`.localeCompare(`${b.event_date || ""}T${b.event_time || ""}`));
-    const select = document.getElementById("socialInviteEvent");
-    const submit = document.getElementById("socialInviteSubmit");
-    select.innerHTML = events.length ? events.map(event => `<option value="${esc(event.id)}">${esc(eventLabel(event))}</option>`).join("") : '<option value="">Нет доступных мероприятий</option>';
-    select.disabled = !events.length;
-    submit.disabled = !events.length;
-    document.getElementById("socialInviteV2").showModal();
   }
 
   function openGift(id) {
     activePerson = id || activePerson;
+    renderGiftCatalog();
     document.getElementById("socialGiftV2").showModal();
-  }
-
-  function thumb(id) {
-    const result = social.toggleThumb(id);
-    toast(result.connected ? "Взаимный 👍 — фото открыто" : "Отметка 👍 сохранена");
-    render();
-    if (document.getElementById("socialPersonDialog")?.open) openPerson(id);
   }
 
   async function sendGift(giftId) {
     const gift = social.GIFT_CATALOG.find(row => row.id === giftId);
     if (!gift || !activePerson) return;
+    if (window.BaliProduction) {
+      if (confirm(`Отправить ${gift.icon} ${gift.name} за ${gift.stars} BALI Points?`)) {
+        social.recordGift(activePerson, giftId, "bali_points");
+        toast("Подарок отправлен");
+        document.getElementById("socialGiftV2").close();
+      }
+      return;
+    }
     const endpoint = window.BALI_CONFIG?.socialGiftInvoiceEndpoint;
     if (endpoint && tg?.openInvoice) {
       try {
@@ -241,25 +251,19 @@
     }
     const open = event.target.closest("[data-open-social-person]");
     if (open && !event.target.closest("button")) return openPerson(open.dataset.openSocialPerson);
-    const invite = event.target.closest("[data-person-invite]");
-    if (invite) { event.preventDefault(); event.stopPropagation(); return openInvite(invite.dataset.personInvite); }
+    const profile = event.target.closest("[data-person-profile]");
+    if (profile) { event.preventDefault(); event.stopPropagation(); return openPerson(profile.dataset.personProfile); }
     const gift = event.target.closest("[data-person-gift]");
     if (gift) { event.preventDefault(); event.stopPropagation(); return openGift(gift.dataset.personGift); }
-    const like = event.target.closest("[data-person-thumb]");
-    if (like) { event.preventDefault(); event.stopPropagation(); return thumb(like.dataset.personThumb); }
-    const send = event.target.closest("[data-send-social-invite]");
-    if (send) {
-      const selectedEvent = events.find(row => String(row.id) === String(document.getElementById("socialInviteEvent").value));
-      const result = social.sendRequest(activePerson, "event", selectedEvent);
-      toast(result.ok ? "Приглашение отправлено" : result.message);
-      if (result.ok) document.getElementById("socialInviteV2").close();
-    }
     const sendGiftButton = event.target.closest("[data-send-social-gift]");
     if (sendGiftButton) return sendGift(sendGiftButton.dataset.sendSocialGift);
     if (event.target.closest("[data-social-v2-close]")) event.target.closest("dialog")?.close();
   }, true);
 
-  window.addEventListener("bali:social-changed", () => requestAnimationFrame(render));
+  window.addEventListener("bali:social-changed", () => requestAnimationFrame(() => {
+    renderGiftCatalog();
+    render();
+  }));
   ["bali:data-changed", "bali:checkin-complete", "bali:checkin-left"].forEach(name => window.addEventListener(name, () => tab === "inside" && requestAnimationFrame(render)));
   styles();
   let attempts = 0;

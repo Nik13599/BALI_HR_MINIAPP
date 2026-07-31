@@ -50,7 +50,7 @@
     if (!hero) return;
     hero.classList.add("home-designed");
     hero.dataset.align = current.hero.align || "left";
-    hero.style.minHeight = `${Number(current.hero.minHeight || 310)}px`;
+    hero.style.minHeight = `${Number(current.hero.minHeight || 265)}px`;
     hero.style.backgroundColor = current.hero.backgroundColor || "";
     hero.style.backgroundImage = current.hero.backgroundImage ? `linear-gradient(rgba(4,7,5,.25),rgba(4,7,5,.72)),url("${String(current.hero.backgroundImage).replace(/"/g,"%22")}")` : "";
     const eyebrow = hero.querySelector(".eyebrow"), title = hero.querySelector("h1"), text = hero.querySelector("p"), pills = hero.querySelector(".pills");

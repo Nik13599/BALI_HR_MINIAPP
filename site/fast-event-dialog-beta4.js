@@ -13,9 +13,10 @@
   const TABLES_KEY = "bali_tables_v2";
   const LAYOUTS_KEY = "bali_event_layouts_v1";
 
-  const state = { event:null, availability:[], selectedTable:"", loadingTables:false };
-  const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
-  const write = (key, value) => { localStorage.setItem(key, JSON.stringify(value)); return value; };
+  const production = Boolean(window.BaliProduction);
+  const state = { event:null, bundle:null, availability:[], selectedTable:"", loadingTables:false };
+  const read = (key, fallback) => { if (production) return fallback; try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
+  const write = (key, value) => { if (production) return value; localStorage.setItem(key, JSON.stringify(value)); return value; };
   const esc = (value = "") => String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
   const fmtDate = value => value ? new Date(`${value}T12:00:00`).toLocaleDateString("ru-RU", { day:"2-digit", month:"long", year:"numeric" }) : "—";
   const activeBooking = row => !["cancelled","completed"].includes(String(row?.status || "pending"));
@@ -34,7 +35,7 @@
     const style = document.createElement("style");
     style.id = "fastEventDialogStyle";
     style.textContent = `
-      #eventGoing{display:none!important}
+      html:not([data-bali-mode="production"]) #eventGoing{display:none!important}
       .fast-event-counts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
       .fast-event-count{display:grid;gap:4px;padding:13px;border:1px solid var(--line);border-radius:15px;background:#ffffff05;text-align:left;color:#fff}
       .fast-event-count strong{font:600 27px Unbounded;color:var(--lime)}
@@ -57,10 +58,19 @@
     document.body.insertAdjacentHTML("beforeend", `<dialog class="fast-event-list-dialog" id="fastEventListDialog"><header class="fast-event-list-head"><div><span class="eyebrow" id="fastEventListEyebrow">МЕРОПРИЯТИЕ</span><h3 id="fastEventListTitle">Участники</h3></div><button class="fast-event-list-close" type="button" data-close-fast-event-list>×</button></header><div class="fast-event-list" id="fastEventList"></div></dialog>`);
   }
 
-  function events() { return read(EVENTS_KEY, []); }
+  function events() { return production ? window.BaliProduction.state.events : read(EVENTS_KEY, []); }
   function eventById(id) { return events().find(row => String(row.id) === String(id)); }
   function rsvps() { return read(RSVP_KEY, {}); }
-  function eventRsvps(eventId) { return Object.values(rsvps()?.[eventId] || {}); }
+  function eventRsvps(eventId) {
+    if (production && String(state.event?.id) === String(eventId)) {
+      return (state.bundle?.participants || []).map(row => ({
+        ...row,
+        interested:["going", "maybe"].includes(row.status),
+        party_size:1
+      }));
+    }
+    return Object.values(rsvps()?.[eventId] || {});
+  }
 
   function hasIntent(row = {}) {
     if (row.interested === true) return true;
@@ -75,10 +85,19 @@
     return eventRsvps(eventId).filter(hasIntent).map(row => ({ ...row, partySize:partySize(row) }));
   }
   function presentRows(eventId) {
+    if (production && String(state.event?.id) === String(eventId)) return state.bundle?.checkedIn || [];
     return Object.values(read(CHECKIN_KEY, {})).filter(row => String(row.event_id) === String(eventId) && !row.left_at && row.presence_status !== "left");
   }
   function wantTotal(eventId) { return wantRows(eventId).reduce((sum, row) => sum + row.partySize, 0); }
-  function mine(eventId) { return rsvps()?.[eventId]?.[profileKey()] || null; }
+  function mine(eventId) {
+    if (production) {
+      const event = events().find(row => String(row.id) === String(eventId));
+      return event?.my_attendance_status
+        ? { user_key:profileKey(), name:game.profile().name, status:event.my_attendance_status, interested:["going", "maybe"].includes(event.my_attendance_status) }
+        : null;
+    }
+    return rsvps()?.[eventId]?.[profileKey()] || null;
+  }
 
   function renderCounts() {
     if (!state.event) return;
@@ -92,11 +111,31 @@
     const size = partySize(current || {});
     if (button) {
       button.hidden = false;
-      button.classList.toggle("primary", hasIntent(current || {}));
-      button.textContent = hasIntent(current || {}) ? (size > 1 ? `Вы +${size - 1} хотите пойти` : "Вы хотите пойти") : "Хочу пойти";
+      button.classList.toggle("primary", production ? current?.status === "going" : hasIntent(current || {}));
+      button.textContent = production
+        ? "Я иду"
+        : hasIntent(current || {}) ? (size > 1 ? `Вы +${size - 1} хотите пойти` : "Вы хотите пойти") : "Хочу пойти";
     }
     const going = document.getElementById("eventGoing");
-    if (going) going.hidden = true;
+    if (going) {
+      going.hidden = !production;
+      going.textContent = "Возможно";
+      going.classList.toggle("primary", current?.status === "maybe");
+    }
+    if (production) {
+      let notGoing = document.getElementById("eventNotGoing");
+      if (!notGoing && going) {
+        notGoing = document.createElement("button");
+        notGoing.id = "eventNotGoing";
+        notGoing.type = "button";
+        notGoing.className = "secondary";
+        going.insertAdjacentElement("afterend", notGoing);
+      }
+      if (notGoing) {
+        notGoing.textContent = "Не иду";
+        notGoing.classList.toggle("primary", ["not_going", "cancelled"].includes(current?.status));
+      }
+    }
   }
 
   function lineupHtml(event = {}) {
@@ -107,6 +146,7 @@
   }
 
   function computeAvailability(event) {
+    if (production) return state.availability;
     const layouts = read(LAYOUTS_KEY, {});
     const layoutTables = layouts?.[event.id]?.tables;
     const tables = Array.isArray(layoutTables) && layoutTables.length ? layoutTables : read(TABLES_KEY, []);
@@ -126,24 +166,46 @@
     if (input) input.value = state.selectedTable;
   }
 
-  function loadTablesAfterOpen() {
+  async function loadTablesAfterOpen() {
     state.loadingTables = true;
     renderTables();
-    requestAnimationFrame(() => setTimeout(() => {
-      if (!state.event) return;
-      state.availability = computeAvailability(state.event);
+    try {
+      if (production) {
+        const layout = await window.BaliProduction.eventLayout(state.event.id);
+        state.availability = (layout.tables || []).map(table => ({
+          ...table,
+          name:table.name || `Стол ${table.table_number}`,
+          seats:Number(table.capacity || 4),
+          available:["available", "vip", "clan", "selected"].includes(table.availability_status)
+        }));
+      } else {
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        state.availability = computeAvailability(state.event);
+      }
+    } catch (error) {
+      state.availability = [];
+      toast(error.message || "Не удалось загрузить схему столов");
+    } finally {
       state.loadingTables = false;
       renderTables();
-    }, 0));
+    }
   }
 
-  function openEvent(id) {
+  async function openEvent(id) {
     const event = eventById(id);
     const dialog = document.getElementById("eventDialog");
     if (!event || !dialog) return;
     state.event = event;
+    state.bundle = null;
     state.selectedTable = "";
     state.availability = [];
+    if (production) {
+      try {
+        state.bundle = await window.BaliProduction.api(`/api/v1/events/${encodeURIComponent(id)}`);
+      } catch (error) {
+        toast(error.message || "Не удалось загрузить мероприятие");
+      }
+    }
 
     const media = document.getElementById("eventDialogMedia");
     if (media) media.style.backgroundImage = event.image_url ? `url('${String(event.image_url).replace(/'/g, "%27")}')` : "";
@@ -178,8 +240,30 @@
     window.BaliFullDemoEvents?.decorateEvents?.();
   }
 
-  function toggleInterest() {
+  async function setProductionAttendance(status) {
+    if (!state.event || !production) return;
+    try {
+      await window.BaliProduction.api(`/api/v1/events/${encodeURIComponent(state.event.id)}/attendance`, {
+        method:"PUT",
+        body:JSON.stringify({ status })
+      });
+      await window.BaliProduction.refreshCore();
+      state.event = eventById(state.event.id) || state.event;
+      state.bundle = await window.BaliProduction.api(`/api/v1/events/${encodeURIComponent(state.event.id)}`);
+      toast(status === "going" ? "Отмечено: я иду" : status === "maybe" ? "Отмечено: возможно" : "Отмечено: не иду");
+      renderCounts();
+    } catch (error) {
+      toast(error.message || "Не удалось изменить участие");
+    }
+  }
+
+  async function toggleInterest() {
     if (!state.event) return;
+    if (production) {
+      const current = mine(state.event.id);
+      await setProductionAttendance(current?.status === "going" ? "cancelled" : "going");
+      return;
+    }
     const registry = rsvps();
     registry[state.event.id] ||= {};
     const key = profileKey();
@@ -215,10 +299,15 @@
       game.saveProfile({ phone:data.phone, name:data.name, username:data.telegram || profile.username });
       game.recordBooking(Number(data.guests || 2));
 
-      const registry = rsvps();
-      registry[data.event_id] ||= {};
-      const key = profileKey();
       const partySizeValue = Math.max(1, Number(data.guests || 1));
+      if (production) {
+        await window.BaliProduction.refreshCore();
+        state.event = eventById(data.event_id) || state.event;
+        state.bundle = await window.BaliProduction.api(`/api/v1/events/${encodeURIComponent(data.event_id)}`);
+      } else {
+        const registry = rsvps();
+        registry[data.event_id] ||= {};
+        const key = profileKey();
       registry[data.event_id][key] = {
         ...(registry[data.event_id][key] || {}),
         user_key:key,
@@ -234,10 +323,10 @@
       };
       write(RSVP_KEY, registry);
       window.dispatchEvent(new CustomEvent("bali:rsvp-changed", { detail:{ eventId:data.event_id } }));
+      }
       toast(partySizeValue > 1 ? `Стол забронирован: вы +${partySizeValue - 1}` : "Стол забронирован");
       state.selectedTable = "";
-      state.availability = computeAvailability(state.event);
-      renderTables();
+      await loadTablesAfterOpen();
       renderCounts();
     } catch (error) {
       toast(error.message || "Не удалось создать бронь");
@@ -275,6 +364,20 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       toggleInterest();
+      return;
+    }
+    const maybe = event.target.closest("#eventGoing");
+    if (maybe && production) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      setProductionAttendance("maybe");
+      return;
+    }
+    const notGoing = event.target.closest("#eventNotGoing");
+    if (notGoing && production) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      setProductionAttendance("not_going");
       return;
     }
     const table = event.target.closest("[data-fast-table]");

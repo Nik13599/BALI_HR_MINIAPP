@@ -172,6 +172,7 @@
       <button class="profile-v2-tile gifts" type="button" data-open-profile-gifts>
         <small>ОТ ПОЛЬЗОВАТЕЛЕЙ</small><strong>Мои подарки · ${gifts.length}</strong><span>Посмотреть подарки и отправителей →</span>
       </button>`;
+    window.dispatchEvent(new CustomEvent("bali:profile-v2-mounted"));
     return true;
   }
 
@@ -235,7 +236,6 @@
     setTitle("Settings", "Настройки профиля");
     const profile = game.profile();
     const socialProfile = social?.profile?.() || {};
-    const statuses = social?.STATUSES || [];
     const root = document.getElementById("profileSettingsBody");
     if (!root) return;
     root.innerHTML = `
@@ -246,7 +246,7 @@
         <label><span>Telegram username</span><input name="username" value="${esc(profile.username || "")}"></label>
         <label class="profile-v2-switch"><span>Показывать меня в рейтинге</span><input name="publicRanking" type="checkbox" ${profile.publicRanking !== false ? "checked" : ""}></label>
         <label class="profile-v2-switch"><span>Показывать меня в BALI PEOPLE</span><input name="socialActive" type="checkbox" ${socialProfile.active ? "checked" : ""}></label>
-        <label><span>Статус в BALI PEOPLE</span><select name="socialStatus">${statuses.map(([id, title]) => `<option value="${esc(id)}" ${socialProfile.status === id ? "selected" : ""}>${esc(title)}</option>`).join("")}</select></label>
+        <label><span>Ваш статус в BALI PEOPLE</span><input name="socialStatus" maxlength="80" value="${esc(social?.statusText?.(socialProfile.status) || socialProfile.status || "")}" placeholder="Например: Сегодня танцую до утра"></label>
         <label><span>О себе</span><textarea name="bio" maxlength="180">${esc(socialProfile.bio || "")}</textarea></label>
         <button class="primary full" type="submit">Сохранить настройки</button>
       </form>`;
@@ -310,7 +310,7 @@
     const form = event.target;
     const data = Object.fromEntries(new FormData(form).entries());
     game.saveProfile({ name:String(data.name || "").trim(), phone:String(data.phone || "").trim(), username:String(data.username || "").trim(), publicRanking:form.publicRanking.checked });
-    social?.saveProfile?.({ name:String(data.name || "").trim(), active:form.socialActive.checked, status:form.socialActive.checked ? data.socialStatus : "closed", bio:String(data.bio || "").trim(), photo:game.profile().avatar || social.profile().photo || "" });
+    social?.saveProfile?.({ name:String(data.name || "").trim(), active:form.socialActive.checked, status:String(data.socialStatus || "").trim().slice(0, 80), bio:String(data.bio || "").trim(), photo:game.profile().avatar || social.profile().photo || "" });
     toast("Настройки сохранены");
     document.getElementById("profileSettingsDialog")?.close();
     mount();

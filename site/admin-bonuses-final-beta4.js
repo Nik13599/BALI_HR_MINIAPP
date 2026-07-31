@@ -63,9 +63,11 @@
       if (key) map.set(String(key), { ...account, key: String(key) });
     });
     customers.forEach(customer => {
-      const key = digits(customer.phone) ? `phone:${digits(customer.phone)}` : String(customer.id || "");
+      const phone = digits(customer.phone);
+      const account = phone ? [...map.values()].find(item => digits(item.phone) === phone) : null;
+      const key = account?.key || (phone ? `phone:${phone}` : String(customer.id || ""));
       if (!key) return;
-      const existing = map.get(key) || {};
+      const existing = account || map.get(key) || {};
       map.set(key, {
         ...existing,
         key,

@@ -12,7 +12,7 @@
         button.disabled = false;
         button.classList.remove("navigation-loading");
         button.setAttribute("aria-busy", "false");
-        button.removeAttribute("title");
+        button.title = button.dataset.navPurpose || button.getAttribute("aria-label") || "";
       }
     });
     const nav = document.querySelector(".shell > nav.nav");
@@ -40,9 +40,9 @@
     scheduled = true;
     requestAnimationFrame(() => { scheduled = false; sync(); });
   };
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
-  ["bali:full-demo-ready","bali:full-demo-enhancements-ready","bali:social-changed","bali:night-crown-changed"].forEach(name => window.addEventListener(name,schedule));
-  setInterval(sync,1000);
+  const app = document.getElementById("app");
+  if (app) new MutationObserver(schedule).observe(app,{childList:true});
+  ["bali:full-demo-ready","bali:full-demo-enhancements-ready","bali:social-changed","bali:match3-changed"].forEach(name => window.addEventListener(name,schedule));
   schedule();
   window.BaliFullDemoNavigation = { sync, go };
 })();

@@ -2,6 +2,13 @@ name: Deploy BALI Full Browser Demo
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [gh-pages]
+    paths:
+      - "site/**"
+      - "index.html"
+      - "404.html"
+      - ".github/workflows/deploy-pages.yml"
   push:
     branches: [gh-pages]
     paths:
@@ -16,7 +23,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -49,10 +56,56 @@ jobs:
             site/full-menu-catalog-beta4.js
             site/beta4-home-links.js
             site/bali-web-demo-sanitize.js
+            site/telegram-fullscreen-beta4.js
             site/people-profile-stability-beta4.js
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
+            site/admin-venue-reviews-beta4.js
+            site/admin-mobile-runtime.js
+            site/admin-night-crown-bootstrap-beta4.js
+            site/match3-game-core-beta4.js
+            site/match3-game-ui-beta4.js
+            site/match3-game-beta4.css
+            site/admin-match3-game-beta4.js
+            site/admin-match3-game-beta4.css
+            site/bali-temple-theme-beta4.css
+            site/admin-bali-temple-theme-beta4.css
+            site/bali-visual-blocks-beta4.css
+            site/bali-visual-blocks-core-beta4.js
+            site/admin-visual-blocks-beta4.js
+            site/nav-icons-core-beta4.js
+            site/admin-nav-icons-beta4.js
+            site/assets/bali-temple/hero-stone-face.webp
+            site/assets/bali-temple/gold-bear.webp
+            site/assets/bali-temple/bronze-statues.webp
+            site/assets/bali-temple/nav-home.svg
+            site/assets/bali-temple/nav-events.svg
+            site/assets/bali-temple/nav-menu.svg
+            site/assets/bali-temple/nav-people.svg
+            site/assets/bali-temple/nav-game.svg
+            site/assets/bali-temple/nav-profile.svg
+            site/assets/match3/background.webp
+            site/assets/match3/headphones.webp
+            site/assets/match3/martini.webp
+            site/assets/match3/palm.webp
+            site/assets/match3/turntable.webp
+            site/assets/match3/disco.webp
+            site/assets/match3/mask.webp
+            site/assets/match3/lotus.webp
+            site/assets/match3/triangle.webp
+            site/assets/match3/reward.webp
+            site/home-community-copy-beta4.js
+            site/home-design-core-beta4.js
+            site/admin-home-design-beta4.js
+            site/demo-data-consistency-beta4.js
+            site/profile-recent-rewards-beta4.js
+            site/full-demo-nav-unlock-beta4.js
+            site/full-demo-social-economy-beta4.js
+            site/home-booking-controls-beta4.js
+            site/referral-share-beta4.js
+            site/referral-commission-beta4.js
+            site/admin-booking-edit-beta4.js
           )
           for file in "${required[@]}"; do
             test -f "$file" || { echo "Missing required file: $file"; exit 1; }
@@ -67,26 +120,80 @@ jobs:
             site/full-menu-catalog-beta4.js
             site/beta4-home-links.js
             site/bali-web-demo-sanitize.js
+            site/telegram-fullscreen-beta4.js
             site/people-profile-stability-beta4.js
             site/profile-controls-final-beta4.js
             site/admin-event-qr-auto-beta4.js
             site/admin-full-users-beta4.js
+            site/admin-venue-reviews-beta4.js
+            site/admin-mobile-runtime.js
+            site/admin-night-crown-bootstrap-beta4.js
+            site/match3-game-core-beta4.js
+            site/match3-game-ui-beta4.js
+            site/admin-match3-game-beta4.js
+            site/bali-visual-blocks-core-beta4.js
+            site/admin-visual-blocks-beta4.js
+            site/nav-icons-core-beta4.js
+            site/admin-nav-icons-beta4.js
+            site/home-community-copy-beta4.js
+            site/home-design-core-beta4.js
+            site/admin-home-design-beta4.js
+            site/demo-data-consistency-beta4.js
+            site/profile-recent-rewards-beta4.js
+            site/full-demo-nav-unlock-beta4.js
+            site/full-demo-social-economy-beta4.js
+            site/home-booking-controls-beta4.js
+            site/referral-share-beta4.js
+            site/referral-commission-beta4.js
+            site/admin-booking-edit-beta4.js
           )
           for file in "${scripts[@]}"; do
             echo "Checking $file"
             node --check "$file"
           done
 
-          grep -q 'beta4-square-loader.js?v=bali-full-demo-8-stable4' site/index.html
-          grep -q 'const version = "bali-full-demo-8-stable4"' site/beta4-square-loader.js
+          version="$(sed -nE 's/.*beta4-square-loader\.js\?v=([^"]+).*/\1/p' site/index.html | head -n1)"
+          test -n "$version" || { echo "Unable to resolve demo cache version"; exit 1; }
+          echo "Validating cache version: $version"
+          grep -Fq "const version = \"$version\"" site/beta4-square-loader.js
+          grep -Fq "url=./site/index.html?v=$version" index.html
+          grep -Fq "/BALI_HR_MINIAPP/site/index.html?v=$version" 404.html
+          grep -Fq "url=./index.html?v=$version" site/browser-demo.html
+          grep -Fq "admin-beta4.html?v=$version" site/admin.html
+          grep -Fq "admin-beta4.html?v=$version" site/browser-admin.html
+          grep -Fq "admin-booking-edit-beta4.js?v=$version" site/admin-beta4.html
+          grep -Fq "admin-booking-manager-beta4.js?v=$version" site/admin-beta4.html
           grep -q 'full-menu-catalog-beta4.js' site/beta4-square-loader.js
+          grep -q 'demo-data-consistency-beta4.js' site/beta4-square-loader.js
+          grep -q 'demo-data-consistency-beta4.js' site/admin-beta4.html
+          grep -q 'script.async=false' site/beta4-square-loader.js
+          grep -q 'match3-game-core-beta4.js' site/beta4-square-loader.js
+          grep -q 'match3-game-ui-beta4.js' site/beta4-square-loader.js
+          grep -q 'match3-game-core-beta4.js' site/admin-beta4.html
+          grep -q 'admin-match3-game-beta4.js' site/admin-beta4.html
+          grep -q 'bali-temple-theme-beta4.css' site/beta4-square-loader.js
+          grep -q 'admin-bali-temple-theme-beta4.css' site/admin-beta4.html
+          grep -q 'bali-visual-blocks-beta4.css' site/beta4-square-loader.js
+          grep -q 'bali-visual-blocks-core-beta4.js' site/beta4-square-loader.js
+          grep -q 'bali:profile-v2-mounted' site/beta4-profile-v2.js
+          grep -Fq 'moduleSets.reviews=["admin-venue-reviews-beta4.js"]' site/admin-mobile-runtime.js
+          grep -Fq 'crown:["points-core.js","beta4-game.js","beta4-loyalty-core.js","match3-game-core-beta4.js","admin-match3-game-beta4.js"]' site/admin-mobile-runtime.js
+          grep -q 'nav-icons-core-beta4.js' site/beta4-square-loader.js
+          grep -q 'telegram-fullscreen-beta4.js' site/index.html
+          grep -q 'requestFullscreen' site/telegram-fullscreen-beta4.js
+          grep -q 'contentSafeAreaInset' site/telegram-fullscreen-beta4.js
+          grep -Fq 'settings:["home-design-core-beta4.js","admin-home-design-upload-fix-beta4.js","admin-home-design-beta4.js","nav-icons-core-beta4.js","admin-nav-icons-beta4.js","bali-visual-blocks-core-beta4.js","admin-visual-blocks-beta4.js"]' site/admin-mobile-runtime.js
           grep -q 'event-performer-cards-beta4.js' site/beta4-square-loader.js
-          grep -q 'admin-event-performer-fields-beta4.js?v=bali-full-demo-8-stable4' site/admin-beta4.html
           grep -q 'performer-socials' site/event-performer-cards-beta4.js
           grep -q 'dj_photo_url' site/admin-event-performer-fields-beta4.js
           grep -q 'host_telegram_url' site/admin-event-performer-fields-beta4.js
           grep -q 'data-contact-key="telegram-channel"' site/beta4-home-links.js
           grep -q 'Уже в клубе' site/people-profile-stability-beta4.js
+
+          if grep -Eq '\b(form|f)\.id\.value' site/home-booking-controls-beta4.js site/admin-booking-edit-beta4.js; then
+            echo "Booking editor uses the form id attribute instead of the hidden id control"
+            exit 1
+          fi
 
           node <<'NODE'
           const memory = new Map();
@@ -118,6 +225,149 @@ jobs:
           console.log(`Validated ${catalog.length} menu items in ${categories.size} categories`);
           NODE
 
+          node <<'NODE'
+          const memory = new Map();
+          global.window = global;
+          global.localStorage = {
+            getItem:key => memory.has(key) ? memory.get(key) : null,
+            setItem:(key,value) => memory.set(key,String(value)),
+            removeItem:key => memory.delete(key)
+          };
+          const write = (key, value) => memory.set(key, JSON.stringify(value));
+          write("bali_events_v2", [
+            {id:"event-demo-crown",event_date:"2020-01-01",event_time:"20:00"},
+            {id:"event-demo-crown",event_date:"2021-01-01",updated_at:"2021-01-02T00:00:00Z"},
+            {id:"custom-event",event_date:"2030-01-01"}
+          ]);
+          write("bali_social_people_v1", [
+            {id:"person-1",name:"Old",updatedAt:"2020-01-01T00:00:00Z"},
+            {id:"person-1",name:"Current",updatedAt:"2021-01-01T00:00:00Z"},
+            {id:"person-2",name:"Custom"}
+          ]);
+          require('./site/demo-data-consistency-beta4.js');
+          const events = JSON.parse(memory.get("bali_events_v2"));
+          const people = JSON.parse(memory.get("bali_social_people_v1"));
+          if (events.filter(row => row.id === "event-demo-crown").length !== 1) throw new Error("Demo event duplicate was not removed");
+          if (events.find(row => row.id === "event-demo-crown").event_date === "2021-01-01") throw new Error("Demo event date was not refreshed");
+          if (!events.some(row => row.id === "custom-event")) throw new Error("Custom event was removed");
+          if (people.length !== 2 || people.find(row => row.id === "person-1").name !== "Current") throw new Error("People dedupe did not keep the newest row");
+          console.log("Validated demo data consistency migration");
+          NODE
+
+          node <<'NODE'
+          global.window = global;
+          global.BALI_TELEGRAM_MINI_APP = true;
+          const styles = new Map();
+          const calls = { ready:0, expand:0, fullscreen:0 };
+          global.document = {
+            hidden:false,
+            documentElement:{ style:{ setProperty:(key,value) => styles.set(key,value) }, dataset:{} },
+            addEventListener:() => {}
+          };
+          global.innerHeight = 640;
+          global.addEventListener = () => {};
+          global.requestAnimationFrame = fn => fn();
+          global.Telegram = { WebApp:{
+            viewportStableHeight:620,
+            isFullscreen:false,
+            isExpanded:true,
+            safeAreaInset:{top:20,right:0,bottom:12,left:0},
+            contentSafeAreaInset:{top:28,right:0,bottom:16,left:0},
+            isVersionAtLeast:version => version === "8.0",
+            ready:() => calls.ready++,
+            expand:() => calls.expand++,
+            requestFullscreen:() => calls.fullscreen++,
+            setHeaderColor:() => {},
+            setBackgroundColor:() => {},
+            setBottomBarColor:() => {},
+            onEvent:() => {}
+          }};
+          require('./site/telegram-fullscreen-beta4.js');
+          if (!global.BaliTelegramFullscreen?.active) throw new Error("Telegram fullscreen controller is inactive");
+          if (calls.ready !== 1 || calls.expand !== 1 || calls.fullscreen !== 1) throw new Error("Fullscreen startup sequence did not run");
+          if (styles.get("--bali-viewport-height") !== "620px") throw new Error("Telegram viewport height was not synchronized");
+          if (styles.get("--bali-content-safe-top") !== "28px" || styles.get("--bali-content-safe-bottom") !== "16px") throw new Error("Telegram safe-area insets were not synchronized");
+          console.log("Validated Telegram fullscreen startup and safe areas");
+          NODE
+
+          node <<'NODE'
+          const memory = new Map();
+          global.window = global;
+          global.localStorage = {
+            getItem:key => memory.has(key) ? memory.get(key) : null,
+            setItem:(key,value) => memory.set(key,String(value)),
+            removeItem:key => memory.delete(key)
+          };
+          global.document = {
+            querySelectorAll:() => [],
+            addEventListener:() => {},
+            documentElement:{ dataset:{} }
+          };
+          global.CustomEvent = class { constructor(type,init){ this.type=type; this.detail=init?.detail; } };
+          global.dispatchEvent = () => {};
+          global.addEventListener = () => {};
+          global.requestAnimationFrame = fn => fn();
+          global.setInterval = () => 0;
+          global.clearInterval = () => {};
+          require('./site/bali-visual-blocks-core-beta4.js');
+          const blocks = global.BaliVisualBlocks;
+          if (!blocks || blocks.BLOCKS.length < 25) throw new Error("Expected the full visual block registry");
+          if (!blocks.BLOCKS.every(block => block.width && block.height && block.defaultTitle)) throw new Error("Visual block dimensions or default titles are missing");
+          blocks.updateBlock("events.header", { title:"Новая афиша", image:"custom.webp" });
+          if (blocks.read()["events.header"].title !== "Новая афиша") throw new Error("Visual block update was not saved");
+          blocks.resetBlock("events.header");
+          if (blocks.read()["events.header"].title !== "") throw new Error("Per-block visual reset failed");
+          console.log(`Validated ${blocks.BLOCKS.length} configurable visual blocks`);
+          NODE
+
+          node <<'NODE'
+          const memory = new Map();
+          global.window = global;
+          global.localStorage = {
+            getItem:key => memory.has(key) ? memory.get(key) : null,
+            setItem:(key,value) => memory.set(key,String(value)),
+            removeItem:key => memory.delete(key)
+          };
+          global.CustomEvent = class { constructor(type,init){ this.type=type; this.detail=init?.detail; } };
+          global.dispatchEvent = () => {};
+          global.addEventListener = () => {};
+          require('./site/match3-game-core-beta4.js');
+          const game = global.BaliMatch3;
+          if (!game) throw new Error("BALI Match core did not initialize");
+          if (game.config().tiles.length !== 8) throw new Error("Expected 8 default match-3 items");
+          if (game.config().rewards.length !== 10) throw new Error("Expected rewards for TOP 10");
+          const initial = game.leaderboard();
+          if (new Set(initial.map(row => row.userKey)).size !== initial.length) throw new Error("Weekly leaderboard contains duplicates");
+          const result = game.submitScore(99999, { completed:true, bestCombo:5 });
+          if (result.row.position !== 1 || result.row.score !== 99999) throw new Error("Weekly score was not ranked");
+          console.log("Validated BALI Match weekly ranking and defaults");
+          NODE
+
+          node <<'NODE'
+          const memory = new Map();
+          global.window = global;
+          global.localStorage = {
+            getItem:key => memory.has(key) ? memory.get(key) : null,
+            setItem:(key,value) => memory.set(key,String(value)),
+            removeItem:key => memory.delete(key)
+          };
+          global.CustomEvent = class { constructor(type,init){ this.type=type; this.detail=init?.detail; } };
+          global.dispatchEvent = () => {};
+          global.addEventListener = () => {};
+          global.requestAnimationFrame = fn => fn();
+          require('./site/nav-icons-core-beta4.js');
+          const icons = global.BaliNavIcons;
+          if (!icons || icons.read().length !== 6) throw new Error("Expected six configurable navigation icons");
+          if (!icons.item("crown").image.includes("nav-game.svg")) throw new Error("Match-3 default icon is missing");
+          icons.write(icons.read().map(row => row.page === "home" ? {...row,label:"Старт",iconText:"H",image:"custom.webp"} : row));
+          if (icons.item("home").image !== "custom.webp" || icons.item("home").label !== "Старт") throw new Error("Navigation icon or label update was not saved");
+          icons.resetPage("home");
+          if (icons.item("home").label !== "Главная" || icons.item("home").iconText !== "⌂" || !icons.item("home").image.includes("nav-home.svg")) throw new Error("Per-icon reset failed");
+          icons.write([]);
+          if (icons.read().length !== 6) throw new Error("Navigation icon normalization failed");
+          console.log("Validated configurable navigation icons and resets");
+          NODE
+
           if grep -q 'all.click()' site/full-demo-people-finalizer-beta4.js; then
             echo "Recursive BALI People tab click found"
             exit 1
@@ -128,13 +378,33 @@ jobs:
             exit 1
           fi
 
+          if grep -q 'observe(document.documentElement' site/home-community-copy-beta4.js; then
+            echo "Global home copy MutationObserver found"
+            exit 1
+          fi
+
+          if grep -Eq 'observe\(document\.documentElement|setInterval\(sync' site/full-demo-nav-unlock-beta4.js site/full-demo-social-economy-beta4.js site/referral-share-beta4.js; then
+            echo "Unscoped observer or navigation polling found"
+            exit 1
+          fi
+
+          if grep -Eq 'night-crown-beta4\.js|admin-night-crown-bootstrap-beta4\.js' site/beta4-square-loader.js site/admin-beta4.html; then
+            echo "Legacy king/queen contest UI is still loaded"
+            exit 1
+          fi
+
+          if grep -F 'crown:[' site/admin-mobile-runtime.js | grep -Eq 'night-crown-core-beta4|admin-night-crown-beta4'; then
+            echo "Legacy king/queen contest is still configured as the admin crown route"
+            exit 1
+          fi
+
           if grep -Eq 'location\.href = phone|Позвонить менеджеру' site/bali-web-demo-sanitize.js; then
             echo "Browser sanitizer still replaces Telegram links"
             exit 1
           fi
 
-          if grep -Eqi 'telegram-web-app\.js|telegram\.org/js|supabase-js|cdn\.jsdelivr\.net/npm/@supabase' site/index.html site/admin-beta4.html; then
-            echo "Telegram or Supabase SDK found in browser DEMO"
+          if grep -Eqi 'supabase-js|cdn\.jsdelivr\.net/npm/@supabase' site/index.html site/admin-beta4.html || grep -Eqi 'telegram-web-app\.js|telegram\.org/js' site/admin-beta4.html; then
+            echo "Unexpected external SDK found in the browser demo or admin"
             exit 1
           fi
 
@@ -161,6 +431,7 @@ jobs:
           path: _site
 
   deploy:
+    if: github.event_name != 'pull_request'
     name: Deploy GitHub Pages
     needs: build
     runs-on: ubuntu-latest

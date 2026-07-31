@@ -19,8 +19,10 @@
       if (key) map.set(key, { ...account, key });
     });
     customers.forEach((customer) => {
-      const key = digits(customer.phone) ? `phone:${digits(customer.phone)}` : customer.id;
-      const existing = map.get(key) || {};
+      const phone = digits(customer.phone);
+      const account = phone ? [...map.values()].find(item => digits(item.phone) === phone) : null;
+      const key = account?.key || (phone ? `phone:${phone}` : customer.id);
+      const existing = account || map.get(key) || {};
       map.set(key, { ...existing, key, name: customer.name || existing.name || "Гость", phone: digits(customer.phone) || existing.phone || "", telegram: customer.telegram || existing.telegram || "", balance: Number(existing.balance || 0) });
     });
     const current = points.profile();
@@ -42,7 +44,7 @@
       const signed = Math.max(1, Number(data.amount || 0)) * (data.operation === "remove" ? -1 : 1);
       const result = points.adjustAccount(user, signed, data.note || "Корректировка администратора");
       toast(result.ok ? `${signed > 0 ? "Начислено" : "Списано"} ${Math.abs(signed)} баллов` : result.message);
-      render();
+      window.render?.();
     });
   }
 

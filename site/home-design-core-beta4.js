@@ -5,14 +5,14 @@
     brand: { logo: "", name: "BALI", subtitle: "МИНСК · NIGHT CLUB" },
     global: { accent: "#c8ff3d", pageBackground: "#080a0a", text: "#f5f7f5" },
     hero: {
-      eyebrow: "NIGHT CLUB · CONTACT BAR · 18+",
-      title: "Твоя ночь",
-      accentTitle: "начинается здесь",
-      text: "Клубный формат BALI: события, танцпол, контактный бар, кальяны и индивидуальная рассадка столов.",
+      eyebrow: "ЕДИНОЕ ПРИЛОЖЕНИЕ БАЛИ",
+      title: "BALI",
+      accentTitle: "",
+      text: "BALI — приложение ночного клуба и комьюнити людей, объединённых музыкой, любимыми диджеями, артистами и яркими вечеринками.",
       backgroundColor: "#151a17",
       backgroundImage: "",
       align: "left",
-      minHeight: 310,
+      minHeight: 265,
       pills: ["Кирова, 13", "ПТ–СБ · 23:00–06:00", "5 минут от «Динамо»"]
     },
     actions: {
@@ -21,6 +21,33 @@
       align: "center",
       events: { title: "Смотреть афиши", icon: "" },
       profile: { title: "Мой профиль", icon: "" }
+    },
+    controls: {
+      arrowIcon: ""
+    },
+    stats: {
+      points: { title: "Баллы", icon: "" },
+      vip: { title: "VIP статус", icon: "" },
+      game: { title: "Рейтинг в игре", icon: "" },
+      rank: { title: "Общий рейтинг", subtitle: "Минск", icon: "" },
+      notice: { title: "Уведомления", subtitle: "подарки и приглашения", icon: "" }
+    },
+    event: {
+      empty: "Ближайшие события скоро появятся",
+      kicker: "БЛИЖАЙШЕЕ СОБЫТИЕ",
+      allEvents: "Посмотреть все мероприятия",
+      participants: "участников",
+      friends: "друзей",
+      clans: "клана",
+      join: "Я иду",
+      book: "Забронировать",
+      people: "Посмотреть людей и кланы",
+      participantsIcon: "",
+      friendsIcon: "",
+      clansIcon: "",
+      joinIcon: "",
+      bookIcon: "",
+      peopleIcon: ""
     },
     checkin: {
       eyebrow: "Я УЖЕ В BALI",
@@ -32,24 +59,37 @@
       backgroundImage: "",
       align: "left"
     },
+    booking: {
+      title: "Ближайшее бронирование",
+      empty: "У вас пока нет активной брони",
+      choose: "Выбрать",
+      open: "Открыть",
+      icon: ""
+    },
     upcoming: { title: "Три ближайших события", button: "Все афиши", backgroundColor: "#111413", backgroundImage: "", align: "left" },
     about: {
+      heading: "О ЗАВЕДЕНИИ",
       title: "О клубе",
       text: "BALI — ночной клуб с большими экранами, танцполом, контактным баром, кальянами и комфортными столами.",
+      icon: "",
       backgroundColor: "#111413",
       backgroundImage: "",
       align: "left"
+    },
+    social: {
+      heading: "СОЦСЕТИ"
     },
     contacts: {
       title: "Связаться с BALI",
       backgroundColor: "#111413",
       backgroundImage: "",
       align: "left",
-      instagram: { title: "Instagram", subtitle: "Новости и атмосфера", icon: "" },
-      telegram: { title: "Telegram", subtitle: "Канал клуба", icon: "" },
-      manager: { title: "Связаться с менеджером", subtitle: "Личный чат в Telegram", icon: "" },
-      phone: { title: "Позвонить", subtitle: "+375 29 670-03-00", icon: "" },
-      map: { title: "Как добраться", subtitle: "Яндекс Карты", icon: "" }
+      instagram: { heading: "", title: "Instagram", subtitle: "Новости и атмосфера", href: "https://www.instagram.com/bali.minsk/", icon: "" },
+      telegram: { heading: "", title: "Telegram", subtitle: "Канал клуба", href: "https://t.me/bali_minsk", icon: "" },
+      tiktok: { heading: "", title: "TikTok", subtitle: "Видео из BALI", href: "https://www.tiktok.com/", icon: "" },
+      manager: { heading: "СВЯЗАТЬСЯ С BALI", title: "Связаться с менеджером", subtitle: "Личный чат в Telegram", href: "https://t.me/bali_minsk", icon: "" },
+      phone: { heading: "ТЕЛЕФОН", title: "Позвонить", subtitle: "+375 29 670-03-00", href: "+375296700300", icon: "" },
+      map: { heading: "КАК НАС НАЙТИ", title: "Как добраться", subtitle: "Яндекс Карты", href: "https://yandex.by/maps/?text=%D0%9A%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%2013%20%D0%9C%D0%B8%D0%BD%D1%81%D0%BA", icon: "" }
     }
   };
   const clone = value => JSON.parse(JSON.stringify(value));

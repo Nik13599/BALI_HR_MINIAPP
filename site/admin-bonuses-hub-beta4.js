@@ -44,6 +44,13 @@
       title: "Значки наград",
       description: "Замена изображений стандартных и созданных наград.",
       match: ["Все награды"]
+    },
+    {
+      id: "gifts",
+      icon: "🎁",
+      title: "Подарки пользователям",
+      description: "Каталог подарков, цены в BALI-Баллах, ручная выдача и история.",
+      match: ["Подарки пользователям"]
     }
   ];
 
@@ -111,9 +118,10 @@
   function buildHub() {
     if (typeof state === "undefined" || state.view !== "bonuses") return;
     const root = document.getElementById("content");
-    if (!root || root.dataset.bonusHubReady === "1") return;
+    if (!root) return;
 
     document.querySelectorAll(".bonus-section-dialog").forEach(dialog => dialog.remove());
+    delete root.dataset.bonusHubReady;
     const panels = [...root.querySelectorAll(":scope > .panel, :scope > .bonus-admin-grid > .panel")];
     const matched = new Set();
     const readyGroups = groups.map(group => {
@@ -155,6 +163,11 @@
   const baseRender = window.render;
   if (typeof baseRender === "function") {
     window.render = async function(...args) {
+      const root = document.getElementById("content");
+      if (typeof state !== "undefined" && state.view === "bonuses" && root) {
+        delete root.dataset.bonusHubReady;
+        document.querySelectorAll(".bonus-section-dialog").forEach(dialog => dialog.remove());
+      }
       const result = await baseRender.apply(this, args);
       if (typeof state !== "undefined" && state.view === "bonuses") {
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));

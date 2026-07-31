@@ -110,9 +110,26 @@
     return true;
   }
 
-  function adjustAccount(target, delta, note = "Корректировка администратора") {
+  function adjustAccount(target, delta, note = "Корректировка администратора", options = {}) {
     const key = accountKey(target);
     if (!key) return { ok: false, message: "Не выбран пользователь" };
+    const actionKey = String(options.actionKey || options.idempotencyKey || "");
+    const used = actions();
+    if (actionKey && used[actionKey]) {
+      const previous = ledger().find((row) => row.actionKey === actionKey || row.metadata?.idempotencyKey === actionKey);
+      if (used[actionKey]?.status === "pending" && !previous) {
+        delete used[actionKey];
+        write(keys.actions, used);
+      } else {
+        return {
+          ok: true,
+          duplicate: true,
+          account: accounts()[key] || target,
+          delta: Number(previous?.amount || 0),
+          transaction: previous || null
+        };
+      }
+    }
     const all = accounts();
     const currentProfile = profile();
     const existing = all[key] || {
@@ -125,17 +142,59 @@
     };
     const value = Number(delta || 0);
     if (!value) return { ok: false, message: "Укажите количество баллов" };
-    existing.balance = Math.max(0, Number(existing.balance || 0) + value);
+    const balanceBefore = Number(existing.balance || 0);
+    const balanceAfter = Math.max(0, balanceBefore + value);
+    const appliedDelta = balanceAfter - balanceBefore;
+    if (!appliedDelta) return { ok: false, message: value < 0 ? "Недостаточно баллов для списания" : "Укажите количество баллов" };
+    const transactionId = options.transactionId || crypto.randomUUID?.() || String(Date.now());
+    if (actionKey) {
+      used[actionKey] = {
+        status: "pending",
+        transactionId,
+        userKey: key,
+        createdAt: new Date().toISOString()
+      };
+      write(keys.actions, used);
+    }
+    existing.balance = balanceAfter;
     existing.updatedAt = new Date().toISOString();
     all[key] = existing;
     write(keys.accounts, all);
     const rows = ledger();
-    rows.unshift({ id: crypto.randomUUID?.() || String(Date.now()), userKey: key, type: value > 0 ? "admin_add" : "admin_remove", title: note, amount: value, createdAt: new Date().toISOString() });
-    write(keys.ledger, rows.slice(0, 200));
+    const transaction = {
+      id: transactionId,
+      userKey: key,
+      type: options.type || (appliedDelta > 0 ? "admin_add" : "admin_remove"),
+      title: note,
+      amount: appliedDelta,
+      balanceBefore,
+      balanceAfter,
+      actionKey,
+      metadata: { ...(options.metadata || {}), ...(actionKey ? { idempotencyKey: actionKey } : {}) },
+      createdAt: new Date().toISOString()
+    };
+    rows.unshift(transaction);
+    write(keys.ledger, rows.slice(0, 500));
+    if (actionKey) {
+      used[actionKey] = {
+        status: "completed",
+        transactionId,
+        userKey: key,
+        createdAt: transaction.createdAt
+      };
+      write(keys.actions, used);
+    }
     if (currentProfile.userKey === key || currentProfile.ownerKey === key || currentProfile.code === key) {
       write(keys.profile, { ...currentProfile, ...existing, userKey: key });
     }
-    return { ok: true, account: existing, delta: value };
+    return {
+      ok: true,
+      account: existing,
+      delta: appliedDelta,
+      requestedDelta: value,
+      partial: appliedDelta !== value,
+      transaction
+    };
   }
 
   function redeemVisit(rawCode) {

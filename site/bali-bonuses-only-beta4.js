@@ -18,6 +18,9 @@
   };
 
   function cleanVisibleUi() {
+    social.GIFT_CATALOG?.forEach(gift => {
+      gift.points = Math.max(1, Number(gift.stars || gift.points || 1));
+    });
     const vipCount = document.querySelector('[data-screen="profile"] .card-head .count');
     if (vipCount && /Stars/i.test(vipCount.textContent || "")) vipCount.textContent = "BALI-Баллы";
 

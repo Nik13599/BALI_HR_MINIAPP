@@ -38,7 +38,9 @@
 .shell>nav.nav[data-navigation-ready="true"]>button[data-page].navigation-loading>i{animation:baliNavPulse 1s ease-in-out infinite alternate}
 .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i,
 .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>span{pointer-events:none!important}
-.shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i{display:block!important;transform:none!important;line-height:1!important}
+.shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i{display:grid!important;place-items:center!important;width:24px!important;height:24px!important;overflow:hidden!important;transform:none!important;line-height:1!important}
+.shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i.nav-icon-image{border-radius:7px!important;background:transparent!important;color:transparent!important;font-size:0!important}
+.shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i.nav-icon-image>img{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;border-radius:inherit!important}
 .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>span{display:block!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:7px!important}
 @keyframes baliNavPulse{from{opacity:.45}to{opacity:1}}
 @media(max-width:370px){.shell>nav.nav[data-navigation-ready="true"]>button[data-page]>span{font-size:6px!important}}

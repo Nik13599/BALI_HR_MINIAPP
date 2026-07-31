@@ -23,6 +23,7 @@
   }
 
   function apply() {
+    if (window.BALI_TELEGRAM_MINI_APP) return;
     try { delete window.Telegram; } catch { window.Telegram = undefined; }
     removeAuthKeys(window.localStorage);
     removeAuthKeys(window.sessionStorage);

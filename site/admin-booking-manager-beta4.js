@@ -339,10 +339,12 @@
   styles();
   ensureDialogs();
   let scheduled = false;
-  new MutationObserver(records => {
+  const contentRoot = document.getElementById("content");
+  const contentObserver = new MutationObserver(records => {
     if (scheduled || !records.some(record => record.addedNodes.length || record.removedNodes.length)) return;
     scheduled = true;
     requestAnimationFrame(() => { scheduled = false; apply(); });
-  }).observe(document.getElementById("content"), { childList: true, subtree: true });
+  });
+  if (contentRoot) contentObserver.observe(contentRoot, { childList: true, subtree: true });
   [0, 250, 700, 1400].forEach(delay => setTimeout(apply, delay));
 })();
