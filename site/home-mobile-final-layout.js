@@ -1,63 +1,81 @@
 (() => {
   "use strict";
 
-  if (window.__BALI_HOME_FINAL_LAYOUT__) return;
-  window.__BALI_HOME_FINAL_LAYOUT__ = true;
+  if (window.__BALI_HOME_FINAL_LAYOUT_V4__) return;
+  window.__BALI_HOME_FINAL_LAYOUT_V4__ = true;
 
   const mobileQuery = window.matchMedia("(max-width: 760px)");
   const fallbackText = "BALI — приложение ночного клуба и комьюнити людей, объединённых музыкой, любимыми диджеями, артистами и яркими вечеринками.";
+  const clubLine = "NIGHT CLUB · CONTACT BAR · 18+";
   let lastDescription = fallbackText;
   let frame = 0;
 
   function ensureStyles() {
-    if (document.getElementById("baliHomeFinalLayoutStyles")) return;
+    document.getElementById("baliHomeFinalLayoutStyles")?.remove();
+    if (document.getElementById("baliHomeFinalLayoutStylesV4")) return;
+
     const style = document.createElement("style");
-    style.id = "baliHomeFinalLayoutStyles";
+    style.id = "baliHomeFinalLayoutStylesV4";
     style.textContent = `
       @media (max-width:760px){
         .shell{
-          grid-template-rows:calc(70px + var(--safe-top)) minmax(0,1fr) calc(46px + var(--safe))!important;
+          grid-template-rows:calc(60px + var(--safe-top)) minmax(0,1fr) calc(42px + var(--safe))!important;
         }
         .top{
-          min-height:68px!important;
-          display:grid!important;
-          grid-template-columns:minmax(0,1fr) auto!important;
-          grid-template-rows:auto auto!important;
-          align-content:center!important;
-          column-gap:8px!important;
-          row-gap:1px!important;
-          padding:3px 8px!important;
+          min-height:58px!important;
+          display:flex!important;
+          align-items:center!important;
+          gap:6px!important;
+          padding:2px 7px!important;
           background:transparent!important;
         }
         .top .brand{
-          grid-column:1!important;
-          grid-row:1!important;
+          flex:1 1 auto!important;
           min-width:0!important;
-          gap:8px!important;
+          display:flex!important;
+          align-items:center!important;
+          gap:6px!important;
         }
         .top .logo{
+          flex:0 0 auto!important;
           width:38px!important;
           height:38px!important;
           border-radius:12px!important;
           font-size:18px!important;
         }
-        .top .brand strong{font-size:19px!important}
-        .top .brand small{font-size:7px!important;margin-top:2px!important}
+        .top .bali-brand-copy{
+          min-width:0!important;
+          display:flex!important;
+          flex-direction:column!important;
+          justify-content:center!important;
+          gap:0!important;
+          margin:0!important;
+          padding:0!important;
+        }
+        .top .brand strong{
+          margin:0!important;
+          font-size:19px!important;
+          line-height:.95!important;
+        }
+        .top .brand small{
+          margin:1px 0 0!important;
+          color:#b8bcb8!important;
+          font-size:6.8px!important;
+          line-height:1.05!important;
+          letter-spacing:.035em!important;
+          white-space:nowrap!important;
+        }
         .top-profile-button{
-          grid-column:2!important;
-          grid-row:1/3!important;
-          align-self:center!important;
-          width:40px!important;
-          height:40px!important;
+          flex:0 0 auto!important;
+          width:38px!important;
+          height:38px!important;
+          padding:2px!important;
         }
         .bali-top-description{
-          grid-column:1!important;
-          grid-row:2!important;
-          min-width:0!important;
-          max-width:calc(100vw - 68px)!important;
-          margin:0!important;
-          color:#d5d8d5!important;
-          font:500 8.7px/1.18 Manrope,system-ui,sans-serif!important;
+          max-width:calc(100vw - 92px)!important;
+          margin:1px 0 0!important;
+          color:#d8dbd8!important;
+          font:500 7.8px/1.08 Manrope,system-ui,sans-serif!important;
           letter-spacing:0!important;
         }
         [data-screen="home"] .bali-home-reference-hero,
@@ -68,51 +86,56 @@
           gap:5px!important;
         }
         [data-screen="home"] .bali-home-stat{
-          min-height:66px!important;
+          min-height:70px!important;
           padding:6px!important;
         }
         [data-screen="home"] .bali-home-stat-icon{
-          width:23px!important;
-          height:23px!important;
+          width:24px!important;
+          height:24px!important;
         }
-        [data-screen="home"] .bali-home-stat strong{font-size:14px!important}
-        [data-screen="home"] .bali-home-stat-label{font-size:6px!important}
-        [data-screen="home"] .bali-home-stat small{font-size:6px!important}
+        [data-screen="home"] .bali-home-stat strong{font-size:15px!important}
+        [data-screen="home"] .bali-home-stat-label{font-size:6.3px!important}
+        [data-screen="home"] .bali-home-stat small{font-size:6.2px!important}
         [data-screen="home"] .bali-home-event-grid{
-          grid-template-columns:102px minmax(0,1fr)!important;
+          grid-template-columns:108px minmax(0,1fr)!important;
           gap:8px!important;
         }
         [data-screen="home"] .bali-home-event-poster{
-          min-height:170px!important;
-          height:170px!important;
+          min-height:178px!important;
+          height:178px!important;
         }
-        [data-screen="home"] .bali-home-event-title{font-size:21px!important}
-        [data-screen="home"] .bali-home-event-description{font-size:8.5px!important}
-        [data-screen="home"] .bali-home-count{min-height:24px!important;font-size:7px!important}
-        [data-screen="home"] .bali-home-event-actions button{min-height:29px!important;font-size:9.5px!important}
-        [data-screen="home"] .bali-home-reference-checkin{min-height:55px!important;padding:6px!important}
-        [data-screen="home"] .bali-home-checkin-copy h3{font-size:12px!important}
-        [data-screen="home"] .bali-home-checkin-copy p{font-size:6.5px!important}
-        [data-screen="home"] .bali-home-scan{min-height:23px!important;font-size:8px!important}
-        [data-screen="home"] .bali-home-booking-strip{min-height:40px!important}
-        [data-screen="home"] .bali-home-social-link{min-height:35px!important}
+        [data-screen="home"] .bali-home-event-title{font-size:22px!important}
+        [data-screen="home"] .bali-home-event-description{font-size:9px!important}
+        [data-screen="home"] .bali-home-count{min-height:25px!important;font-size:7.3px!important}
+        [data-screen="home"] .bali-home-event-actions button{min-height:31px!important;font-size:10px!important}
+        [data-screen="home"] .bali-home-reference-checkin{min-height:58px!important;padding:6px!important}
+        [data-screen="home"] .bali-home-checkin-copy h3{font-size:12.5px!important}
+        [data-screen="home"] .bali-home-checkin-copy p{font-size:7px!important}
+        [data-screen="home"] .bali-home-scan{min-height:24px!important;font-size:8.3px!important}
+        [data-screen="home"] .bali-home-booking-strip{min-height:42px!important}
+        [data-screen="home"] .bali-home-social-link{min-height:37px!important}
         [data-screen="home"] .bali-home-bottom-card,
         [data-screen="home"] .bali-home-reference-phone,
-        [data-screen="home"] .bali-home-reference-about{min-height:42px!important}
+        [data-screen="home"] .bali-home-reference-about{min-height:44px!important}
         .shell>nav.nav[data-navigation-ready="true"]{
           width:calc(100% - 8px)!important;
-          min-height:42px!important;
-          margin:0 auto 2px!important;
-          padding:2px 3px calc(2px + var(--safe))!important;
-          border-radius:12px!important;
+          min-height:38px!important;
+          margin:0 auto 1px!important;
+          padding:1px 3px calc(1px + var(--safe))!important;
+          border-radius:11px!important;
         }
         .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i{
-          width:18px!important;
-          height:18px!important;
+          width:17px!important;
+          height:17px!important;
         }
         .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>span{
-          font-size:5px!important;
+          font-size:4.8px!important;
         }
+      }
+      @media (max-width:360px){
+        .bali-top-description{font-size:7.2px!important}
+        [data-screen="home"] .bali-home-event-grid{grid-template-columns:96px minmax(0,1fr)!important}
+        [data-screen="home"] .bali-home-event-poster{min-height:170px!important;height:170px!important}
       }
     `;
     document.head.appendChild(style);
@@ -125,22 +148,31 @@
       ensureStyles();
 
       const top = document.querySelector(".top");
+      const brand = top?.querySelector(".brand");
+      const subtitle = brand?.querySelector("small");
       const home = document.querySelector('[data-screen="home"]');
       const root = home?.querySelector(".bali-home-reference");
-      if (!top || !root) return;
+      if (!top || !brand || !subtitle || !root) return;
 
       const hero = root.querySelector(".bali-home-reference-hero");
       const heroText = hero?.querySelector("p")?.textContent?.trim();
       if (heroText) lastDescription = heroText;
 
-      let description = top.querySelector(":scope > .bali-top-description");
-      if (!description) {
+      subtitle.textContent = clubLine;
+      const copy = subtitle.parentElement;
+      copy?.classList.add("bali-brand-copy");
+
+      let description = copy?.querySelector(":scope > .bali-top-description");
+      if (!description && copy) {
         description = document.createElement("p");
         description.className = "bali-top-description";
-        top.appendChild(description);
+        subtitle.insertAdjacentElement("afterend", description);
       }
-      if (description.textContent !== lastDescription) description.textContent = lastDescription;
+      if (description && description.textContent !== lastDescription) {
+        description.textContent = lastDescription;
+      }
 
+      top.querySelectorAll(":scope > .bali-top-description").forEach(node => node.remove());
       hero?.remove();
       root.querySelectorAll(".bali-home-people-link").forEach(node => node.remove());
 
