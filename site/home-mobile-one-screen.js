@@ -6,11 +6,13 @@
 
   let frame = 0;
   let observer;
+  let delayed = [];
 
   function reset(root, screen) {
     if (root) {
       root.style.removeProperty("transform");
       root.style.removeProperty("transform-origin");
+      delete root.dataset.oneScreenScale;
     }
     if (screen) {
       screen.style.removeProperty("overflow");
@@ -43,19 +45,21 @@
       const available = Math.max(1, screen.clientHeight - verticalPadding - 2);
       const natural = Math.max(1, root.scrollHeight);
       const scale = Math.min(1, available / natural);
-      root.style.transform = `scale(${Math.max(0.58, scale).toFixed(4)})`;
-      root.dataset.oneScreenScale = scale.toFixed(4);
+      const applied = Math.max(0.4, scale);
+      root.style.transform = `scale(${applied.toFixed(4)})`;
+      root.dataset.oneScreenScale = applied.toFixed(4);
     });
   }
 
   function schedule() {
+    delayed.forEach(clearTimeout);
+    delayed = [];
     fit();
-    setTimeout(fit, 80);
-    setTimeout(fit, 260);
+    delayed.push(setTimeout(fit, 80), setTimeout(fit, 260));
   }
 
   observer = new MutationObserver(mutations => {
-    if (mutations.some(mutation => mutation.type === "childList" || mutation.type === "attributes")) schedule();
+    if (mutations.some(mutation => mutation.type === "childList" || mutation.attributeName === "class")) schedule();
   });
 
   const start = () => {
@@ -63,7 +67,7 @@
       subtree:true,
       childList:true,
       attributes:true,
-      attributeFilter:["class", "style", "data-screen"]
+      attributeFilter:["class"]
     });
     schedule();
   };
@@ -71,7 +75,6 @@
   window.addEventListener("resize", schedule, { passive:true });
   window.addEventListener("orientationchange", schedule, { passive:true });
   window.visualViewport?.addEventListener("resize", schedule, { passive:true });
-  window.visualViewport?.addEventListener("scroll", schedule, { passive:true });
   [
     "bali:full-demo-enhancements-ready",
     "bali:home-design-changed",
