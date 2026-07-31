@@ -1,0 +1,375 @@
+/* One-screen mobile dashboard for the BALI user home page. */
+@media (max-width:760px){
+  .shell{
+    grid-template-rows:calc(56px + var(--safe-top)) minmax(0,1fr) calc(62px + var(--safe))!important;
+    height:100dvh!important;
+    min-height:100dvh!important;
+    overflow:hidden!important;
+  }
+
+  .top{
+    min-height:54px!important;
+    padding:3px 10px!important;
+    background:transparent!important;
+  }
+  .top .brand{gap:8px!important}
+  .top .logo{
+    width:38px!important;
+    height:38px!important;
+    border-radius:12px!important;
+    font-size:18px!important;
+  }
+  .top .brand strong{font-size:19px!important}
+  .top .brand small{
+    margin-top:2px!important;
+    font-size:7px!important;
+  }
+  .top-profile-button{
+    width:42px!important;
+    height:42px!important;
+    padding:3px!important;
+  }
+
+  [data-screen="home"]{
+    height:100%!important;
+    min-height:0!important;
+    padding:0 7px!important;
+    overflow:hidden!important;
+    overscroll-behavior:none!important;
+  }
+  [data-screen="home"] .inner{
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  [data-screen="home"] .bali-home-reference{
+    width:100%;
+    gap:4px!important;
+    padding:0!important;
+    transform-origin:top center;
+    will-change:transform;
+  }
+  [data-screen="home"] .bali-home-reference:before{
+    right:-7px!important;
+    left:-7px!important;
+    height:210px!important;
+    background:
+      linear-gradient(90deg,#070808 0%,rgba(7,8,8,.82) 48%,rgba(7,8,8,.18) 100%),
+      linear-gradient(0deg,#070808 0%,transparent 48%),
+      var(--bali-home-hero-image,url("./assets/bali-temple/hero-stone-face.webp")) 79% 0/auto 205px no-repeat!important;
+  }
+
+  [data-screen="home"] .bali-home-reference-hero{
+    min-height:68px!important;
+    padding:0 3px 3px!important;
+    align-content:center!important;
+  }
+  [data-screen="home"] .bali-home-reference-hero .eyebrow{
+    max-width:none!important;
+    font-size:7px!important;
+    line-height:1.1!important;
+    letter-spacing:.15em!important;
+  }
+  [data-screen="home"] .bali-home-reference-hero h1{
+    margin-top:2px!important;
+    font-size:31px!important;
+    line-height:.86!important;
+  }
+  [data-screen="home"] .bali-home-reference-hero p{
+    max-width:280px!important;
+    margin-top:3px!important;
+    display:-webkit-box;
+    overflow:hidden;
+    font-size:8px!important;
+    line-height:1.2!important;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+  }
+
+  [data-screen="home"] .bali-home-reference-stats{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    gap:3px!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+  }
+  [data-screen="home"] .bali-home-stat{
+    min-height:54px!important;
+    padding:4px!important;
+    border-radius:9px!important;
+    align-content:space-between!important;
+  }
+  [data-screen="home"] .bali-home-stat-icon{
+    width:18px!important;
+    height:18px!important;
+    border-radius:6px!important;
+  }
+  [data-screen="home"] .bali-home-stat-copy{gap:1px!important}
+  [data-screen="home"] .bali-home-stat-label{
+    font-size:5px!important;
+    line-height:1!important;
+    letter-spacing:.04em!important;
+  }
+  [data-screen="home"] .bali-home-stat strong{
+    font-size:11px!important;
+    line-height:1!important;
+  }
+  [data-screen="home"] .bali-home-stat small{
+    font-size:5px!important;
+    line-height:1!important;
+  }
+  [data-screen="home"] .bali-home-notice-badge{
+    top:2px!important;
+    left:18px!important;
+    min-width:14px!important;
+    height:14px!important;
+    padding:0 3px!important;
+    font-size:7px!important;
+  }
+
+  [data-screen="home"] .bali-home-reference-event{
+    padding:5px!important;
+    border-radius:13px!important;
+  }
+  [data-screen="home"] .bali-home-event-grid{
+    grid-template-columns:86px minmax(0,1fr)!important;
+    gap:6px!important;
+  }
+  [data-screen="home"] .bali-home-event-poster{
+    min-height:152px!important;
+    height:152px!important;
+    aspect-ratio:auto!important;
+    border-radius:9px!important;
+  }
+  [data-screen="home"] .bali-home-event-main{gap:3px!important}
+  [data-screen="home"] .bali-home-event-head{gap:3px!important}
+  [data-screen="home"] .bali-home-event-kicker{
+    max-width:125px!important;
+    font-size:6px!important;
+    line-height:1.15!important;
+    letter-spacing:.08em!important;
+  }
+  [data-screen="home"] .bali-home-all-events{
+    min-width:24px!important;
+    width:24px!important;
+    min-height:22px!important;
+    padding:0!important;
+    overflow:hidden!important;
+    color:transparent!important;
+    border-radius:7px!important;
+  }
+  [data-screen="home"] .bali-home-all-events img{
+    width:9px!important;
+    margin:0!important;
+  }
+  [data-screen="home"] .bali-home-event-title{
+    font-size:17px!important;
+    line-height:.95!important;
+  }
+  [data-screen="home"] .bali-home-event-description{
+    display:-webkit-box;
+    margin:0!important;
+    overflow:hidden;
+    font-size:7px!important;
+    line-height:1.15!important;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+  }
+  [data-screen="home"] .bali-home-event-counts{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:2px!important;
+  }
+  [data-screen="home"] .bali-home-count{
+    min-height:20px!important;
+    justify-content:center!important;
+    gap:2px!important;
+    padding:0 2px!important;
+    border-radius:7px!important;
+    font-size:6px!important;
+    white-space:nowrap!important;
+  }
+  [data-screen="home"] .bali-home-count img{
+    width:9px!important;
+    height:9px!important;
+  }
+  [data-screen="home"] .bali-home-event-actions{
+    grid-template-columns:1fr 1fr!important;
+    gap:3px!important;
+  }
+  [data-screen="home"] .bali-home-event-actions button{
+    min-height:24px!important;
+    border-radius:7px!important;
+    font-size:8px!important;
+  }
+  [data-screen="home"] .bali-home-action-arrow,
+  [data-screen="home"] .bali-home-action-leading{
+    width:10px!important;
+    height:10px!important;
+    margin-right:2px!important;
+  }
+
+  [data-screen="home"] .bali-home-reference-checkin{
+    min-height:48px!important;
+    grid-template-columns:minmax(0,1fr) 28px!important;
+    gap:3px!important;
+    padding:4px!important;
+    border-radius:8px!important;
+  }
+  [data-screen="home"] .bali-home-checkin-copy .eyebrow{font-size:5px!important}
+  [data-screen="home"] .bali-home-checkin-copy h3{
+    margin-top:1px!important;
+    font-size:10px!important;
+  }
+  [data-screen="home"] .bali-home-checkin-copy p{
+    margin-top:1px!important;
+    display:-webkit-box;
+    overflow:hidden;
+    font-size:5.5px!important;
+    line-height:1.15!important;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+  }
+  [data-screen="home"] .bali-home-checkin-qr{
+    width:27px!important;
+    height:27px!important;
+    padding:3px!important;
+    border-width:1px!important;
+    border-radius:6px!important;
+  }
+  [data-screen="home"] .bali-home-scan{
+    grid-column:1/3!important;
+    min-height:20px!important;
+    border-radius:6px!important;
+    font-size:7px!important;
+  }
+  [data-screen="home"] .bali-home-people-link{
+    grid-column:1/3!important;
+    min-height:22px!important;
+    gap:4px!important;
+    margin:0!important;
+    border-radius:7px!important;
+    font-size:7px!important;
+  }
+  [data-screen="home"] .bali-home-people-link img{width:11px!important}
+
+  [data-screen="home"] .bali-home-booking-strip{
+    min-height:34px!important;
+    grid-template-columns:26px minmax(0,1fr) 52px!important;
+    gap:4px!important;
+    padding:3px 5px!important;
+    border-radius:10px!important;
+  }
+  [data-screen="home"] .bali-home-strip-icon{
+    width:24px!important;
+    height:24px!important;
+    border-radius:7px!important;
+  }
+  [data-screen="home"] .bali-home-booking-copy small{
+    font-size:5px!important;
+    letter-spacing:.08em!important;
+  }
+  [data-screen="home"] .bali-home-booking-copy strong{
+    margin-top:1px!important;
+    overflow:hidden!important;
+    font-size:7px!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  [data-screen="home"] .bali-home-booking-open{
+    grid-column:auto!important;
+    min-height:24px!important;
+    border-radius:7px!important;
+    font-size:7px!important;
+  }
+
+  [data-screen="home"] .bali-home-reference-social{
+    padding:3px 4px!important;
+    border-radius:10px!important;
+  }
+  [data-screen="home"] .bali-home-reference-social .bali-home-section-label{
+    margin-bottom:2px!important;
+    font-size:5px!important;
+  }
+  [data-screen="home"] .bali-home-social-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:3px!important;
+  }
+  [data-screen="home"] .bali-home-social-link{
+    min-height:30px!important;
+    grid-template-columns:18px minmax(0,1fr) 7px!important;
+    gap:3px!important;
+    padding:2px 3px!important;
+    border-radius:7px!important;
+  }
+  [data-screen="home"] .bali-home-social-link .bali-home-link-icon{
+    width:17px!important;
+    height:17px!important;
+    border-radius:5px!important;
+  }
+  [data-screen="home"] .bali-home-social-link strong{font-size:6px!important}
+  [data-screen="home"] .bali-home-social-link small{
+    margin-top:1px!important;
+    overflow:hidden!important;
+    font-size:4.5px!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  [data-screen="home"] .bali-home-social-link>img{width:6px!important}
+
+  [data-screen="home"] .bali-home-bottom-grid{
+    grid-template-columns:1fr 1fr!important;
+    gap:3px!important;
+  }
+  [data-screen="home"] .bali-home-bottom-card,
+  [data-screen="home"] .bali-home-reference-phone,
+  [data-screen="home"] .bali-home-reference-about{
+    grid-column:auto!important;
+    min-height:36px!important;
+    grid-template-columns:19px minmax(0,1fr) 7px!important;
+    gap:3px!important;
+    padding:3px 4px!important;
+    border-radius:8px!important;
+  }
+  [data-screen="home"] .bali-home-bottom-card .bali-home-section-label{
+    grid-column:1/4!important;
+    margin:0 0 -2px!important;
+    font-size:4.5px!important;
+  }
+  [data-screen="home"] .bali-home-bottom-card .bali-home-link-icon{
+    width:18px!important;
+    height:18px!important;
+  }
+  [data-screen="home"] .bali-home-bottom-card strong{font-size:6.5px!important}
+  [data-screen="home"] .bali-home-bottom-card small{
+    margin-top:0!important;
+    overflow:hidden!important;
+    font-size:4.5px!important;
+    line-height:1!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+  [data-screen="home"] .bali-home-bottom-card>img{width:6px!important}
+
+  .shell>nav.nav[data-navigation-ready="true"]{
+    width:calc(100% - 10px)!important;
+    min-height:54px!important;
+    margin:0 auto 3px!important;
+    padding:3px 4px calc(3px + var(--safe))!important;
+    border-radius:15px!important;
+  }
+  .shell>nav.nav[data-navigation-ready="true"]>button[data-page]{border-radius:11px!important}
+  .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>i{
+    width:23px!important;
+    height:23px!important;
+  }
+  .shell>nav.nav[data-navigation-ready="true"]>button[data-page]>span{font-size:6px!important}
+}
+
+@media (max-width:360px){
+  [data-screen="home"] .bali-home-reference-hero{min-height:58px!important}
+  [data-screen="home"] .bali-home-reference-hero h1{font-size:27px!important}
+  [data-screen="home"] .bali-home-event-grid{grid-template-columns:74px minmax(0,1fr)!important}
+  [data-screen="home"] .bali-home-event-poster{height:145px!important;min-height:145px!important}
+}
