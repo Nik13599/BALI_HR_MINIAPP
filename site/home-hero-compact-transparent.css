@@ -1,0 +1,42 @@
+/* Compact transparent top hero for the BALI user application. */
+[data-screen="home"] .bali-home-reference-hero{
+  min-height:190px!important;
+  padding:10px 10px 12px!important;
+  border:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+
+[data-screen="home"] .bali-home-reference-hero::before,
+[data-screen="home"] .bali-home-reference-hero::after{
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+[data-screen="home"] .bali-home-reference-hero h1{
+  margin-top:7px!important;
+}
+
+[data-screen="home"] .bali-home-reference-hero p{
+  margin-top:9px!important;
+}
+
+@media (max-width:600px){
+  [data-screen="home"] .bali-home-reference-hero{
+    min-height:170px!important;
+    padding:4px 6px 10px!important;
+  }
+
+  [data-screen="home"] .bali-home-reference-hero h1{
+    margin-top:5px!important;
+  }
+
+  [data-screen="home"] .bali-home-reference-hero p{
+    margin-top:7px!important;
+    line-height:1.35!important;
+  }
+}
