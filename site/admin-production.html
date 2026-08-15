@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#090806">
   <title>BALI Admin — Production Control</title>
   <link rel="stylesheet" href="/site/admin-production.css?v=bali-production-2">
+  <link rel="stylesheet" href="/site/admin-mobile-access.css?v=20260816-1">
   <script defer src="/site/admin-production.js?v=bali-production-2"></script>
 </head>
 <body>
@@ -14,7 +15,7 @@
       <span class="admin-logo">B</span>
       <p class="eyebrow">BALI CONTROL CENTER</p>
       <h1>Служебный вход</h1>
-      <p>Telegram‑сессия пользователя не предоставляет доступ к этой панели.</p>
+      <p>Пользовательская мобильная сессия не предоставляет доступ к этой панели.</p>
       <label>Email<input name="email" type="email" autocomplete="username" required></label>
       <label>Пароль<input name="password" type="password" autocomplete="current-password" minlength="12" required></label>
       <button type="submit">Войти в админку</button>
@@ -28,6 +29,7 @@
       <nav>
         <button type="button" data-admin-view="dashboard">Дашборд</button>
         <button type="button" data-admin-view="crm">CRM</button>
+        <button class="mobile-access-nav" type="button" data-mobile-access-view="1">Доступ <span class="mobile-access-badge" id="mobileAccessBadge" hidden>0</span></button>
         <button type="button" data-admin-view="events">События</button>
         <button type="button" data-admin-view="bookings">Брони</button>
         <button type="button" data-admin-view="operations">QR</button>
@@ -56,5 +58,6 @@
   <dialog id="adminDialog"><form method="dialog" id="adminDialogForm"><header><h2 id="adminDialogTitle">Действие</h2><button value="cancel">×</button></header><div id="adminDialogBody"></div></form></dialog>
   <div class="admin-toast" id="adminToast"></div>
   <script defer src="/site/admin-platform-ui.js?v=bali-production-2"></script>
+  <script defer src="/site/admin-mobile-access.js?v=20260816-1"></script>
 </body>
 </html>
