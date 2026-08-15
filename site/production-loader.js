@@ -2,6 +2,9 @@
   "use strict";
   const version = "bali-mobile-production-20260816-1";
   const assetBase = window.BALI_ASSET_BASE || "/site/";
+  const esc = (value = "") => String(value).replace(/[&<>'"]/g, char => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;"
+  })[char]);
   window.BALI_DEMO_ONLY = false;
   window.BALI_WEB_DEMO = false;
   window.BALI_BROWSER_DEMO = false;
@@ -107,7 +110,8 @@
       window.BaliMobileAuth?.showLogin?.(error?.message || "Войдите в приложение");
     } else {
       const card = gate.querySelector(".production-gate__card");
-      if (card) card.innerHTML = `<span class="production-gate__mark">B</span><p class="mobile-auth-kicker">BALI MOBILE</p><h1>BALI временно недоступен</h1><p class="mobile-auth-copy">${String(error?.message || "Не удалось загрузить приложение. Повторите попытку.")}</p><div class="mobile-auth-actions"><button class="mobile-auth-button" type="button" onclick="location.reload()">Повторить</button></div>`;
+      const message = esc(error?.message || "Не удалось загрузить приложение. Повторите попытку.");
+      if (card) card.innerHTML = `<span class="production-gate__mark">B</span><p class="mobile-auth-kicker">BALI MOBILE</p><h1>BALI временно недоступен</h1><p class="mobile-auth-copy">${message}</p><div class="mobile-auth-actions"><button class="mobile-auth-button" type="button" onclick="location.reload()">Повторить</button></div>`;
     }
   }
 })();
