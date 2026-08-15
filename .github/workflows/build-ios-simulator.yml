@@ -1,0 +1,57 @@
+name: Build iOS simulator app
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_url:
+        description: HTTPS address serving the BALI /app production client
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ios-simulator:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    env:
+      BALI_MOBILE_SERVER_URL: ${{ inputs.server_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+      - name: Install native dependencies
+        working-directory: native
+        run: npm install
+      - name: Generate iOS project
+        working-directory: native
+        run: npx cap add ios
+      - name: Sync Capacitor
+        working-directory: native
+        run: npx cap sync ios
+      - name: Build unsigned simulator app
+        working-directory: native
+        run: |
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Package simulator app
+        working-directory: native
+        run: |
+          cd build/Build/Products/Debug-iphonesimulator
+          ditto -c -k --sequesterRsrc --keepParent App.app BALI-iOS-Simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BALI-iOS-Simulator
+          path: native/build/Build/Products/Debug-iphonesimulator/BALI-iOS-Simulator.zip
+          if-no-files-found: error
+          retention-days: 14
