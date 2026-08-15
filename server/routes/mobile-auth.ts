@@ -54,6 +54,18 @@ async function createMobileSession(db: Queryable, config: AppConfig, req: any, r
 export function createMobileAuthRouter(db: Queryable, config: AppConfig): Router {
   const router = Router();
 
+  router.get("/mobile/session", requireUser, asyncHandler(async (req, res) => {
+    res.json({
+      user: {
+        id: req.userPrincipal!.userKey,
+        name: req.userPrincipal!.name,
+        username: req.userPrincipal!.username
+      },
+      authMethod: req.userPrincipal!.authMethod,
+      mustChangePassword: req.userPrincipal!.mustChangePassword
+    });
+  }));
+
   router.post("/mobile/register-request", asyncHandler(async (req, res) => {
     await enforceRateLimit(db, req, "auth.mobile_request", requestSubject(req));
     const phone = normalizePhone(req.body?.phone);
