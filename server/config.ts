@@ -35,7 +35,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (productionLike) {
     const missing = [
       !config.databaseUrl && "DATABASE_URL",
-      !config.telegramBotToken && "TELEGRAM_BOT_TOKEN",
       config.sessionSecret.length < 32 && "SESSION_SECRET (minimum 32 characters)"
     ].filter(Boolean);
     if (missing.length) throw new Error(`Missing production configuration: ${missing.join(", ")}`);
