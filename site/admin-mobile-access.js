@@ -165,7 +165,11 @@
       return;
     }
     if (event.target.closest("[data-close-mobile-password]")) {
-      document.getElementById("mobilePasswordOverlay")?.setAttribute("hidden", "");
+      const overlay = document.getElementById("mobilePasswordOverlay");
+      if (overlay) {
+        overlay.hidden = true;
+        overlay.innerHTML = "";
+      }
     }
   }, true);
 
