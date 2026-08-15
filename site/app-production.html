@@ -4,32 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#080a0a">
-  <meta name="bali-telegram-url" content="">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BALI">
   <meta http-equiv="Cache-Control" content="no-cache">
+  <link rel="manifest" href="/site/mobile-manifest.webmanifest">
   <link rel="stylesheet" href="/site/home-hero-compact-transparent.css?v=1">
-  <link rel="stylesheet" href="/site/home-mobile-one-screen.css?v=1">
-  <link rel="stylesheet" href="/site/home-mobile-balance-v2.css?v=2">
-  <title>BALI Minsk</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="/site/mobile-auth.css?v=20260816-1">
+  <link rel="stylesheet" href="/site/mobile-readable-v3.css?v=20260816-1">
+  <link rel="stylesheet" href="/site/match3-motion-lite.css?v=20260816-1">
+  <title>BALI Mobile</title>
 </head>
-<body data-bali-mode="production">
+<body data-bali-mode="production" data-bali-client="mobile">
   <section class="production-gate" id="productionGate" aria-live="polite">
     <div class="production-gate__card">
       <span class="production-gate__mark">B</span>
-      <h1 id="productionGateTitle">Откройте приложение через Telegram</h1>
-      <p id="productionGateMessage">Проверяем Telegram и получаем актуальные данные BALI.</p>
-      <a id="productionTelegramLink" href="#" hidden>Открыть в Telegram</a>
-      <button id="productionRetry" type="button" onclick="location.reload()" hidden>Повторить</button>
+      <p class="mobile-auth-kicker">BALI MOBILE</p>
+      <h1>Вход в приложение</h1>
+      <p class="mobile-auth-copy">Проверяем мобильную сессию.</p>
     </div>
   </section>
   <div id="app" hidden></div>
   <div id="toast" class="toast"></div>
-  <script src="/site/production-loader.js?v=bali-production-2"></script>
-  <script src="/site/home-mobile-one-screen.js?v=2"></script>
-  <script src="/site/home-mobile-final-layout.js?v=4"></script>
+  <script src="/site/mobile-auth.js?v=20260816-1"></script>
+  <script src="/site/production-loader.js?v=bali-mobile-production-1"></script>
+  <script src="/site/match3-motion-lite.js?v=20260816-1"></script>
   <script src="/site/remove-people-clans-button.js?v=20260801-1"></script>
   <script src="/site/remove-large-bali-heading.js?v=20260801-1"></script>
-  <script src="/site/home-stats-compact-v1.js?v=20260801-1"></script>
   <script src="/site/home-header-text-larger-v1.js?v=20260801-1"></script>
   <script src="/site/remove-club-line-v1.js?v=20260801-1"></script>
 </body>

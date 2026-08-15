@@ -43,6 +43,8 @@ export interface UserPrincipal {
   name: string;
   username: string;
   status: string;
+  authMethod: "telegram" | "mobile";
+  mustChangePassword: boolean;
 }
 
 export interface AdminPrincipal {

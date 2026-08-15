@@ -6,6 +6,7 @@ import express from "express";
 import helmet from "helmet";
 import type { Request, Response } from "express";
 import { createAuthRouter } from "./routes/auth.js";
+import { createMobileAuthRouter } from "./routes/mobile-auth.js";
 import { createClanRouter } from "./routes/clans.js";
 import { createAdminRouter } from "./routes/admin.js";
 import { createAdminPlatformRouter } from "./routes/admin-platform.js";
@@ -13,6 +14,7 @@ import { createAdminEconomyRouter } from "./routes/admin-economy.js";
 import { createAdminContentRouter } from "./routes/admin-content.js";
 import { createAdminCrmRouter } from "./routes/admin-crm.js";
 import { createAdminOperationsRouter } from "./routes/admin-operations.js";
+import { createAdminMobileAccessRouter } from "./routes/admin-mobile-access.js";
 import { createBookingsRouter } from "./routes/bookings.js";
 import { createCatalogRouter } from "./routes/catalog.js";
 import { createEconomyRouter } from "./routes/economy.js";
@@ -45,12 +47,12 @@ export function createApp(db: Queryable, config: AppConfig) {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://telegram.org"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
         connectSrc: ["'self'"],
-        frameAncestors: ["'self'", "https://web.telegram.org", "https://*.telegram.org"]
+        frameAncestors: ["'self'"]
       }
     },
     crossOriginEmbedderPolicy: false
@@ -71,11 +73,12 @@ export function createApp(db: Queryable, config: AppConfig) {
   app.get("/api/v1/config/public", (_req, res) => {
     res.json({
       environment: config.environment,
-      telegramBotUrl: config.telegramBotUrl,
-      demoAvailable: !["production", "staging"].includes(config.environment)
+      demoAvailable: !["production", "staging"].includes(config.environment),
+      authentication: "mobile-password"
     });
   });
   app.use("/api/v1/auth", createAuthRouter(db, config));
+  app.use("/api/v1/auth", createMobileAuthRouter(db, config));
   app.use("/api/v1/clans", createClanRouter(db));
   app.use("/api/v1/people", createPeopleRouter(db));
   app.use("/api/v1/events", createEventsRouter(db));
@@ -93,6 +96,7 @@ export function createApp(db: Queryable, config: AppConfig) {
   app.use("/api/v1/admin", createAdminContentRouter(db, uploadDirectory));
   app.use("/api/v1/admin", createAdminCrmRouter(db));
   app.use("/api/v1/admin", createAdminOperationsRouter(db));
+  app.use("/api/v1/admin", createAdminMobileAccessRouter(db));
 
   app.use("/site", express.static(siteDirectory, {
     etag: true,

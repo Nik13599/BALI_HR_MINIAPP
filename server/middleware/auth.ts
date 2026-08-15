@@ -13,24 +13,37 @@ export function optionalUser(db: Queryable, config: AppConfig): RequestHandler {
     if (!token) return next();
     const row = await one<any>(
       db,
-      `select s.id as session_id, s.app_user_key, s.last_seen_at, a.telegram_user_id,
+      `select s.id as session_id, s.app_user_key, s.last_seen_at,
+              coalesce(a.telegram_user_id::text, '') as telegram_user_id,
               u.name, u.username, u.account_status
          from public.user_sessions s
          join public.app_users u on u.user_key = s.app_user_key
-         join public.telegram_accounts a on a.app_user_key = s.app_user_key
+         left join public.telegram_accounts a on a.app_user_key = s.app_user_key
         where s.token_hash = $1 and s.revoked_at is null and s.expires_at > now()
           and u.account_status = 'active' and u.blocked_at is null`,
       [hashToken(token, config.sessionSecret)]
     );
     if (row) {
+      const telegramUserId = String(row.telegram_user_id || "");
+      let mustChangePassword = false;
+      if (!telegramUserId) {
+        const credential = await one<any>(
+          db,
+          `select must_change_password from public.mobile_credentials where app_user_key = $1`,
+          [row.app_user_key]
+        );
+        mustChangePassword = Boolean(credential?.must_change_password);
+      }
       req.userPrincipal = {
         kind: "user",
         userKey: row.app_user_key,
-        telegramUserId: String(row.telegram_user_id),
+        telegramUserId,
         sessionId: String(row.session_id),
         name: row.name,
         username: row.username,
-        status: row.account_status
+        status: row.account_status,
+        authMethod: telegramUserId ? "telegram" : "mobile",
+        mustChangePassword
       };
       if (Date.now() - new Date(row.last_seen_at).getTime() > 300_000) {
         await db.query(
@@ -45,7 +58,7 @@ export function optionalUser(db: Queryable, config: AppConfig): RequestHandler {
 }
 
 export const requireUser: RequestHandler = (req, _res, next) => {
-  if (!req.userPrincipal) return next(new ApiError(401, "Verified Telegram session is required", "authentication_required"));
+  if (!req.userPrincipal) return next(new ApiError(401, "User session is required", "authentication_required"));
   next();
 };
 

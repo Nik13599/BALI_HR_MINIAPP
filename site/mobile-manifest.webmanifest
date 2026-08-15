@@ -1,0 +1,11 @@
+{
+  "name": "BALI Mobile",
+  "short_name": "BALI",
+  "description": "Мобильное приложение BALI",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#080a0a",
+  "theme_color": "#080a0a",
+  "orientation": "portrait-primary"
+}

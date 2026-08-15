@@ -16,11 +16,13 @@ afterEach(async () => {
   context = undefined;
 });
 
-test("production shell outside Telegram does not create a session", async () => {
+test("production shell exposes standalone mobile login without creating a session", async () => {
   context = await createTestContext({ environment: "production", secureCookies: false });
   const response = await request(context.app).get("/app");
   assert.equal(response.status, 200);
-  assert.match(response.text, /Откройте приложение через Telegram/);
+  assert.match(response.text, /BALI Mobile/);
+  assert.match(response.text, /mobile-auth\.js/);
+  assert.doesNotMatch(response.text, /telegram-web-app\.js/);
   assert.equal(response.headers["set-cookie"], undefined);
 });
 
