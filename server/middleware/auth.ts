@@ -25,6 +25,15 @@ export function optionalUser(db: Queryable, config: AppConfig): RequestHandler {
     );
     if (row) {
       const telegramUserId = String(row.telegram_user_id || "");
+      let mustChangePassword = false;
+      if (!telegramUserId) {
+        const credential = await one<any>(
+          db,
+          `select must_change_password from public.mobile_credentials where app_user_key = $1`,
+          [row.app_user_key]
+        );
+        mustChangePassword = Boolean(credential?.must_change_password);
+      }
       req.userPrincipal = {
         kind: "user",
         userKey: row.app_user_key,
@@ -34,7 +43,7 @@ export function optionalUser(db: Queryable, config: AppConfig): RequestHandler {
         username: row.username,
         status: row.account_status,
         authMethod: telegramUserId ? "telegram" : "mobile",
-        mustChangePassword: false
+        mustChangePassword
       };
       if (Date.now() - new Date(row.last_seen_at).getTime() > 300_000) {
         await db.query(
