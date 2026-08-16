@@ -307,6 +307,12 @@
     gameSyncTimer = setTimeout(() => pushGameConfig(config).catch(console.error), 850);
   }
 
+  function installClanProductionApi() {
+    if (!window.BaliClans) return;
+    window.BaliClans.api = (path, options = {}) => api(path, options);
+    window.BaliBetaApi = window.BaliClans.api;
+  }
+
   function installGameBridge() {
     const game = window.BaliMatch3;
     if (!game || game.__productionBridge) return;
@@ -378,12 +384,14 @@
     try {
       await hydrateOrSeed();
       installStorageMirror();
+      installClanProductionApi();
       installGameBridge();
       setAuthStatus("Настройки синхронизированы ✓");
     } catch (error) {
       console.error("BALI BETA4 initial cloud sync failed", error);
       setAuthStatus(`Админка откроется, синхронизация повторится: ${error.message}`, true);
       installStorageMirror();
+      installClanProductionApi();
       installGameBridge();
     }
     const overlay = document.getElementById("beta4ProductionAuth");
