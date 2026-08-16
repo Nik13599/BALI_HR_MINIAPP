@@ -1,0 +1,34 @@
+name: Diagnose PR27 production checks
+
+on:
+  push:
+    branches: [agent/ci-diagnose-pr27]
+    paths:
+      - ".github/workflows/diagnose-pr27.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: migrations
+        run: timeout 120s npm run migrations:check
+      - name: lint
+        run: timeout 180s npm run lint
+      - name: typecheck
+        run: timeout 180s npm run typecheck
+      - name: server tests
+        run: timeout 300s npm run test:server
+      - name: demo tests
+        run: timeout 300s npm run test:demo
+      - name: build
+        run: timeout 180s npm run build
