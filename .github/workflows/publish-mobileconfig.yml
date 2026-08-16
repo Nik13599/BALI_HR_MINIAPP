@@ -117,5 +117,7 @@ jobs:
           git add mobile BALI.mobileconfig
           if ! git diff --cached --quiet; then
             git commit -m "Publish BALI MobileConfig package"
+            git fetch origin gh-pages
+            git rebase origin/gh-pages
             git push origin HEAD:gh-pages
           fi
