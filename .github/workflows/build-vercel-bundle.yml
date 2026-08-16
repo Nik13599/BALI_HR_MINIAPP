@@ -1,0 +1,48 @@
+name: Build Vercel backend bundle
+
+on:
+  push:
+    branches:
+      - agent/vercel-bundle-build
+    paths:
+      - .github/workflows/build-vercel-bundle.yml
+      - api/**
+      - server/**
+      - package.json
+      - package-lock.json
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/vercel-bundle-build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Build single Vercel handler
+        run: >-
+          npx --yes esbuild@0.25.9 api/index.ts
+          --bundle
+          --platform=node
+          --format=esm
+          --target=node22
+          --packages=external
+          --outfile=vercel-bundle/index.mjs
+      - name: Validate generated module
+        run: node --check vercel-bundle/index.mjs
+      - name: Commit generated bundle
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add vercel-bundle/index.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "Build Vercel backend bundle [skip ci]"
+            git push origin HEAD:agent/vercel-bundle-build
+          fi
