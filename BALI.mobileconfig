@@ -16,7 +16,7 @@
       <key>PayloadDescription</key><string>BALI Mobile full-screen web application</string>
       <key>PayloadIdentifier</key><string>club.bali.mobile.webclip</string>
       <key>PayloadType</key><string>com.apple.webClip.managed</string>
-      <key>PayloadUUID</key><string>FBB98974-C31A-4B4B-9059-4EBDA30EF20E</string>
+      <key>PayloadUUID</key><string>176A9873-9FBE-495B-8C6F-C90489930702</string>
       <key>PayloadVersion</key><integer>1</integer>
     </dict>
   </array>
@@ -26,7 +26,7 @@
   <key>PayloadIdentifier</key><string>club.bali.mobile.profile</string>
   <key>PayloadRemovalDisallowed</key><false/>
   <key>PayloadType</key><string>Configuration</string>
-  <key>PayloadUUID</key><string>97718BD6-4109-4E99-A280-737B630C7EB2</string>
+  <key>PayloadUUID</key><string>884FBAEF-EE34-452F-83C4-82BFB036213B</string>
   <key>PayloadVersion</key><integer>1</integer>
 </dict>
 </plist>
