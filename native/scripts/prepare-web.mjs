@@ -8,8 +8,37 @@ const repositoryDirectory = path.resolve(nativeDirectory, "..");
 const source = path.join(repositoryDirectory, "site");
 const destination = path.join(nativeDirectory, "www", "site");
 
+const requiredMatch3Assets = [
+  "assets/match3/headphones.webp",
+  "assets/match3/martini.webp",
+  "assets/match3/palm.webp",
+  "assets/match3/turntable.webp",
+  "assets/match3/disco.webp",
+  "assets/match3/mask.webp",
+  "assets/match3/lotus.webp",
+  "assets/match3/triangle.webp",
+  "assets/match3/background.webp",
+  "assets/match3/reward.webp",
+];
+
 if (!existsSync(source)) throw new Error(`BALI site directory not found: ${source}`);
+for (const relativePath of requiredMatch3Assets) {
+  const absolutePath = path.join(source, relativePath);
+  if (!existsSync(absolutePath)) {
+    throw new Error(`Required BALI Match asset is missing: ${relativePath}`);
+  }
+}
+
 mkdirSync(path.dirname(destination), { recursive: true });
 rmSync(destination, { recursive: true, force: true });
 cpSync(source, destination, { recursive: true });
+
+for (const relativePath of requiredMatch3Assets) {
+  const copiedPath = path.join(destination, relativePath);
+  if (!existsSync(copiedPath)) {
+    throw new Error(`Required BALI Match asset was not bundled: ${relativePath}`);
+  }
+}
+
 console.log(`BALI web assets copied to ${destination}`);
+console.log(`BALI Match assets verified: ${requiredMatch3Assets.length}`);
