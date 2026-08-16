@@ -2,8 +2,12 @@ name: Publish BALI MobileConfig web app
 
 on:
   push:
-    branches: [agent/supabase-edge-mobile-api]
+    branches:
+      - main
+      - agent/supabase-edge-mobile-api
     paths:
+      - "native/**"
+      - "site/**"
       - ".github/workflows/publish-mobileconfig.yml"
   workflow_dispatch:
 
@@ -17,7 +21,7 @@ jobs:
       - name: Checkout mobile source
         uses: actions/checkout@v4
         with:
-          ref: agent/supabase-edge-mobile-api
+          ref: ${{ github.ref_name }}
           path: source
 
       - uses: actions/setup-node@v4
