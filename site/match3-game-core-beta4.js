@@ -1,5 +1,7 @@
 if (typeof window !== "undefined" && !window.BaliMatch3InfiniteEngine && typeof require === "function") {
-  try { require("./match3-infinite-engine-beta4.js"); } catch {}
+  try { require("./match3-infinite-engine-beta4.js"); } catch (error) {
+    if (typeof process !== "undefined" && process.versions?.node) console.error("BALI Match3 bootstrap failed", error?.stack || error);
+  }
 }
 
 (() => {
