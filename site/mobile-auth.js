@@ -5,6 +5,7 @@
   const gate = document.getElementById("productionGate");
   const app = document.getElementById("app");
   const card = gate?.querySelector(".production-gate__card");
+  const transport = window.BaliApi;
   let temporaryPassword = "";
   let resolveReady;
   let rejectReady;
@@ -15,11 +16,14 @@
   })[char]);
 
   async function api(path, options = {}) {
-    const response = await fetch(path, {
+    const response = await (transport?.request ? transport.request(path, {
+      ...options,
+      headers: { "Content-Type":"application/json", ...(options.headers || {}) }
+    }) : fetch(path, {
       credentials: "include",
       ...options,
       headers: { "Content-Type":"application/json", ...(options.headers || {}) }
-    });
+    }));
     if (response.status === 204) return null;
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -143,6 +147,7 @@
       const session = await api("/api/v1/auth/mobile/session");
       if (session.authMethod !== "mobile") {
         await api("/api/v1/auth/logout", { method:"POST", body:"{}" }).catch(() => null);
+        transport?.clearToken?.();
         renderLogin();
         return;
       }
@@ -152,8 +157,10 @@
       }
       await complete(session);
     } catch (error) {
-      if (error.status === 401) renderLogin();
-      else {
+      if (error.status === 401) {
+        transport?.clearToken?.();
+        renderLogin();
+      } else {
         setCard(`<p class="mobile-auth-kicker">BALI MOBILE</p><h1>Нет соединения</h1><p class="mobile-auth-copy">${esc(error.message)}</p><div class="mobile-auth-actions"><button class="mobile-auth-button" type="button" data-mobile-auth="retry">Повторить</button></div>`);
       }
     }
@@ -177,6 +184,7 @@
       const data = Object.fromEntries(new FormData(form).entries());
       try {
         const result = await api("/api/v1/auth/mobile/login", { method:"POST", body:JSON.stringify(data) });
+        transport?.setToken?.(result.accessToken || "");
         temporaryPassword = String(data.password || "");
         if (result.mustChangePassword) renderChangePassword();
         else await complete(result);
