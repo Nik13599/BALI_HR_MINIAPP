@@ -1,0 +1,48 @@
+name: Diagnose Match3 Node validator
+
+on:
+  push:
+    branches: [gh-pages]
+    paths:
+      - ".github/workflows/diag-match3-temp.yml"
+      - "site/match3-game-core-beta4.js"
+      - "site/match3-infinite-engine-beta4.js"
+
+permissions:
+  contents: read
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+      - name: Probe Match3 engine and core
+        run: |
+          node <<'NODE'
+          const memory = new Map();
+          global.window = global;
+          global.localStorage = {
+            getItem:key => memory.has(key) ? memory.get(key) : null,
+            setItem:(key,value) => memory.set(key,String(value)),
+            removeItem:key => memory.delete(key)
+          };
+          global.CustomEvent = class { constructor(type,init){ this.type=type; this.detail=init?.detail; } };
+          global.dispatchEvent = () => {};
+          global.addEventListener = () => {};
+          try {
+            require('./site/match3-infinite-engine-beta4.js');
+            console.log('ENGINE', Boolean(global.BaliMatch3InfiniteEngine), Object.keys(global.BaliMatch3InfiniteEngine || {}));
+          } catch (error) {
+            console.error('ENGINE ERROR', error?.stack || error);
+            process.exitCode = 11;
+          }
+          try {
+            require('./site/match3-game-core-beta4.js');
+            console.log('CORE', Boolean(global.BaliMatch3), Object.keys(global.BaliMatch3 || {}));
+          } catch (error) {
+            console.error('CORE ERROR', error?.stack || error);
+            process.exitCode = 12;
+          }
+          NODE
