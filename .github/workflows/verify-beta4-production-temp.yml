@@ -1,0 +1,47 @@
+name: Verify BETA4 production admin
+on:
+  push:
+    branches: [agent/supabase-edge-mobile-api]
+    paths:
+      - ".github/workflows/verify-beta4-production-temp.yml"
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/supabase-edge-mobile-api
+      - name: Check production bridge syntax
+        run: node --check site/admin-beta4-production-sync.js
+      - name: Verify BETA4 production shell
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          beta = Path('site/admin-beta4.html').read_text()
+          prod = Path('site/admin-production.html').read_text()
+          required = [
+            'admin.css', 'hall-layout.css', 'admin-beta3.css', 'admin-mobile-stable.css',
+            'admin-loyalty-rewards-beta4.css', 'admin-match3-game-beta4.css',
+            'admin-bali-temple-theme-beta4.css', 'admin.js', 'admin-clans-beta4.js',
+            'match3-infinite-engine-beta4.js', 'match3-game-core-beta4.js',
+            'admin-match3-game-beta4.js', 'admin-mobile-runtime.js',
+            'admin-booking-manager-beta4.js', 'admin-customer-dossier-beta4.js',
+            'admin-integrated-overview-beta4.js'
+          ]
+          for name in required:
+            if name not in beta or name not in prod:
+              raise SystemExit(f'missing canonical BETA4 module: {name}')
+          if 'admin-beta4-production-sync.js' not in prod or 'admin-api.js' not in prod:
+            raise SystemExit('production bridge is not connected')
+          if 'DOMContentLoaded",()=>document.getElementById("demoLogin")?.click()' in prod:
+            raise SystemExit('production admin must not bypass authentication')
+          refs = re.findall(r'(?:src|href)="\.\/([^"?]+)', prod)
+          missing = sorted({ref for ref in refs if not Path('site', ref).exists()})
+          if missing:
+            raise SystemExit('missing assets: ' + ', '.join(missing))
+          print(f'OK: {len(refs)} referenced local assets exist')
+          print('OK: canonical BETA4 modules retained')
+          print('OK: production auth/state/game bridge connected')
