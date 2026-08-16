@@ -30,14 +30,37 @@ import { optionalAdmin, optionalUser } from "./middleware/auth.js";
 import type { AppConfig, Queryable } from "./types.js";
 
 const siteDirectory = path.resolve(process.cwd(), "site");
-const defaultUploadDirectory = process.env.VERCEL ? "/tmp/bali-uploads" : path.join(process.cwd(), "var", "uploads");
+const isDenoRuntime = Boolean((globalThis as any).Deno);
+const defaultUploadDirectory = process.env.VERCEL || isDenoRuntime
+  ? "/tmp/bali-uploads"
+  : path.join(process.cwd(), "var", "uploads");
 const uploadDirectory = path.resolve(process.env.BALI_UPLOAD_DIR || defaultUploadDirectory);
+const mobileOrigins = new Set([
+  "capacitor://localhost",
+  "ionic://localhost",
+  "http://localhost",
+  "https://localhost",
+  "https://nik13599.github.io"
+]);
 
 export function createApp(db: Queryable, config: AppConfig) {
-  mkdirSync(uploadDirectory, { recursive: true });
+  if (!isDenoRuntime) mkdirSync(uploadDirectory, { recursive: true });
   const app = express();
   app.disable("x-powered-by");
   if (config.trustProxy) app.set("trust proxy", 1);
+  app.use((req, res, next) => {
+    const origin = String(req.get("origin") || "");
+    if (origin && mobileOrigins.has(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization,Idempotency-Key,X-Request-ID");
+      res.setHeader("Access-Control-Max-Age", "600");
+      res.append("Vary", "Origin");
+      if (req.method === "OPTIONS") return res.status(204).end();
+    }
+    next();
+  });
   app.use((req, res, next) => {
     req.requestId = String(req.get("x-request-id") || randomUUID()).slice(0, 160);
     res.setHeader("x-request-id", req.requestId);
