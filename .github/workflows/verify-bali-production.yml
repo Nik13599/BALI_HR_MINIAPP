@@ -1,0 +1,32 @@
+name: Verify BALI production API
+
+on:
+  push:
+    branches:
+      - agent/vercel-bundle-build
+    paths:
+      - .github/workflows/verify-bali-production.yml
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify health and public config
+        run: |
+          set -euo pipefail
+          BASE='https://bali-api-kolyaselekh-9471s-projects.vercel.app'
+          echo '--- health ---'
+          curl -fsS --retry 20 --retry-delay 3 --retry-all-errors "$BASE/api/v1/health"
+          echo
+          echo '--- config ---'
+          curl -fsS --retry 10 --retry-delay 2 --retry-all-errors "$BASE/api/v1/config/public"
+          echo
+      - name: Verify real Supabase write path
+        run: |
+          set -euo pipefail
+          BASE='https://bali-api-kolyaselekh-9471s-projects.vercel.app'
+          curl -fsS --retry 10 --retry-delay 2 --retry-all-errors \
+            -H 'content-type: application/json' \
+            -d '{"phone":"+375290000001","telegramUsername":"bali_probe_20260816","displayName":"BALI Deploy Probe"}' \
+            "$BASE/api/v1/auth/mobile/register-request"
+          echo
