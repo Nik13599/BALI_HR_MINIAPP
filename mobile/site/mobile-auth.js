@@ -61,9 +61,15 @@
     const field = form?.elements?.namedItem?.(name);
     const value = field && typeof field.value !== "undefined" ? field.value : "";
     return String(value ?? "").normalize("NFKC").trim();
-  }
+}
 
-  function normalizePhoneInput(value) {
+function passwordFieldValue(form, name) {
+  const field = form?.elements?.namedItem?.(name);
+  const value = field && typeof field.value !== "undefined" ? field.value : "";
+  return String(value ?? "");
+}
+
+function normalizePhoneInput(value) {
     const raw = String(value ?? "").normalize("NFKC").trim();
     const digits = raw.replace(/\D/g, "");
     if (digits.length < 9 || digits.length > 15) {
@@ -164,8 +170,8 @@
       <p class="mobile-auth-copy">Временный пароль действует только для первого входа. Сейчас замените его на постоянный.</p>
       <form class="mobile-auth-form" id="mobileChangePasswordForm">
         ${haveTemporary ? "" : '<label>Текущий временный пароль<input name="currentPassword" type="password" autocomplete="current-password" required></label>'}
-        <label>Новый пароль<input name="newPassword" type="password" autocomplete="new-password" minlength="12" required></label>
-        <label>Повторите новый пароль<input name="confirmPassword" type="password" autocomplete="new-password" minlength="12" required></label>
+        <label>Новый пароль<input name="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label>
+        <label>Повторите новый пароль<input name="confirmPassword" type="password" autocomplete="new-password" minlength="12" maxlength="128" required></label>
         <div class="mobile-auth-password-hint">Минимум 12 символов. После смены остальные активные сессии будут завершены.</div>
         <button class="mobile-auth-button" type="submit">Сохранить пароль и открыть BALI</button>
       </form>
@@ -254,14 +260,19 @@
 
     if (form.id === "mobileChangePasswordForm") {
       event.preventDefault(); busy(form, true); showError("");
-      const data = Object.fromEntries(new FormData(form).entries());
-      if (data.newPassword !== data.confirmPassword) {
+      const currentPassword = temporaryPassword || passwordFieldValue(form, "currentPassword");
+      const newPassword = passwordFieldValue(form, "newPassword");
+      const confirmPassword = passwordFieldValue(form, "confirmPassword");
+      if (newPassword.length < 12 || newPassword.length > 128) {
+        busy(form, false); showError(new Error("Пароль должен содержать от 12 до 128 символов")); return;
+      }
+      if (newPassword !== confirmPassword) {
         busy(form, false); showError(new Error("Пароли не совпадают")); return;
       }
       try {
         await api("/api/v1/auth/mobile/change-password", {
           method:"POST",
-          body:JSON.stringify({ currentPassword: temporaryPassword || data.currentPassword, newPassword:data.newPassword })
+          body:JSON.stringify({ currentPassword, newPassword })
         });
         temporaryPassword = "";
         const session = await api("/api/v1/auth/mobile/session");
