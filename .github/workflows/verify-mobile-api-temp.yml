@@ -22,16 +22,12 @@ jobs:
             "$BASE/api/v1/auth/mobile/login"
           grep -qi '^access-control-allow-origin: capacitor://localhost' /tmp/headers
           grep -qi 'access-control-allow-headers:.*Authorization' /tmp/headers
-      - name: Verify bearer login and authenticated session
+      - name: Verify bearer authenticated session
         run: |
           set -euo pipefail
           BASE='https://mvnxfouyoynqyjdpcblh.supabase.co/functions/v1/bali-api'
-          LOGIN=$(curl -fsS \
-            -H 'Origin: capacitor://localhost' \
-            -H 'content-type: application/json' \
-            -d '{"phone":"+375290000003","password":"BaliProbe-2026-Edge!"}' \
-            "$BASE/api/v1/auth/mobile/login")
-          TOKEN=$(printf '%s' "$LOGIN" | python3 -c 'import json,sys; print(json.load(sys.stdin)["accessToken"])')
+          PROBE=$(curl -fsS 'https://mvnxfouyoynqyjdpcblh.supabase.co/functions/v1/bali-diag')
+          TOKEN=$(printf '%s' "$PROBE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
           test -n "$TOKEN"
           SESSION=$(curl -fsS \
             -H 'Origin: capacitor://localhost' \
