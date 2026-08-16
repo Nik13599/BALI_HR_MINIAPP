@@ -6,6 +6,7 @@ import {
   timingSafeEqual,
   webcrypto
 } from "node:crypto";
+import { Buffer } from "node:buffer";
 import { promisify } from "node:util";
 import type { TelegramUser } from "./types.js";
 
