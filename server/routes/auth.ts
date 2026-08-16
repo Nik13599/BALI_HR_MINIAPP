@@ -326,7 +326,7 @@ export function createAuthRouter(db: Queryable, config: AppConfig): Router {
       ]
     );
     res.cookie(ADMIN_COOKIE, token, cookieOptions(config, 12 * 60 * 60 * 1000));
-    res.json({ admin: { id: admin.id, email: admin.email, role: admin.role }, expiresAt });
+    res.json({ admin: { id: admin.id, email: admin.email, role: admin.role }, expiresAt, accessToken: token, tokenType: "Bearer" });
   }));
 
   router.get("/admin/session", requireAdmin, asyncHandler(async (req, res) => {
