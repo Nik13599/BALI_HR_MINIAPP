@@ -1,0 +1,88 @@
+name: Build iPhone device IPA
+
+on:
+  push:
+    branches: [agent/iphone-device-ipa]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  iphone-device:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install native dependencies
+        working-directory: native
+        run: npm install
+
+      - name: Bundle BALI production web client
+        working-directory: native
+        run: npm run web:prepare
+
+      - name: Generate iOS project
+        working-directory: native
+        run: npx cap add ios
+
+      - name: Sync Capacitor
+        working-directory: native
+        run: npx cap sync ios
+
+      - name: Build unsigned arm64 app for physical iPhone
+        working-directory: native
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build-device \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Verify physical-device binary
+        working-directory: native
+        run: |
+          APP="build-device/Build/Products/Release-iphoneos/App.app"
+          test -d "$APP"
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")
+          echo "Executable: $EXECUTABLE"
+          file "$APP/$EXECUTABLE"
+          lipo -info "$APP/$EXECUTABLE" || true
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist"
+
+      - name: Package unsigned IPA for signing
+        working-directory: native
+        run: |
+          rm -rf ipa-package
+          mkdir -p ipa-package/Payload
+          ditto build-device/Build/Products/Release-iphoneos/App.app ipa-package/Payload/App.app
+          cat > ipa-package/README.txt <<'EOF'
+          BALI iPhone device build
+          Bundle ID: club.bali.mobile
+
+          This IPA contains the real iphoneos/arm64 application binary.
+          Apple requires a valid iOS signing certificate and provisioning profile before installation on a physical iPhone.
+          The IPA is ready to be signed with Xcode, Apple Configurator, Sideloadly/AltStore-compatible signing, or an Apple Developer distribution workflow.
+          EOF
+          cd ipa-package
+          zip -qry ../BALI-iPhone-Unsigned.ipa Payload
+          cd ..
+          ditto -c -k --sequesterRsrc --keepParent ipa-package BALI-iPhone-Package.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BALI-iPhone-Device-IPA
+          path: |
+            native/BALI-iPhone-Unsigned.ipa
+            native/BALI-iPhone-Package.zip
+          if-no-files-found: error
+          retention-days: 14
