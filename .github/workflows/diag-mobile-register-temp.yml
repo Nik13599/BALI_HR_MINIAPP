@@ -1,0 +1,29 @@
+name: Diagnose mobile registration
+on:
+  push:
+    branches: [agent/supabase-edge-mobile-api]
+    paths:
+      - ".github/workflows/diag-mobile-register-temp.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe production registration
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://mvnxfouyoynqyjdpcblh.supabase.co/functions/v1/bali-api/api/v1/auth/mobile/register-request'
+          payload='{"displayName":"Nikolay","phone":"+375333786884","telegramUsername":"@Mikalai13599"}'
+          code=$(curl -sS -o response.json -w '%{http_code}' \
+            -X POST "$url" \
+            -H 'Origin: https://nik13599.github.io' \
+            -H 'Content-Type: application/json' \
+            --data "$payload")
+          echo "HTTP=$code"
+          cat response.json
+          echo
+          test "$code" -ge 200
+          test "$code" -lt 500
