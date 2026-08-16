@@ -1,0 +1,67 @@
+name: Patch iOS mobile auth
+on:
+  push:
+    branches: [agent/supabase-edge-mobile-api]
+    paths:
+      - ".github/workflows/patch-ios-auth-temp.yml"
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/supabase-edge-mobile-api
+          fetch-depth: 0
+      - name: Patch mobile auth payload handling
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p = Path('site/mobile-auth.js')
+          s = p.read_text()
+          marker = '''  function busy(form, value) {\n    form?.querySelectorAll("button,input").forEach(node => { node.disabled = value; });\n  }\n'''
+          insert = marker + '''\n  function fieldValue(form, name) {\n    const field = form?.elements?.namedItem?.(name);\n    const value = field && typeof field.value !== "undefined" ? field.value : "";\n    return String(value ?? "").normalize("NFKC").trim();\n  }\n\n  function normalizePhoneInput(value) {\n    const raw = String(value ?? "").normalize("NFKC").trim();\n    const digits = raw.replace(/\\D/g, "");\n    if (digits.length < 9 || digits.length > 15) {\n      throw new Error("Введите корректный номер телефона");\n    }\n    return `+${digits}`;\n  }\n\n  function loginPayload(form) {\n    return {\n      phone: normalizePhoneInput(fieldValue(form, "phone")),\n      password: fieldValue(form, "password")\n    };\n  }\n\n  function registrationPayload(form) {\n    return {\n      displayName: fieldValue(form, "displayName"),\n      phone: normalizePhoneInput(fieldValue(form, "phone")),\n      telegramUsername: fieldValue(form, "telegramUsername").replace(/\\s+/g, "")\n    };\n  }\n\n  function resetPayload(form) {\n    return {\n      phone: normalizePhoneInput(fieldValue(form, "phone")),\n      telegramUsername: fieldValue(form, "telegramUsername").replace(/\\s+/g, "")\n    };\n  }\n'''
+          if 'function normalizePhoneInput(value)' not in s:
+              if marker not in s:
+                  raise SystemExit('busy marker not found')
+              s = s.replace(marker, insert, 1)
+
+          old_login = '      const data = Object.fromEntries(new FormData(form).entries());\n      try {\n        const result = await api("/api/v1/auth/mobile/login", { method:"POST", body:JSON.stringify(data) });'
+          new_login = '      let data;\n      try { data = loginPayload(form); } catch (error) { busy(form, false); showError(error); return; }\n      try {\n        const result = await api("/api/v1/auth/mobile/login", { method:"POST", body:JSON.stringify(data) });'
+          s = s.replace(old_login, new_login, 1)
+
+          old_register = '      const data = Object.fromEntries(new FormData(form).entries());\n      try {\n        await api("/api/v1/auth/mobile/register-request", { method:"POST", body:JSON.stringify(data) });'
+          new_register = '      let data;\n      try { data = registrationPayload(form); } catch (error) { busy(form, false); showError(error); return; }\n      try {\n        await api("/api/v1/auth/mobile/register-request", { method:"POST", body:JSON.stringify(data) });'
+          s = s.replace(old_register, new_register, 1)
+
+          old_reset = '      const data = Object.fromEntries(new FormData(form).entries());\n      try {\n        await api("/api/v1/auth/mobile/reset-request", { method:"POST", body:JSON.stringify(data) });'
+          new_reset = '      let data;\n      try { data = resetPayload(form); } catch (error) { busy(form, false); showError(error); return; }\n      try {\n        await api("/api/v1/auth/mobile/reset-request", { method:"POST", body:JSON.stringify(data) });'
+          s = s.replace(old_reset, new_reset, 1)
+
+          p.write_text(s)
+
+          for name in ['native/www/index.html', 'site/app-production.html']:
+              q = Path(name)
+              t = q.read_text()
+              t = t.replace('mobile-api.js?v=20260816-1', 'mobile-api.js?v=20260816-4')
+              t = t.replace('mobile-auth.js?v=20260816-2', 'mobile-auth.js?v=20260816-4')
+              if '<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">' not in t:
+                  t = t.replace('<meta name="apple-mobile-web-app-title" content="BALI">', '<meta name="apple-mobile-web-app-title" content="BALI">\n  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n  <meta http-equiv="Pragma" content="no-cache">\n  <meta http-equiv="Expires" content="0">')
+              q.write_text(t)
+
+          # Guard the exact registration fields expected by the API.
+          out = Path('site/mobile-auth.js').read_text()
+          required = ['registrationPayload(form)', 'phone: normalizePhoneInput', 'telegramUsername:', 'displayName:']
+          missing = [x for x in required if x not in out]
+          if missing:
+              raise SystemExit(f'missing guards: {missing}')
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/mobile-auth.js site/app-production.html native/www/index.html
+          git diff --cached --check
+          git commit -m "Fix iPhone registration phone payload"
+          git push origin HEAD:agent/supabase-edge-mobile-api
