@@ -57,6 +57,43 @@
     form?.querySelectorAll("button,input").forEach(node => { node.disabled = value; });
   }
 
+  function fieldValue(form, name) {
+    const field = form?.elements?.namedItem?.(name);
+    const value = field && typeof field.value !== "undefined" ? field.value : "";
+    return String(value ?? "").normalize("NFKC").trim();
+  }
+
+  function normalizePhoneInput(value) {
+    const raw = String(value ?? "").normalize("NFKC").trim();
+    const digits = raw.replace(/\D/g, "");
+    if (digits.length < 9 || digits.length > 15) {
+      throw new Error("Введите корректный номер телефона");
+    }
+    return `+${digits}`;
+  }
+
+  function loginPayload(form) {
+    return {
+      phone: normalizePhoneInput(fieldValue(form, "phone")),
+      password: fieldValue(form, "password")
+    };
+  }
+
+  function registrationPayload(form) {
+    return {
+      displayName: fieldValue(form, "displayName"),
+      phone: normalizePhoneInput(fieldValue(form, "phone")),
+      telegramUsername: fieldValue(form, "telegramUsername").replace(/\s+/g, "")
+    };
+  }
+
+  function resetPayload(form) {
+    return {
+      phone: normalizePhoneInput(fieldValue(form, "phone")),
+      telegramUsername: fieldValue(form, "telegramUsername").replace(/\s+/g, "")
+    };
+  }
+
   function renderLogin(message = "") {
     temporaryPassword = "";
     setCard(`
@@ -181,7 +218,8 @@
 
     if (form.id === "mobileLoginForm") {
       event.preventDefault(); busy(form, true); showError("");
-      const data = Object.fromEntries(new FormData(form).entries());
+      let data;
+      try { data = loginPayload(form); } catch (error) { busy(form, false); showError(error); return; }
       try {
         const result = await api("/api/v1/auth/mobile/login", { method:"POST", body:JSON.stringify(data) });
         transport?.setToken?.(result.accessToken || "");
@@ -194,7 +232,8 @@
 
     if (form.id === "mobileRegisterForm") {
       event.preventDefault(); busy(form, true); showError("");
-      const data = Object.fromEntries(new FormData(form).entries());
+      let data;
+      try { data = registrationPayload(form); } catch (error) { busy(form, false); showError(error); return; }
       try {
         await api("/api/v1/auth/mobile/register-request", { method:"POST", body:JSON.stringify(data) });
         renderWaiting("registration");
@@ -204,7 +243,8 @@
 
     if (form.id === "mobileResetForm") {
       event.preventDefault(); busy(form, true); showError("");
-      const data = Object.fromEntries(new FormData(form).entries());
+      let data;
+      try { data = resetPayload(form); } catch (error) { busy(form, false); showError(error); return; }
       try {
         await api("/api/v1/auth/mobile/reset-request", { method:"POST", body:JSON.stringify(data) });
         renderWaiting("reset");
