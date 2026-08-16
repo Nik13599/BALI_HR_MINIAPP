@@ -1,0 +1,79 @@
+(() => {
+  if (window.__BALI_LEGACY_FINAL_NAV__) return;
+  window.__BALI_LEGACY_FINAL_NAV__ = true;
+
+  const buttons = [
+    ["home", "⌂", "Главная"],
+    ["events", "◫", "Афиши"],
+    ["menu", "◇", "Меню"],
+    ["dating", "🌴", "BALI PEOPLE"],
+    ["crown", "", "Игра"],
+    ["profile", "◎", "Профиль"]
+  ];
+
+  const screenExists = page => Boolean(document.querySelector(`[data-screen="${page}"]`));
+  const visibleButtons = () => {
+    const configured = window.BaliProduction && window.BaliNavIcons
+      ? window.BaliNavIcons.read().map(row => [row.page, row.iconText || "", row.label])
+      : buttons;
+    return configured.filter(([page]) =>
+      page !== "crown" || window.BaliMatch3?.config?.().enabled !== false
+    );
+  };
+
+  function syncAvailability(nav) {
+    nav.querySelectorAll('button[data-page]').forEach(button => {
+      const page = button.dataset.page;
+      const available = screenExists(page);
+      button.disabled = !available;
+      button.classList.toggle('navigation-loading', !available);
+      button.setAttribute('aria-busy', available ? 'false' : 'true');
+      button.title = available ? (button.dataset.navPurpose || button.getAttribute('aria-label') || '') : 'Раздел загружается';
+    });
+    return visibleButtons().every(([page]) => screenExists(page));
+  }
+
+  function finalize() {
+    const nav = document.querySelector('.shell > nav.nav');
+    if (!nav) return false;
+
+    const activePage = document.querySelector('.page.active[data-screen]')?.dataset.screen || 'home';
+    nav.replaceChildren(...visibleButtons().map(([page, icon, label]) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.page = page;
+      if (page === activePage) button.classList.add('active');
+
+      const i = document.createElement('i');
+      i.textContent = icon;
+      const span = document.createElement('span');
+      span.textContent = label;
+      button.append(i, span);
+      window.BaliNavIcons?.applyButton?.(button);
+      return button;
+    }));
+
+    nav.classList.remove('social-six');
+    nav.style.removeProperty('grid-template-columns');
+    nav.dataset.navigationReady = 'true';
+    window.BaliNavIcons?.applyAll?.(nav);
+    syncAvailability(nav);
+    return true;
+  }
+
+  let mountAttempts = 0;
+  const mountTimer = setInterval(() => {
+    mountAttempts += 1;
+    if (finalize() || mountAttempts >= 40) clearInterval(mountTimer);
+  }, 25);
+
+  let availabilityAttempts = 0;
+  const availabilityTimer = setInterval(() => {
+    availabilityAttempts += 1;
+    const nav = document.querySelector('.shell > nav.nav[data-navigation-ready="true"]');
+    if (!nav) return;
+    if (syncAvailability(nav) || availabilityAttempts >= 1200) clearInterval(availabilityTimer);
+  }, 50);
+
+  window.BaliLegacyNavigation = { finalize, syncAvailability };
+})();

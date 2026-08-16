@@ -1,0 +1,7 @@
+(() => {
+  if(window.__BALI_ADMIN_CROWN_REMOVE__||!window.BaliNightCrown)return;window.__BALI_ADMIN_CROWN_REMOVE__=true;
+  const crown=window.BaliNightCrown;let busy=false;
+  async function decorate(){if(busy||typeof state!=="undefined"&&state.view!=="crown")return;busy=true;try{const eventId=document.getElementById("adminCrownEvent")?.value;if(!eventId)return;const entries=await crown.entries(eventId,true),used=new Set();document.querySelectorAll(".admin-crown-rank").forEach(row=>{if(row.querySelector("[data-crown-remove-approved]"))return;const name=row.querySelector("strong")?.textContent?.trim(),entry=entries.find(x=>x.status==="approved"&&!used.has(x.id)&&String(x.name)===String(name));if(!entry)return;used.add(entry.id);const button=document.createElement("button");button.type="button";button.className="danger compact";button.dataset.crownRemoveApproved=entry.id;button.textContent="Снять";row.appendChild(button)})}finally{busy=false}}
+  document.addEventListener("click",async e=>{const b=e.target.closest("[data-crown-remove-approved]");if(!b)return;const note=prompt("Причина снятия участника:","Нарушение правил конкурса или фотография не соответствует локации клуба BALI.");if(note===null)return;const r=await crown.moderate(b.dataset.crownRemoveApproved,"rejected",note);toast(r.ok?"Участник снят с конкурса":r.message);render()},true);
+  new MutationObserver(r=>{if(r.some(x=>x.addedNodes.length))requestAnimationFrame(decorate)}).observe(document.body,{childList:true,subtree:true});setTimeout(decorate,400);
+})();

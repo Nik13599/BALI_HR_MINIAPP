@@ -1,0 +1,37 @@
+[data-bali-visual-block].bali-visual-block-custom{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+}
+
+.bali-generated-block-title{
+  margin:14px 0 8px;
+  color:var(--text,#f3eadb);
+  font:800 13px/1.25 Unbounded,system-ui,sans-serif;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+[data-screen="home"] .home-links-section.bali-visual-block-custom{
+  padding:12px;
+  border:1px solid rgba(215,173,104,.18);
+  border-radius:16px;
+}
+
+#eventsGrid.bali-visual-block-custom,
+#menuTabs.bali-visual-block-custom,
+#menuList.bali-visual-block-custom,
+#socialV2Content.bali-visual-block-custom,
+[data-screen="dating"] .social-tabs-v2.bali-visual-block-custom,
+.match3-metrics.bali-visual-block-custom{
+  padding:10px;
+  border:1px solid rgba(215,173,104,.18);
+  border-radius:18px;
+}
+
+@media(max-width:560px){
+  .bali-generated-block-title{
+    margin:11px 0 7px;
+    font-size:11px;
+  }
+}

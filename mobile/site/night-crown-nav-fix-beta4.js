@@ -1,0 +1,1 @@
+(()=>{if(window.__BALI_CROWN_NAV_FIX__)return;window.__BALI_CROWN_NAV_FIX__=true;const apply=()=>{const nav=document.querySelector('.nav');if(nav)nav.style.setProperty('grid-template-columns',`repeat(${Math.max(1,nav.children.length)},minmax(0,1fr))`,'important')};new MutationObserver(apply).observe(document.body,{childList:true,subtree:true});setTimeout(apply,300);})();

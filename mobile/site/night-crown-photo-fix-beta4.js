@@ -1,0 +1,1 @@
+(()=>{if(window.__BALI_CROWN_PHOTO_FIX__)return;window.__BALI_CROWN_PHOTO_FIX__=true;const fix=()=>document.getElementById('crownPhotoInput')?.removeAttribute('required');new MutationObserver(fix).observe(document.body,{childList:true,subtree:true});setTimeout(fix,300);})();
