@@ -140,7 +140,7 @@ export function createApp(db: Queryable, config: AppConfig) {
   });
   app.get("/admin", (_req: Request, res: Response) => {
     res.setHeader("Cache-Control", "no-store, max-age=0");
-    res.sendFile(path.join(siteDirectory, "admin-production.html"));
+    res.redirect(302, "/site/admin-production.html");
   });
   if (!["production", "staging"].includes(config.environment)) {
     app.get("/demo", (_req: Request, res: Response) => {
