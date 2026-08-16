@@ -1,0 +1,13 @@
+{
+  "appId": "club.bali.mobile",
+  "appName": "BALI",
+  "webDir": "www",
+  "backgroundColor": "#080a0a",
+  "ios": {
+    "contentInset": "automatic",
+    "preferredContentMode": "mobile"
+  },
+  "android": {
+    "backgroundColor": "#080a0a"
+  }
+}

@@ -1,15 +1,46 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#080a0a">
-  <title>BALI</title>
-  <style>
-    html,body{margin:0;min-height:100%;background:#080a0a;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    main{min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;text-align:center}
-    div{max-width:420px}b{display:grid;width:58px;height:58px;place-items:center;margin:0 auto 20px;border-radius:18px;background:#d8ff47;color:#111;font-size:30px}h1{font-size:32px;margin:0 0 12px}p{color:#aeb7b4;font-size:16px;line-height:1.5}
-  </style>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BALI">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link rel="manifest" href="./site/mobile-manifest.webmanifest">
+  <link rel="stylesheet" href="./site/home-hero-compact-transparent.css?v=1">
+  <link rel="stylesheet" href="./site/home-mobile-one-screen.css?v=1">
+  <link rel="stylesheet" href="./site/home-mobile-balance-v2.css?v=2">
+  <link rel="stylesheet" href="./site/mobile-auth.css?v=20260816-2">
+  <link rel="stylesheet" href="./site/mobile-readable-v3.css?v=20260816-2">
+  <link rel="stylesheet" href="./site/match3-motion-lite.css?v=20260816-2">
+  <title>BALI Mobile</title>
+  <script>
+    window.BALI_API_BASE = "https://mvnxfouyoynqyjdpcblh.supabase.co/functions/v1/bali-api";
+    window.BALI_ASSET_BASE = "./site/";
+  </script>
 </head>
-<body><main><div><b>B</b><h1>BALI Mobile</h1><p>Для этой сборки не указан адрес сервера BALI. Пересоберите приложение с переменной BALI_MOBILE_SERVER_URL, указывающей на HTTPS-адрес приложения.</p></div></main></body>
+<body data-bali-mode="production" data-bali-client="mobile" data-bali-native="1" data-bali-reference="bali-full-demo-8-stable27">
+  <section class="production-gate" id="productionGate" aria-live="polite">
+    <div class="production-gate__card">
+      <span class="production-gate__mark">B</span>
+      <p class="mobile-auth-kicker">BALI MOBILE</p>
+      <h1>Вход в приложение</h1>
+      <p class="mobile-auth-copy">Проверяем мобильную сессию.</p>
+    </div>
+  </section>
+  <div id="app" hidden></div>
+  <div id="toast" class="toast"></div>
+  <script src="./site/mobile-api.js?v=20260816-4"></script>
+  <script src="./site/mobile-auth.js?v=20260816-5"></script>
+  <script src="./site/production-loader.js?v=bali-full-demo-8-stable27-production-3"></script>
+  <script src="./site/match3-motion-lite.js?v=20260816-2"></script>
+  <script src="./site/remove-people-clans-button.js?v=20260801-1"></script>
+  <script src="./site/remove-large-bali-heading.js?v=20260801-1"></script>
+  <script src="./site/home-header-text-larger-v1.js?v=20260801-1"></script>
+  <script src="./site/remove-club-line-v1.js?v=20260801-1"></script>
+</body>
 </html>

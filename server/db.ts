@@ -2,14 +2,16 @@ import pg from "pg";
 import type { PoolClient, QueryResultRow } from "pg";
 import type { Queryable } from "./types.js";
 
-export function createPool(databaseUrl: string): pg.Pool {
+export function createPool(databaseUrl: string, maxOverride?: number): pg.Pool {
   if (!databaseUrl) throw new Error("DATABASE_URL is required");
   const configuredMax = Number.parseInt(process.env.DB_POOL_MAX || "", 10);
-  const max = Number.isFinite(configuredMax) && configuredMax > 0
-    ? configuredMax
-    : process.env.VERCEL
-      ? 1
-      : 10;
+  const max = Number.isFinite(maxOverride) && Number(maxOverride) > 0
+    ? Number(maxOverride)
+    : Number.isFinite(configuredMax) && configuredMax > 0
+      ? configuredMax
+      : process.env.VERCEL
+        ? 1
+        : 10;
   return new pg.Pool({
     connectionString: databaseUrl,
     max,

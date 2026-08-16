@@ -48,7 +48,7 @@ async function createMobileSession(db: Queryable, config: AppConfig, req: any, r
     ]
   );
   res.cookie(USER_COOKIE, sessionToken, cookieOptions(config, config.sessionTtlSeconds * 1000));
-  return expiresAt;
+  return { expiresAt, sessionToken };
 }
 
 export function createMobileAuthRouter(db: Queryable, config: AppConfig): Router {
@@ -158,7 +158,7 @@ export function createMobileAuthRouter(db: Queryable, config: AppConfig): Router
         where user_key = $1`,
       [row.app_user_key]
     );
-    const expiresAt = await createMobileSession(db, config, req, res, row);
+    const { expiresAt, sessionToken } = await createMobileSession(db, config, req, res, row);
     await db.query(
       `insert into public.analytics_events(user_key, event_name, source, entity_type, entity_id, properties)
        values ($1,'app_open','mobile','user',$1,$2::jsonb)`,
@@ -167,7 +167,9 @@ export function createMobileAuthRouter(db: Queryable, config: AppConfig): Router
     res.json({
       user: { id: row.user_key, name: row.name, username: row.username, avatar: row.avatar },
       mustChangePassword: Boolean(row.must_change_password),
-      expiresAt: expiresAt.toISOString()
+      expiresAt: expiresAt.toISOString(),
+      accessToken: sessionToken,
+      tokenType: "Bearer"
     });
   }));
 

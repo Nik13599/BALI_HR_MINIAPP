@@ -2,11 +2,12 @@ name: Build iOS simulator app
 
 on:
   workflow_dispatch:
-    inputs:
-      server_url:
-        description: HTTPS address serving the BALI /app production client
-        required: true
-        type: string
+  pull_request:
+    branches: [main]
+    paths:
+      - "native/**"
+      - "site/**"
+      - ".github/workflows/build-ios-simulator.yml"
 
 permissions:
   contents: read
@@ -15,8 +16,6 @@ jobs:
   ios-simulator:
     runs-on: macos-latest
     timeout-minutes: 25
-    env:
-      BALI_MOBILE_SERVER_URL: ${{ inputs.server_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,6 +24,9 @@ jobs:
       - name: Install native dependencies
         working-directory: native
         run: npm install
+      - name: Bundle BALI web client
+        working-directory: native
+        run: npm run web:prepare
       - name: Generate iOS project
         working-directory: native
         run: npx cap add ios
@@ -35,7 +37,7 @@ jobs:
         working-directory: native
         run: |
           xcodebuild \
-            -workspace ios/App/App.xcworkspace \
+            -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Debug \
             -sdk iphonesimulator \

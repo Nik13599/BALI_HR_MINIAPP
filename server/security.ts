@@ -3,12 +3,42 @@ import {
   createHmac,
   randomBytes,
   scrypt as scryptCallback,
-  timingSafeEqual
+  timingSafeEqual,
+  webcrypto
 } from "node:crypto";
+import { Buffer } from "node:buffer";
 import { promisify } from "node:util";
 import type { TelegramUser } from "./types.js";
 
 const scrypt = promisify(scryptCallback);
+const PBKDF2_ALGORITHM = "pbkdf2-sha256";
+const PBKDF2_ITERATIONS = 600_000;
+const PBKDF2_BYTES = 32;
+const encoder = new TextEncoder();
+
+function cryptoSubtle(): SubtleCrypto {
+  const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
+  if (!subtle) throw new Error("Web Crypto API is unavailable");
+  return subtle;
+}
+
+async function pbkdf2(password: string, salt: Uint8Array, iterations: number, bytes: number): Promise<Uint8Array> {
+  const subtle = cryptoSubtle();
+  const key = await subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const saltBuffer = salt.buffer.slice(salt.byteOffset, salt.byteOffset + salt.byteLength) as ArrayBuffer;
+  const bits = await subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt: saltBuffer, iterations },
+    key,
+    bytes * 8
+  );
+  return new Uint8Array(bits);
+}
 
 export class AuthenticationError extends Error {
   status = 401;
@@ -89,16 +119,33 @@ export function verifyTelegramInitData(
 export async function hashPassword(password: string): Promise<string> {
   if (password.length < 12) throw new Error("Administrator password must contain at least 12 characters");
   const salt = randomBytes(16);
-  const derived = await scrypt(password, salt, 64) as Buffer;
-  return `scrypt:${salt.toString("base64url")}:${derived.toString("base64url")}`;
+  const derived = await pbkdf2(password, salt, PBKDF2_ITERATIONS, PBKDF2_BYTES);
+  return `${PBKDF2_ALGORITHM}:${PBKDF2_ITERATIONS}:${salt.toString("base64url")}:${Buffer.from(derived).toString("base64url")}`;
 }
 
 export async function verifyPassword(password: string, encoded: string): Promise<boolean> {
-  const [algorithm, saltText, hashText] = String(encoded || "").split(":");
+  const parts = String(encoded || "").split(":");
+  if (parts[0] === PBKDF2_ALGORITHM) {
+    const iterations = Number(parts[1]);
+    const saltText = parts[2];
+    const hashText = parts[3];
+    if (!Number.isInteger(iterations) || iterations < 100_000 || iterations > 2_000_000 || !saltText || !hashText) return false;
+    const expected = Buffer.from(hashText, "base64url");
+    if (!expected.length) return false;
+    const derived = await pbkdf2(password, Buffer.from(saltText, "base64url"), iterations, expected.length);
+    const actual = Buffer.from(derived);
+    return expected.length === actual.length && timingSafeEqual(expected, actual);
+  }
+
+  const [algorithm, saltText, hashText] = parts;
   if (algorithm !== "scrypt" || !saltText || !hashText) return false;
-  const expected = Buffer.from(hashText, "base64url");
-  const derived = await scrypt(password, Buffer.from(saltText, "base64url"), expected.length) as Buffer;
-  return expected.length === derived.length && timingSafeEqual(expected, derived);
+  try {
+    const expected = Buffer.from(hashText, "base64url");
+    const derived = await scrypt(password, Buffer.from(saltText, "base64url"), expected.length) as Buffer;
+    return expected.length === derived.length && timingSafeEqual(expected, derived);
+  } catch {
+    return false;
+  }
 }
 
 export function sha256(value: string): string {

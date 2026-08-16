@@ -7,13 +7,23 @@ import type { AppConfig, Queryable } from "../types.js";
 export const USER_COOKIE = "bali_user_session";
 export const ADMIN_COOKIE = "bali_admin_session";
 
+function bearerToken(req: Request): string {
+  const authorization = String(req.get("authorization") || "").trim();
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  return match ? String(match[1] || "").trim() : "";
+}
+
+function requestSessionToken(req: Request, cookieName: string): string {
+  return String(req.cookies?.[cookieName] || bearerToken(req) || "").trim();
+}
+
 export function optionalUser(db: Queryable, config: AppConfig): RequestHandler {
   return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
-    const token = req.cookies?.[USER_COOKIE];
+    const token = requestSessionToken(req, USER_COOKIE);
     if (!token) return next();
     const row = await one<any>(
       db,
-      `select s.id as session_id, s.app_user_key, s.last_seen_at,
+      `select s.id as session_id, s.app_user_key, s.last_seen_at, s.auth_method,
               coalesce(a.telegram_user_id::text, '') as telegram_user_id,
               u.name, u.username, u.account_status
          from public.user_sessions s
@@ -25,8 +35,13 @@ export function optionalUser(db: Queryable, config: AppConfig): RequestHandler {
     );
     if (row) {
       const telegramUserId = String(row.telegram_user_id || "");
+      const authMethod = row.auth_method === "mobile" || row.auth_method === "telegram"
+        ? row.auth_method
+        : telegramUserId
+          ? "telegram"
+          : "mobile";
       let mustChangePassword = false;
-      if (!telegramUserId) {
+      if (authMethod === "mobile") {
         const credential = await one<any>(
           db,
           `select must_change_password from public.mobile_credentials where app_user_key = $1`,
@@ -42,7 +57,7 @@ export function optionalUser(db: Queryable, config: AppConfig): RequestHandler {
         name: row.name,
         username: row.username,
         status: row.account_status,
-        authMethod: telegramUserId ? "telegram" : "mobile",
+        authMethod,
         mustChangePassword
       };
       if (Date.now() - new Date(row.last_seen_at).getTime() > 300_000) {
@@ -64,7 +79,7 @@ export const requireUser: RequestHandler = (req, _res, next) => {
 
 export function optionalAdmin(db: Queryable, config: AppConfig): RequestHandler {
   return asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
-    const token = req.cookies?.[ADMIN_COOKIE];
+    const token = requestSessionToken(req, ADMIN_COOKIE);
     if (!token) return next();
     const row = await one<any>(
       db,
