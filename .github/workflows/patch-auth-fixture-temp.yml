@@ -1,0 +1,40 @@
+name: Patch auth test fixture temporarily
+
+on:
+  push:
+    branches: [agent/supabase-edge-mobile-api]
+    paths:
+      - ".github/workflows/patch-auth-fixture-temp.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/supabase-edge-mobile-api
+      - name: Sync user_sessions fixture with migration 018
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('tests/server/helpers.ts')
+          text = p.read_text()
+          old = "  user_agent text not null default '',\n  created_at timestamptz not null default now(),"
+          new = "  user_agent text not null default '',\n  auth_method text not null default 'telegram',\n  created_at timestamptz not null default now(),"
+          if new not in text:
+              if old not in text:
+                  raise SystemExit('user_sessions fixture marker not found')
+              p.write_text(text.replace(old, new, 1))
+          PY
+      - name: Commit fixture sync
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/server/helpers.ts
+          if ! git diff --cached --quiet; then
+            git commit -m "Sync auth test fixture with mobile sessions"
+            git push origin HEAD:agent/supabase-edge-mobile-api
+          fi
