@@ -1,0 +1,34 @@
+name: Patch admin redirect test
+on:
+  push:
+    branches: [agent/supabase-edge-mobile-api]
+    paths:
+      - ".github/workflows/patch-admin-redirect-test-temp.yml"
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/supabase-edge-mobile-api
+      - name: Update production admin route assertion
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('tests/server/production-platform.test.ts')
+          s = p.read_text()
+          old = '''  assert.equal(admin.status, 200);\n  assert.match(admin.text, /admin-platform-ui\\.js/);\n  assert.match(admin.text, /data-admin-view="crm"/);\n  assert.match(admin.text, /data-admin-view="operations"/);\n'''
+          new = '''  assert.equal(admin.status, 302);\n  assert.equal(admin.headers.location, "/site/admin-production.html");\n  const adminPage = await request(context.app).get(admin.headers.location);\n  assert.equal(adminPage.status, 200);\n  assert.match(adminPage.text, /admin-match3-game-beta4\\.js/);\n  assert.match(adminPage.text, /data-view="crown"/);\n  assert.match(adminPage.text, /data-view="clans"/);\n  assert.match(adminPage.text, /admin-beta4-production-sync\\.js/);\n'''
+          if old not in s:
+              raise SystemExit('old production admin assertion not found')
+          p.write_text(s.replace(old, new, 1))
+      - name: Commit test update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/server/production-platform.test.ts
+          git diff --cached --check
+          git commit -m "Test BETA4 production admin redirect"
+          git push origin HEAD:agent/supabase-edge-mobile-api
