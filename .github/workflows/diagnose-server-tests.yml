@@ -1,0 +1,30 @@
+name: Verify PR27 server tests after fixture sync
+on:
+  push:
+    branches: [agent/ci-diagnose-pr27b]
+    paths: [".github/workflows/diagnose-server-tests.yml"]
+permissions:
+  contents: read
+jobs:
+  split-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: auth test
+        run: timeout 120s node --import tsx --test --test-concurrency=1 tests/server/auth.test.ts
+      - name: clan chat test
+        run: timeout 120s node --import tsx --test --test-concurrency=1 tests/server/clan-chat.test.ts
+      - name: admin test
+        run: timeout 120s node --import tsx --test --test-concurrency=1 tests/server/admin.test.ts
+      - name: privacy migration test
+        run: timeout 120s node --import tsx --test --test-concurrency=1 tests/server/privacy-migration.test.ts
+      - name: match3 engine test
+        run: timeout 120s node --import tsx --test --test-concurrency=1 tests/server/match3-engine.test.ts
+      - name: production platform test
+        run: timeout 120s node --import tsx --test --test-concurrency=1 tests/server/production-platform.test.ts
