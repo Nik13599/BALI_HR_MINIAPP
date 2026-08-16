@@ -1,4 +1,4 @@
-name: Build Vercel backend bundle
+name: Build BALI deployment bundles
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/build-vercel-bundle.yml
       - api/**
+      - edge/**
       - server/**
       - package.json
       - package-lock.json
@@ -35,14 +36,25 @@ jobs:
           --target=node22
           --minify
           --outfile=vercel-bundle/index.cjs
-      - name: Validate generated module
-        run: node --check vercel-bundle/index.cjs
-      - name: Commit generated bundle
+      - name: Build self-contained Supabase Edge server
+        run: >-
+          npx --yes esbuild@0.25.9 edge/bali-api-entry.ts
+          --bundle
+          --platform=node
+          --format=esm
+          --target=es2022
+          --minify
+          --outfile=vercel-bundle/bali-edge.mjs
+      - name: Validate generated modules
+        run: |
+          node --check vercel-bundle/index.cjs
+          node --check vercel-bundle/bali-edge.mjs
+      - name: Commit generated bundles
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add vercel-bundle/index.cjs
+          git add vercel-bundle/index.cjs vercel-bundle/bali-edge.mjs
           if ! git diff --cached --quiet; then
-            git commit -m "Build self-contained Vercel backend bundle [skip ci]"
+            git commit -m "Build BALI deployment bundles [skip ci]"
             git push origin HEAD:agent/vercel-bundle-build
           fi
