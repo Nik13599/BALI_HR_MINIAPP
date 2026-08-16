@@ -1,6 +1,7 @@
 import process from "node:process";
 import express from "express";
 
+// Production Supabase Edge entrypoint for the standalone BALI API.
 const denoEnv = (globalThis as any).Deno?.env;
 const runtimeEnv = {
   ...process.env,
