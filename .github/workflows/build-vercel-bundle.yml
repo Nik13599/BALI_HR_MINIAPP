@@ -36,13 +36,14 @@ jobs:
           --target=node22
           --minify
           --outfile=vercel-bundle/index.cjs
-      - name: Build self-contained Supabase Edge server
+      - name: Build Supabase Edge server with native npm dependencies
         run: >-
           npx --yes esbuild@0.25.9 edge/bali-api-entry.ts
           --bundle
           --platform=node
           --format=esm
           --target=es2022
+          --packages=external
           --minify
           --outfile=vercel-bundle/bali-edge.mjs
       - name: Validate generated modules
