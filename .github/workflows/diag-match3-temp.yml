@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: gh-pages
-      - name: Probe Match3 engine and core
+      - name: Probe Match3 core bootstrap only
         run: |
           node <<'NODE'
           const memory = new Map();
@@ -32,17 +32,12 @@ jobs:
           global.dispatchEvent = () => {};
           global.addEventListener = () => {};
           try {
-            require('./site/match3-infinite-engine-beta4.js');
-            console.log('ENGINE', Boolean(global.BaliMatch3InfiniteEngine), Object.keys(global.BaliMatch3InfiniteEngine || {}));
-          } catch (error) {
-            console.error('ENGINE ERROR', error?.stack || error);
-            process.exitCode = 11;
-          }
-          try {
             require('./site/match3-game-core-beta4.js');
+            console.log('ENGINE', Boolean(global.BaliMatch3InfiniteEngine));
             console.log('CORE', Boolean(global.BaliMatch3), Object.keys(global.BaliMatch3 || {}));
+            if (!global.BaliMatch3InfiniteEngine || !global.BaliMatch3) process.exit(21);
           } catch (error) {
-            console.error('CORE ERROR', error?.stack || error);
-            process.exitCode = 12;
+            console.error('CORE BOOTSTRAP ERROR', error?.stack || error);
+            process.exit(22);
           }
           NODE
