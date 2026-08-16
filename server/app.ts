@@ -30,7 +30,8 @@ import { optionalAdmin, optionalUser } from "./middleware/auth.js";
 import type { AppConfig, Queryable } from "./types.js";
 
 const siteDirectory = path.resolve(process.cwd(), "site");
-const uploadDirectory = path.resolve(process.env.BALI_UPLOAD_DIR || path.join(process.cwd(), "var", "uploads"));
+const defaultUploadDirectory = process.env.VERCEL ? "/tmp/bali-uploads" : path.join(process.cwd(), "var", "uploads");
+const uploadDirectory = path.resolve(process.env.BALI_UPLOAD_DIR || defaultUploadDirectory);
 
 export function createApp(db: Queryable, config: AppConfig) {
   mkdirSync(uploadDirectory, { recursive: true });
