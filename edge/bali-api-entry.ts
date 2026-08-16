@@ -2,13 +2,16 @@ import process from "node:process";
 import express from "express";
 
 const denoEnv = (globalThis as any).Deno?.env;
-process.env.BALI_ENV = "production";
-process.env.DATABASE_URL = denoEnv?.get("SUPABASE_DB_URL") || process.env.SUPABASE_DB_URL || "";
-process.env.SESSION_SECRET = denoEnv?.get("SUPABASE_SERVICE_ROLE_KEY") || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-process.env.TRUST_PROXY = "1";
-process.env.DB_POOL_MAX = "1";
-process.env.BALI_UPLOAD_DIR = "/tmp/bali-uploads";
-process.env.PORT = "8000";
+const runtimeEnv = {
+  ...process.env,
+  BALI_ENV: "production",
+  DATABASE_URL: denoEnv?.get("SUPABASE_DB_URL") || process.env.SUPABASE_DB_URL || "",
+  SESSION_SECRET: denoEnv?.get("SUPABASE_SERVICE_ROLE_KEY") || process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  TRUST_PROXY: "1",
+  DB_POOL_MAX: "1",
+  BALI_UPLOAD_DIR: "/tmp/bali-uploads",
+  PORT: "8000"
+};
 
 const [{ createApp }, { loadConfig }, { createPool }] = await Promise.all([
   import("../server/app.js"),
@@ -16,7 +19,7 @@ const [{ createApp }, { loadConfig }, { createPool }] = await Promise.all([
   import("../server/db.js")
 ]);
 
-const config = loadConfig(process.env);
+const config = loadConfig(runtimeEnv);
 const db = createPool(config.databaseUrl);
 await db.query("select 1");
 const bali = createApp(db, config);
