@@ -38,7 +38,7 @@ jobs:
       - name: Validate application files
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           required=(
             index.html
             404.html
@@ -409,41 +409,22 @@ jobs:
           fi
 
       - name: Prepare static site
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf _site
-          mkdir -p _site
-          cp index.html 404.html _site/
-          cp -R site _site/site
-          touch _site/.nojekyll
-          test -f _site/site/full-menu-catalog-beta4.js
-          test -f _site/site/event-performer-cards-beta4.js
-          test -f _site/site/admin.html
-          if find _site -type l -print -quit | grep -q .; then
-            echo "Symbolic links are not allowed"
-            exit 1
-          fi
+        run: touch .nojekyll
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: _site
+          path: .
 
   deploy:
-    if: github.event_name != 'pull_request'
     name: Deploy GitHub Pages
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy artifact
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          timeout: 600000
-          error_count: 20
-          reporting_interval: 5000
