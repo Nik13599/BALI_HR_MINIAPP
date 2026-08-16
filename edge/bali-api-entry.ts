@@ -20,7 +20,7 @@ const [{ createApp }, { loadConfig }, { createPool }] = await Promise.all([
 ]);
 
 const config = loadConfig(runtimeEnv);
-const db = createPool(config.databaseUrl);
+const db = createPool(config.databaseUrl, 1);
 await db.query("select 1");
 const bali = createApp(db, config);
 const edge = express();
