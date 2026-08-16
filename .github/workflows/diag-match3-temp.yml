@@ -18,9 +18,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: gh-pages
-      - name: Probe Match3 core bootstrap only
+      - name: Probe fixed Match3 core bootstrap
         run: |
-          echo "diagnostic rerun on current gh-pages"
           node <<'NODE'
           const memory = new Map();
           global.window = global;
@@ -32,13 +31,8 @@ jobs:
           global.CustomEvent = class { constructor(type,init){ this.type=type; this.detail=init?.detail; } };
           global.dispatchEvent = () => {};
           global.addEventListener = () => {};
-          try {
-            require('./site/match3-game-core-beta4.js');
-            console.log('ENGINE', Boolean(global.BaliMatch3InfiniteEngine));
-            console.log('CORE', Boolean(global.BaliMatch3), Object.keys(global.BaliMatch3 || {}));
-            if (!global.BaliMatch3InfiniteEngine || !global.BaliMatch3) process.exit(21);
-          } catch (error) {
-            console.error('CORE BOOTSTRAP ERROR', error?.stack || error);
-            process.exit(22);
-          }
+          require('./site/match3-game-core-beta4.js');
+          console.log('ENGINE', Boolean(global.BaliMatch3InfiniteEngine));
+          console.log('CORE', Boolean(global.BaliMatch3));
+          if (!global.BaliMatch3InfiniteEngine || !global.BaliMatch3) process.exit(21);
           NODE
