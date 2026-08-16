@@ -106,6 +106,7 @@ create table user_sessions (
   revoked_at timestamptz,
   ip_hash text not null default '',
   user_agent text not null default '',
+  auth_method text not null default 'telegram',
   created_at timestamptz not null default now(),
   last_seen_at timestamptz not null default now()
 );
