@@ -75,10 +75,14 @@ test("production routes serve the integrated full app and control center", async
   assert.equal(app.status, 200);
   assert.match(app.text, /production-loader\.js/);
   assert.match(app.text, /viewport-fit=cover/);
-  assert.equal(admin.status, 200);
-  assert.match(admin.text, /admin-platform-ui\.js/);
-  assert.match(admin.text, /data-admin-view="crm"/);
-  assert.match(admin.text, /data-admin-view="operations"/);
+  assert.equal(admin.status, 302);
+  assert.equal(admin.headers.location, "/site/admin-production.html");
+  const adminPage = await request(context.app).get(admin.headers.location);
+  assert.equal(adminPage.status, 200);
+  assert.match(adminPage.text, /admin-match3-game-beta4\.js/);
+  assert.match(adminPage.text, /data-view="crown"/);
+  assert.match(adminPage.text, /data-view="clans"/);
+  assert.match(adminPage.text, /admin-beta4-production-sync\.js/);
 });
 
 test("production responses apply restrictive browser security headers", async () => {
