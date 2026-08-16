@@ -1,3 +1,7 @@
+if (typeof window !== "undefined" && !window.BaliMatch3InfiniteEngine && typeof require === "function") {
+  try { require("./match3-infinite-engine-beta4.js"); } catch {}
+}
+
 (() => {
   "use strict";
   if (window.BaliMatch3 || !window.BaliMatch3InfiniteEngine) return;
