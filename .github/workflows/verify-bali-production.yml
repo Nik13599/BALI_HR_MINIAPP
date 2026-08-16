@@ -14,7 +14,7 @@ jobs:
       - name: Verify health and public config
         run: |
           set -euo pipefail
-          BASE='https://bali-api-kolyaselekh-9471s-projects.vercel.app'
+          BASE='https://mvnxfouyoynqyjdpcblh.supabase.co/functions/v1/bali-api'
           echo '--- health ---'
           curl -fsS --retry 20 --retry-delay 3 --retry-all-errors "$BASE/api/v1/health"
           echo
@@ -24,7 +24,7 @@ jobs:
       - name: Verify real Supabase write path
         run: |
           set -euo pipefail
-          BASE='https://bali-api-kolyaselekh-9471s-projects.vercel.app'
+          BASE='https://mvnxfouyoynqyjdpcblh.supabase.co/functions/v1/bali-api'
           curl -fsS --retry 10 --retry-delay 2 --retry-all-errors \
             -H 'content-type: application/json' \
             -d '{"phone":"+375290000001","telegramUsername":"bali_probe_20260816","displayName":"BALI Deploy Probe"}' \
