@@ -1,0 +1,19 @@
+name: Diagnose BALI Edge runtime
+
+on:
+  push:
+    branches:
+      - agent/vercel-bundle-build
+    paths:
+      - .github/workflows/diag-edge.yml
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe Supabase Edge diagnostics
+        run: |
+          set -euo pipefail
+          curl -fsS --retry 10 --retry-delay 2 --retry-all-errors \
+            'https://mvnxfouyoynqyjdpcblh.supabase.co/functions/v1/bali-diag'
+          echo
