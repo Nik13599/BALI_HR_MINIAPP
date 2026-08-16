@@ -31,8 +31,9 @@ async function pbkdf2(password: string, salt: Uint8Array, iterations: number, by
     false,
     ["deriveBits"]
   );
+  const saltBuffer = salt.buffer.slice(salt.byteOffset, salt.byteOffset + salt.byteLength) as ArrayBuffer;
   const bits = await subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt, iterations },
+    { name: "PBKDF2", hash: "SHA-256", salt: saltBuffer, iterations },
     key,
     bytes * 8
   );
