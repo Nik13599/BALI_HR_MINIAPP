@@ -20,6 +20,7 @@ jobs:
           ref: gh-pages
       - name: Probe Match3 core bootstrap only
         run: |
+          echo "diagnostic rerun on current gh-pages"
           node <<'NODE'
           const memory = new Map();
           global.window = global;
