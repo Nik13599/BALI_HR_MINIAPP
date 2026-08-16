@@ -1,0 +1,42 @@
+name: Apply temporary admin bearer patch
+
+on:
+  push:
+    branches:
+      - agent/supabase-edge-mobile-api
+    paths:
+      - .github/workflows/apply-admin-bearer-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/supabase-edge-mobile-api
+      - name: Add admin access token to login response
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('server/routes/auth.ts')
+          text = path.read_text()
+          old = 'res.json({ admin: { id: admin.id, email: admin.email, role: admin.role }, expiresAt });'
+          new = 'res.json({ admin: { id: admin.id, email: admin.email, role: admin.role }, expiresAt, accessToken: token, tokenType: "Bearer" });'
+          if old not in text:
+              if new in text:
+                  raise SystemExit(0)
+              raise SystemExit('Expected admin login response was not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add server/routes/auth.ts
+          if ! git diff --cached --quiet; then
+            git commit -m "Return bearer token from admin login [skip admin patch]"
+            git push origin HEAD:agent/supabase-edge-mobile-api
+          fi
