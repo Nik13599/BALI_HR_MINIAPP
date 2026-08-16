@@ -1,0 +1,40 @@
+name: Patch Pages validator temporarily
+
+on:
+  push:
+    branches: [gh-pages]
+    paths:
+      - ".github/workflows/patch-pages-validator-temp.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+      - name: Load Match3 engine before core in Node validator
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/deploy-pages.yml')
+          text = p.read_text()
+          old = "          global.addEventListener = () => {};\n          require('./site/match3-game-core-beta4.js');"
+          new = "          global.addEventListener = () => {};\n          require('./site/match3-infinite-engine-beta4.js');\n          require('./site/match3-game-core-beta4.js');"
+          if new not in text:
+              if old not in text:
+                  raise SystemExit('Match3 validator block not found')
+              p.write_text(text.replace(old, new, 1))
+          PY
+      - name: Commit validator fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/deploy-pages.yml
+          if ! git diff --cached --quiet; then
+            git commit -m "Load Match3 engine in Pages validator [skip ci]"
+            git push origin HEAD:gh-pages
+          fi
