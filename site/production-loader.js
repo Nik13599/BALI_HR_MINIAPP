@@ -1,6 +1,6 @@
 (async () => {
   "use strict";
-  const version = "bali-mobile-production-20260816-1";
+  const version = "bali-mobile-production-20261120-game-resume-1";
   const assetBase = window.BALI_ASSET_BASE || "/site/";
   const esc = (value = "") => String(value).replace(/[&<>'"]/g, char => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;"
