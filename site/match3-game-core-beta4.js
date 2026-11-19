@@ -300,6 +300,16 @@
 
   function startLevel(requestedLevel) {
     const profile = progress();
+    const active = profile.activeAttempt;
+    // Resuming a paused level never spends a life, resets its score, or regenerates the board.
+    // An explicit requestedLevel is reserved for deliberately starting another attempt.
+    if (!requestedLevel && active?.status === "active"
+      && active.seasonId === profile.seasonId
+      && Number(active.level) === Number(profile.seasonLevel)
+      && Array.isArray(active.board) && Array.isArray(active.tiles)
+      && active.board.length === Number(active.config?.rows || 0) * Number(active.config?.columns || 0)) {
+      return { ok: true, attempt: active, resumed: true };
+    }
     if (profile.lives < 1) return { ok: false, reason: "lives_empty", profile };
     const levelNumber = Math.max(1, Number(requestedLevel || profile.seasonLevel || 1));
     const generated = levelConfig(levelNumber);
