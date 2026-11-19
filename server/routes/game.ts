@@ -255,8 +255,9 @@ export function createGameRouter(db: Queryable): Router {
       `select * from public.game_sessions where idempotency_key = $1 and user_key = $2`,
       [key, userKey]
     );
-    if (existing) return res.json({ session: existing, replayed: true });
+    if (existing) return res.json({ session: existing, replayed: true, resumed: existing.status === "active" });
     let session: any;
+    let resumed = false;
     try {
       session = await transaction(db, async client => {
       const active = await one<any>(
@@ -266,9 +267,9 @@ export function createGameRouter(db: Queryable): Router {
         [userKey]
       );
       if (active) {
-        throw new ApiError(409, "Finish or abandon the active game first", "active_game_exists", {
-          gameSessionId: active.id
-        });
+        // Reopening a paused game must never discard its board, moves or score.
+        resumed = true;
+        return active;
       }
       const profile = await one<any>(
         client,
@@ -345,19 +346,15 @@ export function createGameRouter(db: Queryable): Router {
         if (replay) return res.json({ session: replay, replayed: true });
         const active = await one<any>(
           db,
-          `select id from public.game_sessions
+          `select * from public.game_sessions
             where user_key = $1 and status = 'active'`,
           [userKey]
         );
-        if (active) {
-          throw new ApiError(409, "Finish or abandon the active game first", "active_game_exists", {
-            gameSessionId: active.id
-          });
-        }
+        if (active) return res.json({ session: active, replayed: false, resumed: true });
       }
       throw error;
     }
-    res.status(201).json({ session, replayed: false });
+    res.status(resumed ? 200 : 201).json({ session, replayed: false, resumed });
   }));
 
   router.post("/sessions/:sessionId/moves", asyncHandler(async (req, res) => {
