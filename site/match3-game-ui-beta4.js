@@ -303,8 +303,17 @@
     state.highlighted.clear();
     state.boosterMode = "";
     state.busy = false;
-    state.message = `Уровень ${number(state.attempt.level)} · сложность ×${Number(state.attempt.config.difficulty).toFixed(2)}.`;
+    state.message = started.resumed
+      ? `Продолжаем уровень ${number(state.attempt.level)} с сохранённого места · ${number(state.attempt.score)} очков.`
+      : `Уровень ${number(state.attempt.level)} · сложность ×${Number(state.attempt.config.difficulty).toFixed(2)}.`;
     renderAll();
+    // A reload can happen immediately after the last move, before its result dialog opens.
+    // Recover the pending finish/continue flow without erasing the completed moves.
+    if (started.resumed && engine.goalsComplete(state.attempt.config, state.attempt.progress, tileIds())) {
+      finishLevel("success");
+    } else if (started.resumed && state.attempt.movesRemaining <= 0) {
+      requestContinue();
+    }
   }
 
   async function playSwap(first, second) {

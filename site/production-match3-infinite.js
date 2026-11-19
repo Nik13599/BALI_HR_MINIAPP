@@ -164,19 +164,24 @@
   }
 
   async function startLevel() {
+    let resumed = false;
     try {
+      // The server returns an existing active session in one response, including after a reload.
       const response = await production.post("/api/v1/game/sessions", {
         deviceHash: navigator.userAgent,
       });
       serverSession = response.session;
+      resumed = Boolean(response.resumed || response.replayed);
     } catch (error) {
       if (error?.code === "game_lives_empty") return { ok: false, reason: "lives_empty", profile: progress() };
+      // Compatibility with backend deployments that still use 409 for an active session.
       if (error?.code !== "active_game_exists" || !error?.details?.gameSessionId) throw error;
       const response = await production.api(`/api/v1/game/sessions/${error.details.gameSessionId}`);
       serverSession = response.session;
+      resumed = true;
     }
     activeAttempt = attemptFromSession(serverSession);
-    return { ok: true, attempt: activeAttempt };
+    return { ok: true, attempt: activeAttempt, resumed };
   }
 
   async function playMove(attempt, first, second) {
